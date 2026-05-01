@@ -1,0 +1,1636 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Diario</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-family: 'DM Sans', sans-serif; background: #fff; color: #1a1a1a; -webkit-font-smoothing: antialiased; }
+  body { min-height: 100dvh; background: #fff; }
+  input, textarea, button { font-family: inherit; }
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-thumb { background: #e5e5e5; border-radius: 3px; }
+
+  @keyframes dFadeIn { from { opacity:0 } to { opacity:1 } }
+  @keyframes dSlideUp { from { opacity:0; transform:translateY(24px) } to { opacity:1; transform:translateY(0) } }
+  @keyframes dPulse { 0%,100% { opacity:1 } 50% { opacity:0.4 } }
+  @keyframes dFloat { 0%,100% { transform:translateY(0) } 50% { transform:translateY(-6px) } }
+  @keyframes dGlow { 0%,100% { box-shadow: 0 0 12px rgba(0,0,0,0.05) } 50% { box-shadow: 0 0 24px rgba(0,0,0,0.08) } }
+
+  .cal-cell:hover { transform: scale(1.06); z-index:2; box-shadow: 0 4px 16px rgba(0,0,0,0.08) !important; }
+  .cal-cell { transition: all .2s ease !important; }
+
+  .nav-tab { position:relative; padding:10px 0; font-size:11px; font-weight:600; color:#bbb; background:none; border:none; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:4px; transition:color .2s; flex:1; }
+  .nav-tab.active { color:#1a1a1a; }
+  .nav-tab.active::after { content:''; position:absolute; bottom:0; left:50%; transform:translateX(-50%); width:4px; height:4px; border-radius:2px; background:#1a1a1a; }
+  .nav-tab:hover { color:#888; }
+
+  .diario-slider { width:100%; appearance:none; background:transparent; cursor:pointer; }
+  .diario-slider::-webkit-slider-runnable-track { height:8px; border-radius:4px; background: linear-gradient(90deg, #ef4444, #f97316, #eab308, #22c55e, #10b981); }
+  .diario-slider::-webkit-slider-thumb { appearance:none; width:30px; height:30px; border-radius:50%; background:#fff; border:3px solid #22c55e; margin-top:-11px; box-shadow:0 2px 10px rgba(0,0,0,0.15); transition: border-color .2s; }
+
+  /* Page transition */
+  .page-enter { animation: dSlideUp .3s cubic-bezier(.2,.8,.3,1); }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+// ── Shared Utils + Components (v3 — visual upgrade) ──
+const STORAGE_KEY = 'diario_entries_v2';
+const STREAKS_KEY = 'diario_streaks_v2';
+const LETTERS_KEY = 'diario_letters_v2';
+const OBJECTIVES_KEY = 'diario_objectives_v2';
+
+function loadData(key, fallback) { try { return JSON.parse(localStorage.getItem(key)) || fallback; } catch { return fallback; } }
+function saveData(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+function dateKey(y, m, d) { return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
+function parseKey(k) { const [y,m,d] = k.split('-').map(Number); return { y, m: m-1, d }; }
+function todayKey() { const t = new Date(); return dateKey(t.getFullYear(), t.getMonth(), t.getDate()); }
+
+const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const MONTHS_SHORT = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const DAYS_ES = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+const DAYS_FULL = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+
+const METAPHORS = [
+  { min:1, max:2, texts:['Tu día fue como una tormenta sin paraguas','Como caminar descalzo sobre piedras','Hoy fue un túnel largo y oscuro'] },
+  { min:3, max:4, texts:['Tu día fue como nubes grises que no terminan de llover','Como una canción en tono menor','Hoy fue un café que se enfrió demasiado rápido'] },
+  { min:5, max:6, texts:['Tu día fue como una brisa suave de primavera','Como un atardecer entre nubes','Hoy fue un libro que apenas empiezas a leer'] },
+  { min:7, max:8, texts:['Tu día fue como un rayo de sol entre las nubes','Como encontrar una canción que te encanta','Hoy fue una ola perfecta para surfear'] },
+  { min:9, max:10, texts:['Tu día fue como una tormenta que aclara y deja un arcoíris','Como el primer día de vacaciones','Hoy fue una estrella fugaz que sí viste'] },
+];
+
+function getMetaphor(rating) {
+  const group = METAPHORS.find(m => rating >= m.min && rating <= m.max) || METAPHORS[2];
+  return group.texts[Math.floor(Math.random() * group.texts.length)];
+}
+
+function randomColor() {
+  const hues = [15, 45, 80, 120, 170, 200, 260, 300, 340];
+  return `oklch(0.72 0.16 ${hues[Math.floor(Math.random() * hues.length)]})`;
+}
+
+function ratingColor(r) {
+  if (r <= 2) return '#ef4444'; if (r <= 4) return '#f97316';
+  if (r <= 6) return '#eab308'; if (r <= 8) return '#22c55e'; return '#10b981';
+}
+function ratingEmoji(r) {
+  if (r <= 2) return '😢'; if (r <= 4) return '😕'; if (r <= 6) return '😊'; if (r <= 8) return '😄'; return '🤩';
+}
+function ratingGradient(r) {
+  if (r <= 3) return 'linear-gradient(135deg, #fecaca, #fca5a5)';
+  if (r <= 5) return 'linear-gradient(135deg, #fef3c7, #fde68a)';
+  if (r <= 7) return 'linear-gradient(135deg, #d1fae5, #a7f3d0)';
+  return 'linear-gradient(135deg, #a7f3d0, #6ee7b7)';
+}
+function getFireColor(days) {
+  if (days >= 100) return '#22c55e'; if (days >= 60) return '#3b82f6';
+  if (days >= 40) return '#8b5cf6'; if (days >= 20) return '#ef4444'; return '#f97316';
+}
+function getStreakDays(streak, entries) {
+  let count = 0;
+  Object.keys(entries).sort().forEach(k => { if (k >= streak.startDate && entries[k]?.streaks?.[streak.id]) count++; });
+  return count;
+}
+function daysUntil(dateStr) {
+  const t = new Date(dateStr); t.setHours(0,0,0,0);
+  const n = new Date(); n.setHours(0,0,0,0);
+  return Math.ceil((t - n) / 86400000);
+}
+function formatDateShort(dk) { const p = parseKey(dk); return `${p.d} ${MONTHS_SHORT[p.m]}`; }
+function formatDateFull(dk) {
+  const p = parseKey(dk);
+  const dayName = new Date(p.y, p.m, p.d).toLocaleDateString('es-ES', { weekday:'long' });
+  return { dayName, display: `${p.d} de ${MONTHS_ES[p.m]}, ${p.y}` };
+}
+
+// ── Confetti System ──
+function launchConfetti() {
+  const canvas = document.createElement('canvas');
+  canvas.style.cssText = 'position:fixed;inset:0;z-index:9999;pointer-events:none;';
+  canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+  document.body.appendChild(canvas);
+  const ctx = canvas.getContext('2d');
+  const particles = [];
+  const colors = ['#ef4444','#f97316','#eab308','#22c55e','#3b82f6','#8b5cf6','#ec4899','#10b981'];
+  for (let i = 0; i < 80; i++) {
+    particles.push({
+      x: Math.random() * canvas.width, y: -20 - Math.random() * 200,
+      w: 6 + Math.random() * 6, h: 4 + Math.random() * 4,
+      vx: (Math.random() - 0.5) * 4, vy: 2 + Math.random() * 4,
+      rot: Math.random() * 360, vr: (Math.random() - 0.5) * 12,
+      color: colors[Math.floor(Math.random() * colors.length)], opacity: 1,
+    });
+  }
+  let frame = 0;
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let alive = false;
+    particles.forEach(p => {
+      p.x += p.vx; p.y += p.vy; p.vy += 0.1; p.rot += p.vr;
+      if (frame > 40) p.opacity -= 0.015;
+      if (p.opacity <= 0) return;
+      alive = true;
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot * Math.PI / 180);
+      ctx.globalAlpha = Math.max(0, p.opacity);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+      ctx.restore();
+    });
+    frame++;
+    if (alive && frame < 150) requestAnimationFrame(animate);
+    else canvas.remove();
+  }
+  requestAnimationFrame(animate);
+}
+
+// ── Stars System (for streak milestones) ──
+function launchStars() {
+  const canvas = document.createElement('canvas');
+  canvas.style.cssText = 'position:fixed;inset:0;z-index:9999;pointer-events:none;';
+  canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+  document.body.appendChild(canvas);
+  const ctx = canvas.getContext('2d');
+  const stars = [];
+  for (let i = 0; i < 40; i++) {
+    stars.push({
+      x: Math.random() * canvas.width, y: -10 - Math.random() * 300,
+      size: 8 + Math.random() * 14, vy: 1.5 + Math.random() * 3,
+      vx: (Math.random() - 0.5) * 2, rot: Math.random() * 360,
+      vr: (Math.random() - 0.5) * 6, opacity: 1,
+    });
+  }
+  let frame = 0;
+  function drawStar(cx, cy, size, rot) {
+    ctx.save(); ctx.translate(cx, cy); ctx.rotate(rot * Math.PI / 180);
+    ctx.beginPath();
+    for (let i = 0; i < 5; i++) {
+      const a = (i * 72 - 90) * Math.PI / 180;
+      const r = size / 2;
+      ctx[i === 0 ? 'moveTo' : 'lineTo'](Math.cos(a) * r, Math.sin(a) * r);
+      const a2 = ((i * 72 + 36) - 90) * Math.PI / 180;
+      ctx.lineTo(Math.cos(a2) * r * 0.4, Math.sin(a2) * r * 0.4);
+    }
+    ctx.closePath(); ctx.fill(); ctx.restore();
+  }
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let alive = false;
+    stars.forEach(s => {
+      s.y += s.vy; s.x += s.vx; s.vy += 0.06; s.rot += s.vr;
+      if (frame > 50) s.opacity -= 0.02;
+      if (s.opacity <= 0) return;
+      alive = true;
+      ctx.globalAlpha = Math.max(0, s.opacity);
+      ctx.fillStyle = '#eab308';
+      drawStar(s.x, s.y, s.size, s.rot);
+      ctx.fillStyle = '#fde68a';
+      drawStar(s.x, s.y, s.size * 0.5, s.rot);
+    });
+    frame++;
+    if (alive && frame < 150) requestAnimationFrame(animate);
+    else canvas.remove();
+  }
+  requestAnimationFrame(animate);
+}
+
+// ── Shared Components ──
+function FireIcon({ days, size = 16 }) {
+  const color = getFireColor(days);
+  const sc = Math.min(1.4, 1 + days * 0.003);
+  return (
+    <svg width={size * sc} height={size * sc} viewBox="0 0 24 24" fill={color} style={{ filter:`drop-shadow(0 0 ${Math.min(6, days/10)}px ${color}40)` }}>
+      <path d="M12 23c-4.97 0-8-3.03-8-7 0-2.45 1.17-4.35 2.68-5.88C8.19 8.61 9 6.62 9 4.5c0-.5.05-1 .14-1.48C9.2 2.63 9.53 2.25 10 2.5c.47.25.75.75 1 1.25.5 1 1.25 2.25 2.5 2.75.3.12.56-.13.43-.42C13.35 4.68 13 3.1 13.5 1.5c.13-.42.63-.55.88-.22C16.08 3.58 20 7.58 20 16c0 3.97-3.03 7-8 7z"/>
+    </svg>
+  );
+}
+
+function Overlay({ children, onClose }) {
+  return (
+    <div onClick={onClose} style={{
+      position:'fixed', inset:0, background:'rgba(0,0,0,0.35)', backdropFilter:'blur(12px)',
+      WebkitBackdropFilter:'blur(12px)', zIndex:200, display:'flex', alignItems:'center',
+      justifyContent:'center', padding:16, animation:'dFadeIn .2s ease'
+    }}>
+      <div onClick={e => e.stopPropagation()} style={{
+        background:'#fff', borderRadius:24, width:'100%', maxWidth:560,
+        maxHeight:'90vh', overflow:'auto',
+        boxShadow:'0 25px 80px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.05)',
+        animation:'dSlideUp .3s cubic-bezier(.2,.8,.3,1)'
+      }}>{children}</div>
+    </div>
+  );
+}
+
+function GlassCard({ children, style = {}, onClick, hover = false }) {
+  const [hovered, setHovered] = React.useState(false);
+  return (
+    <div onClick={onClick} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
+      style={{
+        background:'#fff', borderRadius:20, border:'1px solid #f0f0f0',
+        boxShadow: hovered && hover ? '0 8px 30px rgba(0,0,0,0.08)' : '0 2px 12px rgba(0,0,0,0.04)',
+        transition:'all .25s ease', cursor: onClick ? 'pointer' : 'default',
+        transform: hovered && hover ? 'translateY(-2px)' : 'none', ...style
+      }}>{children}</div>
+  );
+}
+
+function StatBubble({ label, value, sub, color, icon }) {
+  return (
+    <GlassCard style={{ padding:'20px', flex:'1 1 140px', minWidth:130 }}>
+      <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
+        {icon && <span style={{ fontSize:20 }}>{icon}</span>}
+        <span style={{ fontSize:11, fontWeight:600, color:'#aaa', textTransform:'uppercase', letterSpacing:0.5 }}>{label}</span>
+      </div>
+      <div style={{ fontSize:30, fontWeight:700, fontFamily:"'DM Serif Display', serif", color: color || '#1a1a1a', lineHeight:1 }}>{value}</div>
+      {sub && <div style={{ fontSize:12, color:'#bbb', marginTop:4 }}>{sub}</div>}
+    </GlassCard>
+  );
+}
+
+function SectionHeader({ title, subtitle, action, actionLabel, icon }) {
+  return (
+    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-end', marginBottom:16 }}>
+      <div>
+        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+          {icon && <span style={{ fontSize:22 }}>{icon}</span>}
+          <h2 style={{ fontSize:20, fontWeight:700, fontFamily:"'DM Serif Display', serif", margin:0 }}>{title}</h2>
+        </div>
+        {subtitle && <p style={{ fontSize:13, color:'#aaa', margin:'4px 0 0' }}>{subtitle}</p>}
+      </div>
+      {action && (
+        <button onClick={action} style={{
+          background:'#f5f5f5', border:'none', borderRadius:12, padding:'8px 16px',
+          fontSize:12, fontWeight:600, color:'#666', cursor:'pointer', transition:'background .2s'
+        }} onMouseEnter={e => e.currentTarget.style.background='#eee'} onMouseLeave={e => e.currentTarget.style.background='#f5f5f5'}>{actionLabel}</button>
+      )}
+    </div>
+  );
+}
+
+function EmptyState({ icon, text }) {
+  return (
+    <div style={{ textAlign:'center', padding:'40px 20px', color:'#ccc' }}>
+      <div style={{ fontSize:40, marginBottom:12, animation:'dFloat 3s ease-in-out infinite' }}>{icon}</div>
+      <div style={{ fontSize:14 }}>{text}</div>
+    </div>
+  );
+}
+
+Object.assign(window, {
+  STORAGE_KEY, STREAKS_KEY, LETTERS_KEY, OBJECTIVES_KEY,
+  loadData, saveData, dateKey, parseKey, todayKey,
+  MONTHS_ES, MONTHS_SHORT, DAYS_ES, DAYS_FULL,
+  getMetaphor, randomColor, ratingColor, ratingEmoji, ratingGradient,
+  getFireColor, getStreakDays, daysUntil, formatDateShort, formatDateFull,
+  launchConfetti, launchStars,
+  FireIcon, Overlay, GlassCard, StatBubble, SectionHeader, EmptyState,
+});
+
+</script>
+<script type="text/babel">
+// ── Calendar Page + Entry Editor/Viewer (v3 — visual upgrade) ──
+const { useState, useRef, useEffect, useCallback } = React;
+
+// ── Rating Slider ──
+function RatingSlider({ value, onChange, disabled }) {
+  return (
+    <div>
+      <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8, fontSize:12, color:'#bbb' }}>
+        <span>Terrible</span><span>Increíble</span>
+      </div>
+      <div style={{ position:'relative', height:44, display:'flex', alignItems:'center' }}>
+        <input type="range" min="1" max="10" value={value} onChange={e => onChange(+e.target.value)}
+          disabled={disabled} className="diario-slider" />
+      </div>
+      <div style={{ textAlign:'center', marginTop:8, display:'flex', alignItems:'center', justifyContent:'center', gap:10 }}>
+        <span style={{ fontSize:40 }}>{ratingEmoji(value)}</span>
+        <div>
+          <span style={{ fontSize:36, fontWeight:700, fontFamily:"'DM Serif Display', serif", color:ratingColor(value), transition:'color .2s' }}>{value}</span>
+          <span style={{ fontSize:14, color:'#ccc' }}>/10</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Color Palette Picker ──
+function ColorPalettePicker({ colors, onChange }) {
+  const PALETTE = ['#ef4444','#f97316','#eab308','#22c55e','#3b82f6','#8b5cf6','#ec4899','#14b8a6','#6366f1','#f43f5e','#84cc16','#06b6d4','#a855f7','#fb923c','#64748b'];
+  return (
+    <div>
+      <div style={{ fontSize:13, fontWeight:600, marginBottom:8, color:'#555' }}>Paleta de colores del día</div>
+      <div style={{ display:'flex', gap:8, marginBottom:8 }}>
+        {colors.map((c, i) => (
+          <div key={i} style={{ width:40, height:40, borderRadius:12, background:c, border:'2px solid #fff', boxShadow:'0 2px 8px rgba(0,0,0,0.1)', transition:'transform .2s' }}
+            onMouseEnter={e => e.currentTarget.style.transform='scale(1.1) rotate(5deg)'}
+            onMouseLeave={e => e.currentTarget.style.transform='scale(1)'} />
+        ))}
+      </div>
+      <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
+        {PALETTE.map(c => (
+          <div key={c} onClick={() => {
+            const next = [...colors];
+            const idx = next.findIndex(x => x === '#e5e5e5');
+            if (idx >= 0) { next[idx] = c; onChange(next); } else { next.shift(); next.push(c); onChange(next); }
+          }}
+            style={{ width:28, height:28, borderRadius:8, background:c, cursor:'pointer', transition:'transform .15s', border:'2px solid transparent' }}
+            onMouseEnter={e => e.currentTarget.style.transform='scale(1.2)'}
+            onMouseLeave={e => e.currentTarget.style.transform='scale(1)'} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Media Section in Editor ──
+function MediaEditor({ photos, onPhotosChange, audioBlob, onAudioChange }) {
+  const fileRef = useRef();
+  const [recording, setRecording] = useState(false);
+  const mediaRecorder = useRef(null);
+  const chunks = useRef([]);
+
+  const addPhotos = (e) => {
+    Array.from(e.target.files).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (ev) => onPhotosChange(prev => [...prev, ev.target.result]);
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder.current = new MediaRecorder(stream);
+      chunks.current = [];
+      mediaRecorder.current.ondataavailable = (e) => chunks.current.push(e.data);
+      mediaRecorder.current.onstop = () => {
+        const blob = new Blob(chunks.current, { type: 'audio/webm' });
+        const reader = new FileReader();
+        reader.onload = (e) => onAudioChange(e.target.result);
+        reader.readAsDataURL(blob);
+        stream.getTracks().forEach(t => t.stop());
+      };
+      mediaRecorder.current.start();
+      setRecording(true);
+    } catch { alert('No se pudo acceder al micrófono'); }
+  };
+
+  const stopRecording = () => { if (mediaRecorder.current && recording) { mediaRecorder.current.stop(); setRecording(false); } };
+
+  return (
+    <div>
+      <div style={{ fontSize:13, fontWeight:600, marginBottom:10, color:'#555' }}>Multimedia</div>
+      {photos.length > 0 && (
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(80px, 1fr))', gap:8, marginBottom:12 }}>
+          {photos.map((p, i) => (
+            <div key={i} style={{ position:'relative', aspectRatio:'1', borderRadius:12, overflow:'hidden', boxShadow:'0 2px 8px rgba(0,0,0,0.08)' }}>
+              {p.startsWith('data:video') ? <video src={p} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+                : <img src={p} style={{ width:'100%', height:'100%', objectFit:'cover' }} />}
+              <button onClick={() => onPhotosChange(prev => prev.filter((_,j) => j !== i))} style={{
+                position:'absolute', top:4, right:4, background:'rgba(0,0,0,0.5)', color:'#fff',
+                border:'none', borderRadius:6, width:22, height:22, cursor:'pointer', fontSize:12,
+                display:'flex', alignItems:'center', justifyContent:'center'
+              }}>✕</button>
+            </div>
+          ))}
+        </div>
+      )}
+      <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+        <button onClick={() => fileRef.current.click()} style={{
+          flex:'1 1 100px', padding:'14px', border:'2px dashed #e0e0e0', borderRadius:14,
+          background:'#fafafa', cursor:'pointer', color:'#aaa', fontSize:13,
+          display:'flex', alignItems:'center', justifyContent:'center', gap:6, transition:'border-color .2s'
+        }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#bbb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>
+          </svg> Fotos / Vídeos
+        </button>
+        <input ref={fileRef} type="file" accept="image/*,video/*" multiple onChange={addPhotos} style={{ display:'none' }} />
+        <button onClick={recording ? stopRecording : startRecording} style={{
+          flex:'1 1 100px', padding:'14px', border: recording ? '2px solid #ef4444' : '2px dashed #e0e0e0',
+          borderRadius:14, background: recording ? '#fef2f2' : '#fafafa', cursor:'pointer',
+          color: recording ? '#ef4444' : '#aaa', fontSize:13,
+          display:'flex', alignItems:'center', justifyContent:'center', gap:6, transition:'all .2s'
+        }}>
+          {recording ? <><div style={{ width:10, height:10, borderRadius:2, background:'#ef4444', animation:'dPulse 1s infinite' }} /> Grabando...</>
+            : <><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#bbb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/>
+            </svg> Nota de voz</>}
+        </button>
+      </div>
+      {audioBlob && (
+        <div style={{ marginTop:10, display:'flex', alignItems:'center', gap:8 }}>
+          <audio controls src={audioBlob} style={{ flex:1, height:36 }} />
+          <button onClick={() => onAudioChange(null)} style={{ background:'#f5f5f5', border:'none', borderRadius:8, width:28, height:28, cursor:'pointer', fontSize:12, color:'#999', display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Entry Editor Modal ──
+function EntryEditor({ dk, entry, onSave, onClose, streaks, objectives }) {
+  const [rating, setRating] = useState(entry?.rating || 5);
+  const [text, setText] = useState(entry?.text || '');
+  const [bookmark, setBookmark] = useState(entry?.bookmark || false);
+  const [bookmarkColor] = useState(entry?.bookmarkColor || randomColor());
+  const [photos, setPhotos] = useState(entry?.photos || []);
+  const [audio, setAudio] = useState(entry?.audio || null);
+  const [streakStatus, setStreakStatus] = useState(entry?.streaks || {});
+  const [achieved, setAchieved] = useState(entry?.achieved ?? null);
+  const [dayColors, setDayColors] = useState(entry?.dayColors || ['#e5e5e5','#e5e5e5','#e5e5e5']);
+  const [metaphor] = useState(entry?.metaphor || getMetaphor(entry?.rating || 5));
+
+  const { dayName, display } = formatDateFull(dk);
+
+  const handleSave = () => {
+    const finalMetaphor = entry?.metaphor || getMetaphor(rating);
+    onSave(dk, { rating, text, bookmark, bookmarkColor, photos, audio, streaks: streakStatus, achieved, dayColors, metaphor: finalMetaphor, date: dk });
+
+    // Check if any streak just hit 7 days
+    streaks.forEach(s => {
+      if (streakStatus[s.id]) {
+        const tempEntries = { ...window.__diarioEntries, [dk]: { streaks: streakStatus } };
+        const days = getStreakDays(s, tempEntries);
+        if (days === 7 || days === 30 || days === 100) launchStars();
+      }
+    });
+
+    launchConfetti();
+    onClose();
+  };
+
+  return (
+    <Overlay onClose={onClose}>
+      <div style={{ padding:'28px 24px' }}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:24 }}>
+          <div>
+            <div style={{ fontSize:12, color:'#aaa', textTransform:'capitalize', fontWeight:500 }}>{dayName}</div>
+            <div style={{ fontSize:22, fontWeight:700, fontFamily:"'DM Serif Display', serif" }}>{display}</div>
+          </div>
+          <button onClick={onClose} style={{ background:'#f5f5f5', border:'none', borderRadius:12, width:36, height:36, cursor:'pointer', fontSize:16, color:'#999', display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
+        </div>
+
+        <div style={{ marginBottom:28 }}>
+          <div style={{ fontSize:13, fontWeight:600, marginBottom:12, color:'#555' }}>¿Cómo ha ido tu día?</div>
+          <RatingSlider value={rating} onChange={setRating} />
+        </div>
+
+        <div style={{ marginBottom:20 }}>
+          <div style={{ fontSize:13, fontWeight:600, marginBottom:8, color:'#555' }}>Escribe sobre tu día</div>
+          <textarea value={text} onChange={e => setText(e.target.value)} placeholder="Hoy ha sido un día..."
+            style={{ width:'100%', minHeight:110, border:'1.5px solid #eee', borderRadius:16, padding:'14px 16px', fontSize:15, lineHeight:1.6, resize:'vertical', outline:'none', transition:'border-color .2s', color:'#333' }}
+            onFocus={e => e.target.style.borderColor='#ccc'} onBlur={e => e.target.style.borderColor='#eee'} />
+          <div style={{ fontSize:11, color:'#ccc', marginTop:4, fontStyle:'italic' }}>Tip: usa **texto** para resaltar palabras importantes</div>
+        </div>
+
+        <div style={{ marginBottom:20 }}><MediaEditor photos={photos} onPhotosChange={setPhotos} audioBlob={audio} onAudioChange={setAudio} /></div>
+        <div style={{ marginBottom:20 }}><ColorPalettePicker colors={dayColors} onChange={setDayColors} /></div>
+
+        {/* Bookmark */}
+        <div style={{ marginBottom:16 }}>
+          <label style={{
+            display:'flex', alignItems:'center', gap:12, cursor:'pointer', padding:'14px 16px',
+            background: bookmark ? 'oklch(0.97 0.01 200)' : '#fafafa', borderRadius:16,
+            border: bookmark ? '1.5px solid oklch(0.88 0.06 200)' : '1.5px solid #f0f0f0', transition:'all .2s'
+          }}>
+            <div style={{ width:24, height:24, borderRadius:8, border:'2px solid #ccc', background: bookmark ? bookmarkColor : '#fff', transition:'all .2s', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+              {bookmark && <svg width="12" height="12" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5" stroke="#fff" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+            </div>
+            <input type="checkbox" checked={bookmark} onChange={e => setBookmark(e.target.checked)} style={{ display:'none' }} />
+            <div>
+              <div style={{ fontSize:14, fontWeight:600, color:'#333' }}>Añadir marcador</div>
+              <div style={{ fontSize:12, color:'#aaa' }}>Círculo de color en el calendario</div>
+            </div>
+          </label>
+        </div>
+
+        {/* Achieved */}
+        <div style={{ marginBottom:16, padding:'14px 16px', background:'#fafafa', borderRadius:16, border:'1.5px solid #f0f0f0' }}>
+          <div style={{ fontSize:14, fontWeight:600, color:'#333', marginBottom:10 }}>¿Has cumplido con lo propuesto hoy?</div>
+          <div style={{ display:'flex', gap:8 }}>
+            <button onClick={() => setAchieved(true)} style={{
+              flex:1, padding:'10px', borderRadius:12, border:'none', fontSize:13, fontWeight:600, cursor:'pointer',
+              background: achieved === true ? '#22c55e' : '#f0f0f0', color: achieved === true ? '#fff' : '#888', transition:'all .2s'
+            }}>✓ Sí</button>
+            <button onClick={() => setAchieved(false)} style={{
+              flex:1, padding:'10px', borderRadius:12, border:'none', fontSize:13, fontWeight:600, cursor:'pointer',
+              background: achieved === false ? '#ef4444' : '#f0f0f0', color: achieved === false ? '#fff' : '#888', transition:'all .2s'
+            }}>✗ No</button>
+          </div>
+        </div>
+
+        {/* Streaks */}
+        {streaks.length > 0 && (
+          <div style={{ marginBottom:24 }}>
+            <div style={{ fontSize:13, fontWeight:600, marginBottom:10, color:'#555' }}>Rachas activas</div>
+            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+              {streaks.map(s => {
+                const active = streakStatus[s.id] || false;
+                return (
+                  <label key={s.id} style={{
+                    display:'flex', alignItems:'center', gap:12, cursor:'pointer', padding:'12px 16px',
+                    background: active ? 'oklch(0.97 0.02 80)' : '#fafafa', borderRadius:14,
+                    border: active ? '1.5px solid oklch(0.88 0.08 80)' : '1.5px solid #f0f0f0', transition:'all .2s'
+                  }}>
+                    <div style={{ width:22, height:22, borderRadius:6, border:'2px solid #ccc', background: active ? '#f97316' : '#fff', transition:'all .2s', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                      {active && <svg width="12" height="12" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5" stroke="#fff" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                    </div>
+                    <input type="checkbox" checked={active} onChange={e => setStreakStatus({ ...streakStatus, [s.id]: e.target.checked })} style={{ display:'none' }} />
+                    <div style={{ fontSize:14, fontWeight:600, color:'#333' }}>¿Has logrado "{s.name}"?</div>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        <button onClick={handleSave} style={{
+          width:'100%', padding:'16px', background:'#1a1a1a', color:'#fff', border:'none', borderRadius:16,
+          fontSize:15, fontWeight:600, cursor:'pointer', transition:'transform .15s, box-shadow .2s',
+          boxShadow:'0 4px 20px rgba(0,0,0,0.15)'
+        }}
+          onMouseEnter={e => { e.currentTarget.style.transform='translateY(-1px)'; e.currentTarget.style.boxShadow='0 6px 25px rgba(0,0,0,0.2)'; }}
+          onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='0 4px 20px rgba(0,0,0,0.15)'; }}
+        >Guardar ✨</button>
+      </div>
+    </Overlay>
+  );
+}
+
+// ── Render text with **bold** highlights ──
+function RichText({ text }) {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      const inner = part.slice(2, -2);
+      return <span key={i} style={{
+        background:'linear-gradient(to top, #fde68a 40%, transparent 40%)',
+        fontWeight:600, padding:'0 2px'
+      }}>{inner}</span>;
+    }
+    return <span key={i}>{part}</span>;
+  });
+}
+
+// ── Entry Viewer ──
+function EntryViewer({ dk, entry, onClose, onEdit }) {
+  const { dayName, display } = formatDateFull(dk);
+  return (
+    <Overlay onClose={onClose}>
+      <div style={{ padding:'28px 24px' }}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:20 }}>
+          <div>
+            <div style={{ fontSize:12, color:'#aaa', textTransform:'capitalize', fontWeight:500 }}>{dayName}</div>
+            <div style={{ fontSize:22, fontWeight:700, fontFamily:"'DM Serif Display', serif" }}>{display}</div>
+          </div>
+          <div style={{ display:'flex', gap:8 }}>
+            <button onClick={onEdit} style={{ background:'#1a1a1a', border:'none', borderRadius:12, padding:'8px 18px', cursor:'pointer', fontSize:13, fontWeight:600, color:'#fff' }}>Editar</button>
+            <button onClick={onClose} style={{ background:'#f5f5f5', border:'none', borderRadius:12, width:36, height:36, cursor:'pointer', fontSize:16, color:'#999', display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
+          </div>
+        </div>
+
+        {/* Rating card */}
+        <div style={{ background:ratingGradient(entry.rating), borderRadius:18, padding:'20px', marginBottom:16, display:'flex', alignItems:'center', gap:16 }}>
+          <span style={{ fontSize:44 }}>{ratingEmoji(entry.rating)}</span>
+          <div>
+            <div style={{ fontSize:32, fontWeight:700, fontFamily:"'DM Serif Display', serif", color:'rgba(0,0,0,0.7)' }}>{entry.rating}<span style={{ fontSize:16, fontWeight:400 }}>/10</span></div>
+            <div style={{ fontSize:13, color:'rgba(0,0,0,0.4)', fontStyle:'italic' }}>{entry.metaphor}</div>
+          </div>
+        </div>
+
+        {/* Color strip */}
+        {entry.dayColors && !entry.dayColors.every(c => c === '#e5e5e5') && (
+          <div style={{ display:'flex', gap:0, marginBottom:16, borderRadius:12, overflow:'hidden', height:8 }}>
+            {entry.dayColors.map((c,i) => <div key={i} style={{ flex:1, background:c }} />)}
+          </div>
+        )}
+
+        {/* Photos */}
+        {entry.photos?.length > 0 && (
+          <div style={{ display:'grid', gridTemplateColumns: entry.photos.length === 1 ? '1fr' : 'repeat(2,1fr)', gap:8, marginBottom:16 }}>
+            {entry.photos.map((p, i) => (
+              <div key={i} style={{ borderRadius:16, overflow:'hidden', aspectRatio: entry.photos.length === 1 ? '16/9' : '1' }}>
+                {p.startsWith('data:video') ? <video src={p} controls style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+                  : <img src={p} style={{ width:'100%', height:'100%', objectFit:'cover' }} />}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Audio */}
+        {entry.audio && (
+          <div style={{ marginBottom:16, background:'#fafafa', borderRadius:14, padding:'12px 16px', display:'flex', alignItems:'center', gap:10 }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
+            <audio controls src={entry.audio} style={{ flex:1, height:32 }} />
+          </div>
+        )}
+
+        {/* Text with highlights */}
+        {entry.text && (
+          <div style={{ padding:'20px', background:'#fafafa', borderRadius:16, fontSize:15, lineHeight:1.8, color:'#444', whiteSpace:'pre-wrap', marginBottom:16 }}>
+            <RichText text={entry.text} />
+          </div>
+        )}
+
+        <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+          {entry.bookmark && (
+            <div style={{ display:'flex', alignItems:'center', gap:6, fontSize:12, color:'#aaa', background:'#fafafa', padding:'6px 12px', borderRadius:10 }}>
+              <div style={{ width:8, height:8, borderRadius:4, background:entry.bookmarkColor }} /> Marcado
+            </div>
+          )}
+          {entry.achieved !== null && entry.achieved !== undefined && (
+            <div style={{ display:'flex', alignItems:'center', gap:6, fontSize:12, color: entry.achieved ? '#22c55e' : '#ef4444', background:'#fafafa', padding:'6px 12px', borderRadius:10 }}>
+              {entry.achieved ? '✓ Cumplí mis propósitos' : '✗ No cumplí mis propósitos'}
+            </div>
+          )}
+        </div>
+      </div>
+    </Overlay>
+  );
+}
+
+// ── Streak Creator ──
+function StreakCreator({ onClose, onCreate }) {
+  const [name, setName] = useState('');
+  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
+  return (
+    <Overlay onClose={onClose}>
+      <div style={{ padding:'28px 24px' }}>
+        <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:24 }}>
+          <span style={{ fontSize:28 }}>🔥</span>
+          <div style={{ fontSize:22, fontWeight:700, fontFamily:"'DM Serif Display', serif" }}>Nueva racha</div>
+        </div>
+        <div style={{ marginBottom:16 }}>
+          <div style={{ fontSize:13, fontWeight:600, marginBottom:6, color:'#555' }}>Nombre de la racha</div>
+          <input value={name} onChange={e => setName(e.target.value)} placeholder="Ej: Hacer ejercicio"
+            style={{ width:'100%', padding:'14px 16px', border:'1.5px solid #eee', borderRadius:14, fontSize:15, outline:'none' }} />
+        </div>
+        <div style={{ marginBottom:24 }}>
+          <div style={{ fontSize:13, fontWeight:600, marginBottom:6, color:'#555' }}>Fecha de inicio</div>
+          <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
+            style={{ width:'100%', padding:'14px 16px', border:'1.5px solid #eee', borderRadius:14, fontSize:15, outline:'none' }} />
+        </div>
+        <button onClick={() => { if (name.trim()) { onCreate({ id: Date.now().toString(), name: name.trim(), startDate }); onClose(); }}} style={{
+          width:'100%', padding:'16px', background:'#1a1a1a', color:'#fff', border:'none', borderRadius:16,
+          fontSize:15, fontWeight:600, cursor:'pointer', opacity: name.trim() ? 1 : 0.4
+        }}>Crear racha</button>
+      </div>
+    </Overlay>
+  );
+}
+
+// ── 3D Calendar ──
+function CalendarGrid({ year, month, entries, streaks, onDayClick }) {
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const startOffset = (firstDay === 0 ? 6 : firstDay - 1);
+  const today = new Date();
+  const isToday = (d) => today.getFullYear() === year && today.getMonth() === month && today.getDate() === d;
+
+  const cells = [];
+  for (let i = 0; i < startOffset; i++) cells.push(<div key={'e'+i} />);
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dk = dateKey(year, month, d);
+    const entry = entries[dk];
+    const hasEntry = !!entry;
+    const td = isToday(d);
+
+    // 3D effect: higher rating = more elevation
+    const elevation = hasEntry ? -2 + (entry.rating / 10) * 8 : 0; // -2px to +6px
+    const shadowBlur = hasEntry ? 4 + (entry.rating / 10) * 16 : 0;
+    const zScale = hasEntry ? 0.98 + (entry.rating / 10) * 0.06 : 1;
+
+    const dayStreaks = [];
+    if (entry?.streaks) {
+      streaks.forEach(s => { if (entry.streaks[s.id]) dayStreaks.push({ ...s, days: getStreakDays(s, entries) }); });
+    }
+
+    cells.push(
+      <div key={d} onClick={() => onDayClick(dk)} className="cal-cell"
+        style={{
+          position:'relative', aspectRatio:'1', borderRadius:14, cursor:'pointer',
+          display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:1,
+          background: td ? '#1a1a1a' : hasEntry ? ratingGradient(entry.rating) : '#fafafa',
+          color: td ? '#fff' : '#1a1a1a',
+          transform: `translateY(${-elevation}px) scale(${zScale})`,
+          boxShadow: hasEntry ? `0 ${2 + elevation}px ${shadowBlur}px rgba(0,0,0,${0.04 + entry.rating * 0.008})` : 'none',
+          border:'1px solid transparent',
+          transition:'all .3s cubic-bezier(.2,.8,.3,1)',
+        }}
+      >
+        <span style={{ fontSize:13, fontWeight: td ? 700 : hasEntry ? 600 : 400, lineHeight:1 }}>{d}</span>
+        {hasEntry && (
+          <span style={{ fontSize:9, fontWeight:700, color: td ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.4)', lineHeight:1 }}>{entry.rating}</span>
+        )}
+        <div style={{ display:'flex', gap:2, position:'absolute', bottom:2, left:'50%', transform:'translateX(-50%)' }}>
+          {entry?.bookmark && <div style={{ width:5, height:5, borderRadius:3, background:entry.bookmarkColor }} />}
+          {entry?.photos?.length > 0 && (
+            <svg width="7" height="7" viewBox="0 0 24 24" fill={td ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.25)'}><rect x="2" y="4" width="20" height="16" rx="3"/></svg>
+          )}
+          {entry?.audio && (
+            <svg width="7" height="7" viewBox="0 0 24 24" fill={td ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.25)'}><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/></svg>
+          )}
+        </div>
+        {dayStreaks.length > 0 && (
+          <div style={{ position:'absolute', top:1, right:2 }}><FireIcon days={dayStreaks[0].days} size={9} /></div>
+        )}
+        {entry?.dayColors && !entry.dayColors.every(c => c === '#e5e5e5') && (
+          <div style={{ position:'absolute', bottom:0, left:4, right:4, display:'flex', height:3, borderRadius:2, overflow:'hidden' }}>
+            {entry.dayColors.map((c,i) => <div key={i} style={{ flex:1, background:c }} />)}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ perspective:'800px' }}>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:2, marginBottom:6 }}>
+        {DAYS_ES.map(d => (
+          <div key={d} style={{ textAlign:'center', fontSize:11, fontWeight:600, color:'#ccc', padding:'4px 0' }}>{d}</div>
+        ))}
+      </div>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:5, transformStyle:'preserve-3d' }}>{cells}</div>
+    </div>
+  );
+}
+
+// ── "This Day in History" ──
+function ThisDayInHistory({ entries }) {
+  const today = new Date();
+  const m = today.getMonth(), d = today.getDate();
+  const matches = [];
+  Object.entries(entries).forEach(([k, e]) => {
+    const p = parseKey(k);
+    if (p.m === m && p.d === d && p.y !== today.getFullYear()) matches.push({ key: k, entry: e, year: p.y });
+  });
+  if (matches.length === 0) return null;
+  return (
+    <GlassCard style={{ padding:'16px 20px', marginBottom:16, background:'linear-gradient(135deg, #fef3c7, #fde68a20)' }}>
+      <div style={{ fontSize:12, fontWeight:600, color:'#b45309', marginBottom:8, display:'flex', alignItems:'center', gap:6 }}>
+        <span>📅</span> Este día en la historia
+      </div>
+      {matches.map(m => (
+        <div key={m.key} style={{ marginBottom:8 }}>
+          <div style={{ fontSize:13, fontWeight:600, color:'#333' }}>{m.year} — {ratingEmoji(m.entry.rating)} {m.entry.rating}/10</div>
+          {m.entry.text && <div style={{ fontSize:12, color:'#888', marginTop:2 }}>{m.entry.text.slice(0,80)}{m.entry.text.length > 80 ? '...' : ''}</div>}
+        </div>
+      ))}
+    </GlassCard>
+  );
+}
+
+// ── Flashback ──
+function FlashbackButton({ entries, onOpenDay }) {
+  const keys = Object.keys(entries);
+  if (keys.length === 0) return null;
+  return (
+    <button onClick={() => onOpenDay(keys[Math.floor(Math.random() * keys.length)])} style={{
+      background:'linear-gradient(135deg, #c4b5fd, #a78bfa)', border:'none', borderRadius:16,
+      padding:'14px 20px', cursor:'pointer', color:'#fff', fontSize:13, fontWeight:600,
+      display:'flex', alignItems:'center', gap:8, width:'100%', transition:'transform .15s',
+      boxShadow:'0 4px 15px rgba(167,139,250,0.3)'
+    }}
+      onMouseEnter={e => e.currentTarget.style.transform='translateY(-1px)'}
+      onMouseLeave={e => e.currentTarget.style.transform='none'}
+    ><span style={{ fontSize:18 }}>✨</span> Flashback aleatorio</button>
+  );
+}
+
+// ── Calendar Page ──
+function CalendarPage({ entries, streaks, objectives, onDayClick, onOpenDay, onCreateStreak }) {
+  const today = new Date();
+  const [viewYear, setViewYear] = useState(today.getFullYear());
+  const [viewMonth, setViewMonth] = useState(today.getMonth());
+  const [showStreakCreator, setShowStreakCreator] = useState(false);
+
+  const prevMonth = () => { if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y-1); } else setViewMonth(m => m-1); };
+  const nextMonth = () => { if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y+1); } else setViewMonth(m => m+1); };
+
+  const activeStreaks = streaks.map(s => ({ ...s, days: getStreakDays(s, entries) }));
+
+  return (
+    <div>
+      <ThisDayInHistory entries={entries} />
+
+      {activeStreaks.length > 0 && (
+        <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>
+          {activeStreaks.map(s => (
+            <GlassCard key={s.id} style={{ padding:'10px 16px', display:'flex', alignItems:'center', gap:8 }}>
+              <FireIcon days={s.days} size={18} />
+              <div>
+                <div style={{ fontSize:13, fontWeight:600 }}>{s.name}</div>
+                <div style={{ fontSize:11, color:'#aaa' }}>{s.days} días</div>
+              </div>
+            </GlassCard>
+          ))}
+        </div>
+      )}
+
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16, padding:'0 4px' }}>
+        <button onClick={prevMonth} style={{ background:'#f5f5f5', border:'none', borderRadius:12, width:40, height:40, cursor:'pointer', fontSize:18, color:'#888', display:'flex', alignItems:'center', justifyContent:'center', transition:'background .15s' }}
+          onMouseEnter={e => e.currentTarget.style.background='#eee'} onMouseLeave={e => e.currentTarget.style.background='#f5f5f5'}>‹</button>
+        <div style={{ fontSize:18, fontWeight:700, fontFamily:"'DM Serif Display', serif" }}>{MONTHS_ES[viewMonth]} {viewYear}</div>
+        <button onClick={nextMonth} style={{ background:'#f5f5f5', border:'none', borderRadius:12, width:40, height:40, cursor:'pointer', fontSize:18, color:'#888', display:'flex', alignItems:'center', justifyContent:'center', transition:'background .15s' }}
+          onMouseEnter={e => e.currentTarget.style.background='#eee'} onMouseLeave={e => e.currentTarget.style.background='#f5f5f5'}>›</button>
+      </div>
+
+      <CalendarGrid year={viewYear} month={viewMonth} entries={entries} streaks={streaks} onDayClick={onDayClick} />
+
+      <div style={{ marginTop:20, display:'flex', gap:10 }}>
+        <FlashbackButton entries={entries} onOpenDay={onOpenDay} />
+        <button onClick={() => setShowStreakCreator(true)} style={{
+          background:'linear-gradient(135deg, #fed7aa, #fdba74)', border:'none', borderRadius:16,
+          padding:'14px 20px', cursor:'pointer', color:'#9a3412', fontSize:13, fontWeight:600,
+          display:'flex', alignItems:'center', gap:8, whiteSpace:'nowrap', transition:'transform .15s',
+          boxShadow:'0 4px 15px rgba(251,146,60,0.25)'
+        }}
+          onMouseEnter={e => e.currentTarget.style.transform='translateY(-1px)'}
+          onMouseLeave={e => e.currentTarget.style.transform='none'}
+        >🔥 Racha</button>
+      </div>
+
+      {showStreakCreator && <StreakCreator onClose={() => setShowStreakCreator(false)} onCreate={onCreateStreak} />}
+    </div>
+  );
+}
+
+Object.assign(window, {
+  RatingSlider, ColorPalettePicker, MediaEditor, EntryEditor, EntryViewer, RichText,
+  StreakCreator, CalendarGrid, CalendarPage, ThisDayInHistory, FlashbackButton,
+});
+
+</script>
+<script type="text/babel">
+// ── Pages: Summary, Statistics, Letters, Multimedia, Objectives ──
+
+// ═══════════════════════════════════════════
+// SUMMARY PAGE
+// ═══════════════════════════════════════════
+function SummaryPage({ entries }) {
+  const today = new Date();
+
+  const currentMonthEntries = Object.entries(entries).filter(([k]) => {
+    const p = parseKey(k); return p.y === today.getFullYear() && p.m === today.getMonth();
+  });
+  const monthAvg = currentMonthEntries.length > 0
+    ? (currentMonthEntries.reduce((s,[,e]) => s + e.rating, 0) / currentMonthEntries.length).toFixed(1) : '—';
+  const currentYearEntries = Object.entries(entries).filter(([k]) => parseKey(k).y === today.getFullYear());
+  const yearAvg = currentYearEntries.length > 0
+    ? (currentYearEntries.reduce((s,[,e]) => s + e.rating, 0) / currentYearEntries.length).toFixed(1) : '—';
+
+  // Memory from 1 month ago
+  const oneMonthAgo = new Date(today); oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+  const memoryKey = dateKey(oneMonthAgo.getFullYear(), oneMonthAgo.getMonth(), oneMonthAgo.getDate());
+  const memory = entries[memoryKey];
+
+  // Recent trend
+  const recentEntries = Object.entries(entries)
+    .filter(([k]) => { const d = new Date(k); return (today - d) / 86400000 >= 0 && (today - d) / 86400000 <= 30; })
+    .sort(([a],[b]) => a.localeCompare(b));
+  const last7 = recentEntries.slice(-7);
+  const first7 = recentEntries.slice(0, 7);
+  let trendMsg = '', trendIcon = '📊';
+  if (last7.length >= 3 && first7.length >= 3) {
+    const rAvg = last7.reduce((s,[,e]) => s + e.rating, 0) / last7.length;
+    const eAvg = first7.reduce((s,[,e]) => s + e.rating, 0) / first7.length;
+    if (rAvg > eAvg + 0.5) { trendMsg = '¡Estás mejorando! Tu puntuación media ha subido.'; trendIcon = '📈'; }
+    else if (rAvg < eAvg - 0.5) { trendMsg = 'Los últimos días han sido más difíciles. ¡Ánimo!'; trendIcon = '📉'; }
+    else { trendMsg = 'Tu estado de ánimo se mantiene estable.'; trendIcon = '📊'; }
+  }
+
+  const bestDay = currentMonthEntries.length > 0 ? currentMonthEntries.reduce((b, c) => c[1].rating > b[1].rating ? c : b) : null;
+  const worstDay = currentMonthEntries.length > 0 ? currentMonthEntries.reduce((w, c) => c[1].rating < w[1].rating ? c : w) : null;
+
+  // Achievement rate this month
+  const achievedDays = currentMonthEntries.filter(([,e]) => e.achieved === true).length;
+  const totalTracked = currentMonthEntries.filter(([,e]) => e.achieved !== null && e.achieved !== undefined).length;
+  const achieveRate = totalTracked > 0 ? Math.round((achievedDays / totalTracked) * 100) : null;
+
+  // Mini bar chart of last 14 days
+  const last14 = [];
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(today); d.setDate(d.getDate() - i);
+    const k = dateKey(d.getFullYear(), d.getMonth(), d.getDate());
+    last14.push({ key: k, entry: entries[k] || null, day: d.getDate() });
+  }
+
+  return (
+    <div>
+      <SectionHeader title="Resumen" icon="📋" subtitle={`${MONTHS_ES[today.getMonth()]} ${today.getFullYear()}`} />
+
+      {/* Stats */}
+      <div style={{ display:'flex', gap:10, marginBottom:16, flexWrap:'wrap' }}>
+        <StatBubble label="Media mensual" value={monthAvg} color={monthAvg !== '—' ? ratingColor(Math.round(parseFloat(monthAvg))) : '#ccc'} sub={MONTHS_ES[today.getMonth()]} icon="📅" />
+        <StatBubble label="Media anual" value={yearAvg} color={yearAvg !== '—' ? ratingColor(Math.round(parseFloat(yearAvg))) : '#ccc'} sub={String(today.getFullYear())} icon="🗓️" />
+      </div>
+
+      <div style={{ display:'flex', gap:10, marginBottom:16, flexWrap:'wrap' }}>
+        <StatBubble label="Días escritos" value={currentMonthEntries.length} sub={`de ${new Date(today.getFullYear(), today.getMonth()+1, 0).getDate()}`} icon="✍️" />
+        {achieveRate !== null && <StatBubble label="Propósitos cumplidos" value={`${achieveRate}%`} color={achieveRate >= 70 ? '#22c55e' : achieveRate >= 40 ? '#eab308' : '#ef4444'} icon="🎯" />}
+      </div>
+
+      {/* Mini chart */}
+      <GlassCard style={{ padding:'20px', marginBottom:16 }}>
+        <div style={{ fontSize:12, fontWeight:600, color:'#aaa', marginBottom:12, textTransform:'uppercase', letterSpacing:0.5 }}>Últimos 14 días</div>
+        <div style={{ display:'flex', alignItems:'flex-end', gap:4, height:80 }}>
+          {last14.map((d, i) => (
+            <div key={i} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:2 }}>
+              <div style={{
+                width:'100%', borderRadius:6, background: d.entry ? ratingColor(d.entry.rating) : '#f0f0f0',
+                height: d.entry ? `${d.entry.rating * 7}px` : '4px',
+                transition:'height .3s ease', minHeight:4, opacity: d.entry ? 0.8 : 0.3
+              }} />
+              <span style={{ fontSize:8, color:'#ccc' }}>{d.day}</span>
+            </div>
+          ))}
+        </div>
+      </GlassCard>
+
+      {/* Trend */}
+      {trendMsg && (
+        <GlassCard style={{ padding:'18px 20px', marginBottom:16, display:'flex', alignItems:'center', gap:12 }}>
+          <span style={{ fontSize:24 }}>{trendIcon}</span>
+          <div style={{ fontSize:14, color:'#555', lineHeight:1.5 }}>{trendMsg}</div>
+        </GlassCard>
+      )}
+
+      {/* Best / Worst */}
+      {bestDay && worstDay && bestDay[0] !== worstDay[0] && (
+        <div style={{ display:'flex', gap:10, marginBottom:16, flexWrap:'wrap' }}>
+          <GlassCard style={{ flex:'1 1 140px', padding:'16px 20px', background:'linear-gradient(135deg, #d1fae5, #a7f3d020)' }}>
+            <div style={{ fontSize:11, color:'#888', marginBottom:4, fontWeight:600 }}>🌟 Mejor día</div>
+            <div style={{ fontSize:24, fontWeight:700, fontFamily:"'DM Serif Display', serif", color:'#22c55e' }}>{bestDay[1].rating}/10</div>
+            <div style={{ fontSize:12, color:'#aaa', marginTop:2 }}>{formatDateShort(bestDay[0])}</div>
+          </GlassCard>
+          <GlassCard style={{ flex:'1 1 140px', padding:'16px 20px', background:'linear-gradient(135deg, #fecaca, #fca5a520)' }}>
+            <div style={{ fontSize:11, color:'#888', marginBottom:4, fontWeight:600 }}>💪 Más difícil</div>
+            <div style={{ fontSize:24, fontWeight:700, fontFamily:"'DM Serif Display', serif", color:'#ef4444' }}>{worstDay[1].rating}/10</div>
+            <div style={{ fontSize:12, color:'#aaa', marginTop:2 }}>{formatDateShort(worstDay[0])}</div>
+          </GlassCard>
+        </div>
+      )}
+
+      {/* Memory from 1 month ago */}
+      {memory && (
+        <GlassCard style={{ padding:'20px', marginBottom:16, background:'linear-gradient(135deg, #ede9fe, #ddd6fe20)' }}>
+          <div style={{ fontSize:12, fontWeight:600, color:'#7c3aed', marginBottom:10 }}>🕰️ Recuerdo de hace 1 mes</div>
+          <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:8 }}>
+            <span style={{ fontSize:28 }}>{ratingEmoji(memory.rating)}</span>
+            <div>
+              <div style={{ fontSize:18, fontWeight:700, color:'#333' }}>{memory.rating}/10</div>
+              <div style={{ fontSize:12, color:'#aaa' }}>{formatDateShort(memoryKey)}</div>
+            </div>
+          </div>
+          {memory.photos?.[0] && <img src={memory.photos[0]} style={{ width:'100%', maxHeight:120, objectFit:'cover', borderRadius:12, marginBottom:8 }} />}
+          {memory.text && <div style={{ fontSize:13, lineHeight:1.6, color:'#666' }}>{memory.text.slice(0, 200)}{memory.text.length > 200 ? '...' : ''}</div>}
+        </GlassCard>
+      )}
+
+      {Object.keys(entries).length === 0 && <EmptyState icon="📝" text="Empieza a escribir para ver tu resumen" />}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════
+// STATISTICS PAGE
+// ═══════════════════════════════════════════
+function StatisticsPage({ entries }) {
+  const today = new Date();
+  const allEntries = Object.entries(entries);
+
+  if (allEntries.length === 0) return (
+    <div><SectionHeader title="Estadísticas" icon="📊" /><EmptyState icon="📊" text="Necesitas al menos unas entradas para ver estadísticas" /></div>
+  );
+
+  // Happiest day of week
+  const dayTotals = Array(7).fill(0);
+  const dayCounts = Array(7).fill(0);
+  allEntries.forEach(([k, e]) => {
+    const dow = new Date(k).getDay();
+    dayTotals[dow] += e.rating;
+    dayCounts[dow]++;
+  });
+  const dayAvgs = dayTotals.map((t, i) => dayCounts[i] > 0 ? t / dayCounts[i] : 0);
+  const happiestDow = dayAvgs.indexOf(Math.max(...dayAvgs));
+
+  // Monthly ranking
+  const monthlyData = {};
+  allEntries.forEach(([k, e]) => {
+    const p = parseKey(k);
+    const mk = `${p.y}-${p.m}`;
+    if (!monthlyData[mk]) monthlyData[mk] = { total: 0, count: 0, y: p.y, m: p.m };
+    monthlyData[mk].total += e.rating;
+    monthlyData[mk].count++;
+  });
+  const monthlyRanking = Object.values(monthlyData)
+    .map(m => ({ ...m, avg: m.total / m.count }))
+    .sort((a, b) => b.avg - a.avg);
+
+  // Word frequency
+  const wordFreq = {};
+  const stopWords = new Set(['de','la','el','en','un','una','que','y','a','los','las','del','por','con','no','me','mi','se','al','lo','es','le','ha','su','más','muy','ya','pero','para','fue','como','sin','sobre','este','todo','está','son','eso','era','hay','hoy','bien','ser','día','sido','tiene','tengo','hemos','tener','hacer']);
+  allEntries.forEach(([, e]) => {
+    if (!e.text) return;
+    e.text.toLowerCase().replace(/[^a-záéíóúñü\s]/g, '').split(/\s+/).forEach(w => {
+      if (w.length > 2 && !stopWords.has(w)) wordFreq[w] = (wordFreq[w] || 0) + 1;
+    });
+  });
+  const topWords = Object.entries(wordFreq).sort((a, b) => b[1] - a[1]).slice(0, 30);
+  const maxFreq = topWords.length > 0 ? topWords[0][1] : 1;
+
+  // Achievement stats
+  const achievedEntries = allEntries.filter(([, e]) => e.achieved !== null && e.achieved !== undefined);
+  const achievedYes = achievedEntries.filter(([, e]) => e.achieved === true).length;
+  const achievedNo = achievedEntries.filter(([, e]) => e.achieved === false).length;
+
+  // Monthly color mosaic
+  const currentMonthEntries = allEntries.filter(([k]) => {
+    const p = parseKey(k); return p.y === today.getFullYear() && p.m === today.getMonth();
+  }).sort(([a],[b]) => a.localeCompare(b));
+
+  return (
+    <div>
+      <SectionHeader title="Estadísticas" icon="📊" subtitle="Análisis de tu diario" />
+
+      {/* Happiest day of week */}
+      <GlassCard style={{ padding:'20px', marginBottom:16 }}>
+        <div style={{ fontSize:12, fontWeight:600, color:'#aaa', marginBottom:14, textTransform:'uppercase', letterSpacing:0.5 }}>Día más feliz de la semana</div>
+        <div style={{ display:'flex', alignItems:'flex-end', gap:6, height:100 }}>
+          {DAYS_FULL.map((name, i) => {
+            // Sunday=0 in JS
+            const avg = dayAvgs[i];
+            const isHappiest = i === happiestDow && avg > 0;
+            return (
+              <div key={i} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:4 }}>
+                <span style={{ fontSize:10, fontWeight:600, color: isHappiest ? ratingColor(Math.round(avg)) : '#bbb' }}>
+                  {avg > 0 ? avg.toFixed(1) : ''}
+                </span>
+                <div style={{
+                  width:'100%', borderRadius:8, minHeight:6,
+                  height: avg > 0 ? `${avg * 8}px` : '6px',
+                  background: isHappiest ? `linear-gradient(to top, ${ratingColor(Math.round(avg))}, ${ratingColor(Math.round(avg))}90)` : '#f0f0f0',
+                  transition:'height .4s ease'
+                }} />
+                <span style={{ fontSize:9, color:'#bbb', fontWeight:500 }}>{name.slice(0,3)}</span>
+              </div>
+            );
+          })}
+        </div>
+        {dayAvgs[happiestDow] > 0 && (
+          <div style={{ marginTop:12, fontSize:13, color:'#555', textAlign:'center' }}>
+            Los <strong>{DAYS_FULL[happiestDow].toLowerCase()}s</strong> son tu día más feliz con una media de <strong>{dayAvgs[happiestDow].toFixed(1)}</strong>
+          </div>
+        )}
+      </GlassCard>
+
+      {/* Achievement tracking */}
+      {achievedEntries.length > 0 && (
+        <GlassCard style={{ padding:'20px', marginBottom:16 }}>
+          <div style={{ fontSize:12, fontWeight:600, color:'#aaa', marginBottom:14, textTransform:'uppercase', letterSpacing:0.5 }}>Propósitos cumplidos</div>
+          <div style={{ display:'flex', alignItems:'center', gap:20 }}>
+            <div style={{ position:'relative', width:80, height:80 }}>
+              <svg width="80" height="80" viewBox="0 0 80 80">
+                <circle cx="40" cy="40" r="34" fill="none" stroke="#f0f0f0" strokeWidth="6" />
+                <circle cx="40" cy="40" r="34" fill="none" stroke="#22c55e" strokeWidth="6"
+                  strokeDasharray={`${(achievedYes / achievedEntries.length) * 213.6} 213.6`}
+                  strokeLinecap="round" transform="rotate(-90 40 40)" style={{ transition:'stroke-dasharray .5s ease' }} />
+              </svg>
+              <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, fontWeight:700, fontFamily:"'DM Serif Display', serif" }}>
+                {Math.round((achievedYes / achievedEntries.length) * 100)}%
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize:14, color:'#333', marginBottom:4 }}><span style={{ color:'#22c55e', fontWeight:700 }}>{achievedYes}</span> días cumplidos</div>
+              <div style={{ fontSize:14, color:'#333' }}><span style={{ color:'#ef4444', fontWeight:700 }}>{achievedNo}</span> días sin cumplir</div>
+              <div style={{ fontSize:12, color:'#aaa', marginTop:4 }}>{achievedEntries.length} días registrados</div>
+            </div>
+          </div>
+        </GlassCard>
+      )}
+
+      {/* Word Cloud */}
+      {topWords.length > 0 && (
+        <GlassCard style={{ padding:'20px', marginBottom:16 }}>
+          <div style={{ fontSize:12, fontWeight:600, color:'#aaa', marginBottom:14, textTransform:'uppercase', letterSpacing:0.5 }}>Palabras más usadas</div>
+          <div style={{ display:'flex', flexWrap:'wrap', gap:6, justifyContent:'center' }}>
+            {topWords.map(([word, count]) => {
+              const size = 12 + (count / maxFreq) * 18;
+              const opacity = 0.4 + (count / maxFreq) * 0.6;
+              const hue = Math.floor((count / maxFreq) * 280);
+              return (
+                <span key={word} style={{
+                  fontSize:size, fontWeight: count > maxFreq * 0.5 ? 700 : 500,
+                  color:`oklch(0.55 0.12 ${hue})`, opacity, padding:'2px 6px',
+                  transition:'transform .2s', cursor:'default',
+                }}
+                  onMouseEnter={e => e.currentTarget.style.transform='scale(1.15)'}
+                  onMouseLeave={e => e.currentTarget.style.transform='scale(1)'}
+                >{word}</span>
+              );
+            })}
+          </div>
+        </GlassCard>
+      )}
+
+      {/* Monthly Ranking */}
+      {monthlyRanking.length > 1 && (
+        <GlassCard style={{ padding:'20px', marginBottom:16 }}>
+          <div style={{ fontSize:12, fontWeight:600, color:'#aaa', marginBottom:14, textTransform:'uppercase', letterSpacing:0.5 }}>Ranking de meses</div>
+          <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+            {monthlyRanking.slice(0, 6).map((m, i) => (
+              <div key={i} style={{ display:'flex', alignItems:'center', gap:12 }}>
+                <span style={{ fontSize:16, fontWeight:700, color: i === 0 ? '#eab308' : i === 1 ? '#94a3b8' : i === 2 ? '#b45309' : '#ddd', width:24 }}>
+                  {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}.`}
+                </span>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:14, fontWeight:600, color:'#333' }}>{MONTHS_ES[m.m]} {m.y}</div>
+                  <div style={{ height:6, borderRadius:3, background:'#f0f0f0', marginTop:4 }}>
+                    <div style={{ height:6, borderRadius:3, background:ratingColor(Math.round(m.avg)), width:`${m.avg * 10}%`, transition:'width .4s ease' }} />
+                  </div>
+                </div>
+                <span style={{ fontSize:14, fontWeight:700, color:ratingColor(Math.round(m.avg)) }}>{m.avg.toFixed(1)}</span>
+              </div>
+            ))}
+          </div>
+        </GlassCard>
+      )}
+
+      {/* Color Mosaic */}
+      {currentMonthEntries.some(([,e]) => e.dayColors && !e.dayColors.every(c => c === '#e5e5e5')) && (
+        <GlassCard style={{ padding:'20px', marginBottom:16 }}>
+          <div style={{ fontSize:12, fontWeight:600, color:'#aaa', marginBottom:14, textTransform:'uppercase', letterSpacing:0.5 }}>Mosaico de colores del mes</div>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(30px, 1fr))', gap:4 }}>
+            {currentMonthEntries.map(([k, e]) => {
+              if (!e.dayColors || e.dayColors.every(c => c === '#e5e5e5')) return null;
+              return (
+                <div key={k} style={{ aspectRatio:'1', borderRadius:8, overflow:'hidden', display:'flex' }}>
+                  {e.dayColors.map((c, i) => <div key={i} style={{ flex:1, background:c }} />)}
+                </div>
+              );
+            })}
+          </div>
+        </GlassCard>
+      )}
+    </div>
+  );
+}
+
+
+// ═══════════════════════════════════════════
+// LETTERS PAGE
+// ═══════════════════════════════════════════
+function LettersPage({ letters, onCreateLetter }) {
+  const [showCreator, setShowCreator] = React.useState(false);
+  const [title, setTitle] = React.useState('');
+  const [content, setContent] = React.useState('');
+  const [unlockDate, setUnlockDate] = React.useState('');
+
+  const handleCreate = () => {
+    if (!title.trim() || !content.trim() || !unlockDate) return;
+    onCreateLetter({ id: Date.now().toString(), title: title.trim(), content: content.trim(), unlockDate, createdAt: new Date().toISOString().split('T')[0] });
+    setTitle(''); setContent(''); setUnlockDate(''); setShowCreator(false);
+  };
+
+  const [openLetter, setOpenLetter] = React.useState(null);
+
+  return (
+    <div>
+      <SectionHeader title="Cartas para mi yo del futuro" icon="💌" subtitle="Escríbete al futuro" action={() => setShowCreator(true)} actionLabel="+ Nueva carta" />
+
+      {letters.length === 0 && <EmptyState icon="✉️" text="Aún no has escrito ninguna carta. ¡Escríbete al futuro!" />}
+
+      <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+        {letters.map(letter => {
+          const days = daysUntil(letter.unlockDate);
+          const isUnlocked = days <= 0;
+          return (
+            <GlassCard key={letter.id} hover onClick={() => isUnlocked ? setOpenLetter(letter) : null}
+              style={{
+                padding:'20px', position:'relative', overflow:'hidden',
+                background: isUnlocked ? 'linear-gradient(135deg, #fef3c7, #fde68a30)' : '#fafafa',
+                cursor: isUnlocked ? 'pointer' : 'default',
+              }}>
+              {!isUnlocked && (
+                <div style={{ position:'absolute', inset:0, backdropFilter:'blur(0px)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', zIndex:2, background:'rgba(250,250,250,0.5)' }}>
+                  <span style={{ fontSize:36, marginBottom:8 }}>🔒</span>
+                  <span style={{ fontSize:13, fontWeight:600, color:'#888' }}>Faltan {days} días</span>
+                  <span style={{ fontSize:11, color:'#bbb', marginTop:2 }}>{letter.unlockDate}</span>
+                </div>
+              )}
+              <div style={{ opacity: isUnlocked ? 1 : 0.3 }}>
+                <div style={{ fontSize:16, fontWeight:700, fontFamily:"'DM Serif Display', serif", marginBottom:4 }}>{letter.title}</div>
+                {isUnlocked && <div style={{ fontSize:13, color:'#666', lineHeight:1.6 }}>{letter.content.slice(0, 100)}...</div>}
+                <div style={{ fontSize:11, color:'#aaa', marginTop:8 }}>Escrita el {letter.createdAt}</div>
+              </div>
+            </GlassCard>
+          );
+        })}
+      </div>
+
+      {/* Creator */}
+      {showCreator && (
+        <Overlay onClose={() => setShowCreator(false)}>
+          <div style={{ padding:'28px 24px' }}>
+            <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:24 }}>
+              <span style={{ fontSize:28 }}>✉️</span>
+              <div style={{ fontSize:22, fontWeight:700, fontFamily:"'DM Serif Display', serif" }}>Nueva carta</div>
+            </div>
+            <div style={{ marginBottom:16 }}>
+              <div style={{ fontSize:13, fontWeight:600, marginBottom:6, color:'#555' }}>Título</div>
+              <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Para mi yo de..."
+                style={{ width:'100%', padding:'14px 16px', border:'1.5px solid #eee', borderRadius:14, fontSize:15, outline:'none' }} />
+            </div>
+            <div style={{ marginBottom:16 }}>
+              <div style={{ fontSize:13, fontWeight:600, marginBottom:6, color:'#555' }}>Contenido</div>
+              <textarea value={content} onChange={e => setContent(e.target.value)} placeholder="Querido yo del futuro..."
+                style={{ width:'100%', minHeight:140, border:'1.5px solid #eee', borderRadius:14, padding:'14px 16px', fontSize:15, lineHeight:1.6, resize:'vertical', outline:'none' }} />
+            </div>
+            <div style={{ marginBottom:24 }}>
+              <div style={{ fontSize:13, fontWeight:600, marginBottom:6, color:'#555' }}>Fecha de desbloqueo</div>
+              <input type="date" value={unlockDate} onChange={e => setUnlockDate(e.target.value)}
+                min={new Date(Date.now() + 86400000).toISOString().split('T')[0]}
+                style={{ width:'100%', padding:'14px 16px', border:'1.5px solid #eee', borderRadius:14, fontSize:15, outline:'none' }} />
+            </div>
+            <button onClick={handleCreate} style={{
+              width:'100%', padding:'16px', background:'#1a1a1a', color:'#fff', border:'none', borderRadius:16,
+              fontSize:15, fontWeight:600, cursor:'pointer', opacity: (title && content && unlockDate) ? 1 : 0.4
+            }}>Crear carta</button>
+          </div>
+        </Overlay>
+      )}
+
+      {/* Open letter reader */}
+      {openLetter && (
+        <Overlay onClose={() => setOpenLetter(null)}>
+          <div style={{ padding:'28px 24px' }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:20 }}>
+              <div>
+                <div style={{ fontSize:12, color:'#aaa', marginBottom:4 }}>Escrita el {openLetter.createdAt}</div>
+                <div style={{ fontSize:22, fontWeight:700, fontFamily:"'DM Serif Display', serif" }}>{openLetter.title}</div>
+              </div>
+              <button onClick={() => setOpenLetter(null)} style={{ background:'#f5f5f5', border:'none', borderRadius:12, width:36, height:36, cursor:'pointer', fontSize:16, color:'#999', display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
+            </div>
+            <div style={{ fontSize:15, lineHeight:1.8, color:'#444', whiteSpace:'pre-wrap', background:'#fafafa', borderRadius:16, padding:'20px' }}>
+              {openLetter.content}
+            </div>
+          </div>
+        </Overlay>
+      )}
+    </div>
+  );
+}
+
+
+// ═══════════════════════════════════════════
+// MULTIMEDIA PAGE
+// ═══════════════════════════════════════════
+function MultimediaPage({ entries }) {
+  const mediaItems = [];
+  Object.entries(entries).forEach(([k, e]) => {
+    if (e.photos?.length > 0) {
+      e.photos.forEach((p, i) => mediaItems.push({ key: k, src: p, idx: i, rating: e.rating }));
+    }
+  });
+  mediaItems.sort((a, b) => b.key.localeCompare(a.key));
+
+  const [selected, setSelected] = React.useState(null);
+
+  return (
+    <div>
+      <SectionHeader title="Multimedia" icon="📸" subtitle={`${mediaItems.length} archivos`} />
+
+      {mediaItems.length === 0 && <EmptyState icon="📸" text="Añade fotos y vídeos a tus entradas para verlos aquí" />}
+
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(140px, 1fr))', gap:8 }}>
+        {mediaItems.map((item, i) => (
+          <div key={i} onClick={() => setSelected(item)}
+            style={{ position:'relative', aspectRatio:'1', borderRadius:16, overflow:'hidden', cursor:'pointer', transition:'transform .2s' }}
+            onMouseEnter={e => e.currentTarget.style.transform='scale(1.02)'}
+            onMouseLeave={e => e.currentTarget.style.transform='scale(1)'}
+          >
+            {item.src.startsWith('data:video') ? (
+              <video src={item.src} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+            ) : (
+              <img src={item.src} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+            )}
+            <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'8px 10px', background:'linear-gradient(transparent, rgba(0,0,0,0.6))', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+              <span style={{ fontSize:11, color:'#fff', fontWeight:600 }}>{formatDateShort(item.key)}</span>
+              <span style={{ fontSize:11, color:'#fff' }}>{ratingEmoji(item.rating)}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Lightbox */}
+      {selected && (
+        <div onClick={() => setSelected(null)} style={{
+          position:'fixed', inset:0, background:'rgba(0,0,0,0.9)', zIndex:300,
+          display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer',
+          animation:'dFadeIn .2s ease'
+        }}>
+          <div style={{ maxWidth:'90vw', maxHeight:'85vh' }}>
+            {selected.src.startsWith('data:video') ? (
+              <video src={selected.src} controls autoPlay style={{ maxWidth:'90vw', maxHeight:'85vh', borderRadius:16 }} />
+            ) : (
+              <img src={selected.src} style={{ maxWidth:'90vw', maxHeight:'85vh', borderRadius:16 }} />
+            )}
+            <div style={{ textAlign:'center', marginTop:12, color:'#fff', fontSize:14 }}>{formatDateShort(selected.key)}</div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+// ═══════════════════════════════════════════
+// OBJECTIVES PAGE
+// ═══════════════════════════════════════════
+function ObjectivesPage({ objectives, onCreateObjective, onToggleComplete }) {
+  const [showCreator, setShowCreator] = React.useState(false);
+  const [name, setName] = React.useState('');
+  const [difficulty, setDifficulty] = React.useState('medio');
+  const [deadline, setDeadline] = React.useState('');
+
+  const diffColors = { facil:'#22c55e', medio:'#eab308', dificil:'#ef4444' };
+  const diffLabels = { facil:'Fácil', medio:'Medio', dificil:'Difícil' };
+
+  const handleCreate = () => {
+    if (!name.trim() || !deadline) return;
+    onCreateObjective({ id: Date.now().toString(), name: name.trim(), difficulty, deadline, completed: false, createdAt: new Date().toISOString().split('T')[0] });
+    setName(''); setDifficulty('medio'); setDeadline(''); setShowCreator(false);
+  };
+
+  const active = objectives.filter(o => !o.completed);
+  const completed = objectives.filter(o => o.completed);
+
+  return (
+    <div>
+      <SectionHeader title="Objetivos" icon="🎯" subtitle={`${active.length} activos`} action={() => setShowCreator(true)} actionLabel="+ Nuevo objetivo" />
+
+      {objectives.length === 0 && <EmptyState icon="🎯" text="Crea tu primer objetivo y trabaja para conseguirlo" />}
+
+      {/* Active */}
+      <div style={{ display:'flex', flexDirection:'column', gap:10, marginBottom:24 }}>
+        {active.map(obj => {
+          const days = daysUntil(obj.deadline);
+          const isOverdue = days < 0;
+          return (
+            <GlassCard key={obj.id} style={{ padding:'18px 20px', borderLeft:`4px solid ${diffColors[obj.difficulty]}` }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:15, fontWeight:700, color:'#333', marginBottom:4 }}>{obj.name}</div>
+                  <div style={{ display:'flex', gap:8, alignItems:'center', flexWrap:'wrap' }}>
+                    <span style={{ fontSize:11, fontWeight:600, color:diffColors[obj.difficulty], background:`${diffColors[obj.difficulty]}15`, padding:'3px 10px', borderRadius:8 }}>{diffLabels[obj.difficulty]}</span>
+                    <span style={{ fontSize:11, color: isOverdue ? '#ef4444' : '#aaa' }}>
+                      {isOverdue ? `Venció hace ${Math.abs(days)} días` : `Faltan ${days} días`}
+                    </span>
+                  </div>
+                </div>
+                <button onClick={() => onToggleComplete(obj.id)} style={{
+                  width:32, height:32, borderRadius:10, border:'2px solid #ddd', background:'#fff',
+                  cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', transition:'all .2s', flexShrink:0
+                }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor='#22c55e'; e.currentTarget.style.background='#f0fdf4'; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor='#ddd'; e.currentTarget.style.background='#fff'; }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5" stroke="#ccc" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                </button>
+              </div>
+            </GlassCard>
+          );
+        })}
+      </div>
+
+      {/* Completed */}
+      {completed.length > 0 && (
+        <>
+          <div style={{ fontSize:13, fontWeight:600, color:'#aaa', marginBottom:10 }}>Completados ({completed.length})</div>
+          <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+            {completed.map(obj => (
+              <div key={obj.id} style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 16px', background:'#fafafa', borderRadius:14, opacity:0.6 }}>
+                <div style={{ width:24, height:24, borderRadius:8, background:'#22c55e', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5" stroke="#fff" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                </div>
+                <span style={{ fontSize:14, color:'#888', textDecoration:'line-through' }}>{obj.name}</span>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {/* Creator */}
+      {showCreator && (
+        <Overlay onClose={() => setShowCreator(false)}>
+          <div style={{ padding:'28px 24px' }}>
+            <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:24 }}>
+              <span style={{ fontSize:28 }}>🎯</span>
+              <div style={{ fontSize:22, fontWeight:700, fontFamily:"'DM Serif Display', serif" }}>Nuevo objetivo</div>
+            </div>
+            <div style={{ marginBottom:16 }}>
+              <div style={{ fontSize:13, fontWeight:600, marginBottom:6, color:'#555' }}>Nombre</div>
+              <input value={name} onChange={e => setName(e.target.value)} placeholder="Ej: Leer 10 libros"
+                style={{ width:'100%', padding:'14px 16px', border:'1.5px solid #eee', borderRadius:14, fontSize:15, outline:'none' }} />
+            </div>
+            <div style={{ marginBottom:16 }}>
+              <div style={{ fontSize:13, fontWeight:600, marginBottom:8, color:'#555' }}>Dificultad</div>
+              <div style={{ display:'flex', gap:8 }}>
+                {['facil','medio','dificil'].map(d => (
+                  <button key={d} onClick={() => setDifficulty(d)} style={{
+                    flex:1, padding:'12px', borderRadius:14, border:'none', fontSize:14, fontWeight:600,
+                    background: difficulty === d ? diffColors[d] : '#f5f5f5',
+                    color: difficulty === d ? '#fff' : '#888', cursor:'pointer', transition:'all .2s'
+                  }}>{diffLabels[d]}</button>
+                ))}
+              </div>
+            </div>
+            <div style={{ marginBottom:24 }}>
+              <div style={{ fontSize:13, fontWeight:600, marginBottom:6, color:'#555' }}>Fecha límite</div>
+              <input type="date" value={deadline} onChange={e => setDeadline(e.target.value)}
+                style={{ width:'100%', padding:'14px 16px', border:'1.5px solid #eee', borderRadius:14, fontSize:15, outline:'none' }} />
+            </div>
+            <button onClick={handleCreate} style={{
+              width:'100%', padding:'16px', background:'#1a1a1a', color:'#fff', border:'none', borderRadius:16,
+              fontSize:15, fontWeight:600, cursor:'pointer', opacity: (name && deadline) ? 1 : 0.4
+            }}>Crear objetivo</button>
+          </div>
+        </Overlay>
+      )}
+    </div>
+  );
+}
+
+Object.assign(window, {
+  SummaryPage, StatisticsPage, LettersPage, MultimediaPage, ObjectivesPage,
+});
+
+</script>
+
+<script type="text/babel">
+const { useState, useEffect, useMemo } = React;
+
+const TABS = [
+  { id:'calendar', icon:'📅', label:'Calendario' },
+  { id:'summary', icon:'📋', label:'Resumen' },
+  { id:'stats', icon:'📊', label:'Estadísticas' },
+  { id:'letters', icon:'💌', label:'Cartas' },
+  { id:'media', icon:'📸', label:'Multimedia' },
+  { id:'objectives', icon:'🎯', label:'Objetivos' },
+];
+
+function App() {
+  const [tab, setTab] = useState('calendar');
+  const [entries, setEntries] = useState(() => loadData(STORAGE_KEY, {}));
+  const [streaks, setStreaks] = useState(() => loadData(STREAKS_KEY, []));
+  const [letters, setLetters] = useState(() => loadData(LETTERS_KEY, []));
+  const [objectives, setObjectives] = useState(() => loadData(OBJECTIVES_KEY, []));
+
+  // Modals
+  const [editingDay, setEditingDay] = useState(null);
+  const [viewingDay, setViewingDay] = useState(null);
+
+  useEffect(() => { saveData(STORAGE_KEY, entries); }, [entries]);
+  useEffect(() => { saveData(STREAKS_KEY, streaks); }, [streaks]);
+  useEffect(() => { saveData(LETTERS_KEY, letters); }, [letters]);
+  useEffect(() => { saveData(OBJECTIVES_KEY, objectives); }, [objectives]);
+
+  const handleDayClick = (dk) => {
+    if (entries[dk]) setViewingDay(dk);
+    else setEditingDay(dk);
+  };
+
+  const handleOpenDay = (dk) => {
+    if (entries[dk]) setViewingDay(dk);
+  };
+
+  const handleSave = (dk, data) => {
+    setEntries(prev => ({ ...prev, [dk]: data }));
+  };
+
+  const today = new Date();
+
+  // Greeting
+  const hour = today.getHours();
+  const greeting = hour < 12 ? 'Buenos días' : hour < 20 ? 'Buenas tardes' : 'Buenas noches';
+
+  // Quick stats for header
+  const tk = todayKey();
+  const todayEntry = entries[tk];
+  const totalEntries = Object.keys(entries).length;
+
+  return (
+    <div style={{ maxWidth:520, margin:'0 auto', paddingBottom:90, minHeight:'100dvh' }}>
+
+      {/* ── Header ── */}
+      <div style={{ padding:'20px 20px 0', position:'sticky', top:0, zIndex:50, background:'#fff' }}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:4 }}>
+          <div>
+            <div style={{ fontSize:13, color:'#bbb', fontWeight:500 }}>{greeting}</div>
+            <h1 style={{ fontSize:28, fontWeight:700, fontFamily:"'DM Serif Display', serif", margin:'2px 0 0', letterSpacing:-0.5 }}>
+              Diario
+            </h1>
+          </div>
+          <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+            {todayEntry && (
+              <div style={{
+                padding:'6px 12px', borderRadius:10, background:ratingGradient(todayEntry.rating),
+                fontSize:13, fontWeight:700, display:'flex', alignItems:'center', gap:4
+              }}>
+                {ratingEmoji(todayEntry.rating)} {todayEntry.rating}
+              </div>
+            )}
+            <div style={{
+              width:40, height:40, borderRadius:14, background:'linear-gradient(135deg, #1a1a1a, #333)',
+              display:'flex', alignItems:'center', justifyContent:'center', color:'#fff',
+              fontSize:14, fontWeight:700, fontFamily:"'DM Serif Display', serif"
+            }}>{today.getDate()}</div>
+          </div>
+        </div>
+
+        {/* Quick info bar */}
+        <div style={{ display:'flex', gap:12, padding:'12px 0', borderBottom:'1px solid #f5f5f5', marginBottom:0 }}>
+          <div style={{ fontSize:12, color:'#bbb' }}>
+            <span style={{ fontWeight:700, color:'#1a1a1a', fontSize:14 }}>{totalEntries}</span> entradas
+          </div>
+          {streaks.length > 0 && (
+            <div style={{ fontSize:12, color:'#bbb', display:'flex', alignItems:'center', gap:4 }}>
+              <span style={{ fontSize:14 }}>🔥</span>
+              <span style={{ fontWeight:700, color:'#1a1a1a', fontSize:14 }}>{streaks.length}</span> rachas
+            </div>
+          )}
+          {objectives.filter(o => !o.completed).length > 0 && (
+            <div style={{ fontSize:12, color:'#bbb', display:'flex', alignItems:'center', gap:4 }}>
+              <span style={{ fontSize:14 }}>🎯</span>
+              <span style={{ fontWeight:700, color:'#1a1a1a', fontSize:14 }}>{objectives.filter(o => !o.completed).length}</span> objetivos
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Page Content ── */}
+      <div className="page-enter" key={tab} style={{ padding:'20px' }}>
+        {tab === 'calendar' && (
+          <CalendarPage entries={entries} streaks={streaks} objectives={objectives}
+            onDayClick={handleDayClick} onOpenDay={handleOpenDay}
+            onCreateStreak={s => setStreaks(prev => [...prev, s])} />
+        )}
+        {tab === 'summary' && <SummaryPage entries={entries} />}
+        {tab === 'stats' && <StatisticsPage entries={entries} />}
+        {tab === 'letters' && (
+          <LettersPage letters={letters}
+            onCreateLetter={l => setLetters(prev => [...prev, l])} />
+        )}
+        {tab === 'media' && <MultimediaPage entries={entries} />}
+        {tab === 'objectives' && (
+          <ObjectivesPage objectives={objectives}
+            onCreateObjective={o => setObjectives(prev => [...prev, o])}
+            onToggleComplete={id => setObjectives(prev => prev.map(o => o.id === id ? { ...o, completed: true } : o))} />
+        )}
+      </div>
+
+      {/* ── Bottom Navigation ── */}
+      <nav style={{
+        position:'fixed', bottom:0, left:0, right:0, zIndex:100,
+        background:'rgba(255,255,255,0.92)', backdropFilter:'blur(20px)', WebkitBackdropFilter:'blur(20px)',
+        borderTop:'1px solid #f0f0f0', padding:'4px 0 env(safe-area-inset-bottom, 8px)',
+        display:'flex', justifyContent:'center'
+      }}>
+        <div style={{ maxWidth:520, width:'100%', display:'flex' }}>
+          {TABS.map(t => (
+            <button key={t.id} onClick={() => setTab(t.id)}
+              className={`nav-tab ${tab === t.id ? 'active' : ''}`}>
+              <span style={{ fontSize:20 }}>{t.icon}</span>
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </nav>
+
+      {/* ── Modals ── */}
+      {editingDay && (
+        <EntryEditor dk={editingDay} entry={entries[editingDay]} onSave={handleSave}
+          onClose={() => setEditingDay(null)} streaks={streaks} objectives={objectives} />
+      )}
+      {viewingDay && (
+        <EntryViewer dk={viewingDay} entry={entries[viewingDay]}
+          onClose={() => setViewingDay(null)}
+          onEdit={() => { setEditingDay(viewingDay); setViewingDay(null); }} />
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

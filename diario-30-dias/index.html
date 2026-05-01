@@ -315,6 +315,63 @@
       color: var(--c-primary);
       border-width: 2px;
     }
+    .day-cell.done { cursor: pointer; transition: transform .15s var(--ease), box-shadow .15s var(--ease); }
+    .day-cell.done:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(15,23,42,0.55);
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px; z-index: 50;
+      animation: fadeIn .2s var(--ease);
+    }
+    .modal-backdrop.hidden { display: none; }
+    @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+    .modal {
+      background: white;
+      border-radius: var(--radius-xl);
+      padding: 32px;
+      max-width: 520px; width: 100%;
+      max-height: 85vh; overflow-y: auto;
+      box-shadow: var(--shadow-lg);
+      position: relative;
+    }
+    .modal-close {
+      position: absolute; top: 16px; right: 16px;
+      background: var(--c-bg-alt);
+      border: none; border-radius: 50%;
+      width: 32px; height: 32px;
+      cursor: pointer; font-size: 18px;
+      color: var(--c-text-soft);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .modal-close:hover { background: var(--c-border); color: var(--c-text); }
+    .modal h2 { margin-bottom: 4px; }
+    .modal .modal-date { color: var(--c-text-soft); font-size: 14px; margin-bottom: 20px; }
+    .modal .detail-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--c-border);
+    }
+    .modal .detail-row:last-child { border-bottom: none; }
+    .modal .detail-row .k { color: var(--c-text-soft); font-size: 14px; font-weight: 500; }
+    .modal .detail-row .v { font-weight: 700; }
+    .modal .detail-block {
+      margin-top: 16px;
+      padding: 14px 16px;
+      background: var(--c-bg-alt);
+      border-left: 3px solid var(--c-primary);
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      white-space: pre-wrap;
+    }
+    .modal .detail-block .k {
+      display: block;
+      color: var(--c-text-soft); font-size: 12px;
+      text-transform: uppercase; letter-spacing: 0.05em;
+      font-weight: 600; margin-bottom: 6px;
+    }
 
     .actions {
       display: flex;
@@ -509,6 +566,16 @@
       <div class="notice hidden" id="alreadySavedNotice">Ya guardaste este día. Vuelve mañana para el siguiente.</div>
     </section>
 
+    <!-- ============ DAY DETAIL MODAL ============ -->
+    <div id="dayModal" class="modal-backdrop hidden">
+      <div class="modal">
+        <button class="modal-close" id="modalCloseBtn" aria-label="Cerrar">×</button>
+        <h2 id="modalTitle">Día —</h2>
+        <p class="modal-date" id="modalDate"></p>
+        <div id="modalBody"></div>
+      </div>
+    </div>
+
     <!-- ============ RECAP ============ -->
     <section id="view-recap" class="card hidden">
       <h1>30 días completados <span class="grad">✦</span></h1>
@@ -660,12 +727,54 @@
       for (let i = 1; i <= 30; i++) {
         const cell = document.createElement('div');
         cell.className = 'day-cell';
-        if (i <= state.days.length) cell.classList.add('done');
+        const isDone = i <= state.days.length;
+        if (isDone) {
+          cell.classList.add('done');
+          cell.title = 'Ver lo que escribiste el día ' + i;
+          cell.addEventListener('click', () => openDayDetail(i));
+        }
         if (i === currentDay) cell.classList.add('current');
         cell.textContent = i;
         grid.appendChild(cell);
       }
     }
+
+    /* ---- Day detail modal ---- */
+    function openDayDetail(dayNum) {
+      const entry = state.days[dayNum - 1];
+      if (!entry) return;
+      const dateStr = entry.date
+        ? new Date(entry.date).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+        : '';
+      document.getElementById('modalTitle').textContent = 'Día ' + entry.day;
+      document.getElementById('modalDate').textContent = dateStr;
+
+      const rows = [];
+      rows.push(`<div class="detail-row"><span class="k">Puntuación del día</span><span class="v">${entry.score} / 10</span></div>`);
+      rows.push(`<div class="detail-row"><span class="k">¿Has aprendido algo?</span><span class="v">${entry.learned ? 'Sí' : 'No'}</span></div>`);
+      rows.push(`<div class="detail-row"><span class="k">¿Pedidos?</span><span class="v">${entry.orders ? 'Sí' : 'No'}</span></div>`);
+      if (entry.orders) {
+        rows.push(`<div class="detail-row"><span class="k">Nº de pedidos</span><span class="v">${entry.orderCount || 0}</span></div>`);
+        rows.push(`<div class="detail-row"><span class="k">Facturación</span><span class="v">$${(entry.orderRevenue || 0).toFixed(2)}</span></div>`);
+      }
+      let html = rows.join('');
+      if (entry.learned && entry.learnedText) {
+        html += `<div class="detail-block"><span class="k">Lo que aprendiste</span>${escapeHtml(entry.learnedText)}</div>`;
+      }
+      document.getElementById('modalBody').innerHTML = html;
+      document.getElementById('dayModal').classList.remove('hidden');
+    }
+
+    function closeDayDetail() {
+      document.getElementById('dayModal').classList.add('hidden');
+    }
+    document.getElementById('modalCloseBtn').addEventListener('click', closeDayDetail);
+    document.getElementById('dayModal').addEventListener('click', (e) => {
+      if (e.target.id === 'dayModal') closeDayDetail();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeDayDetail();
+    });
 
     document.getElementById('saveDayBtn').addEventListener('click', () => {
       const learnedActive = document.querySelector('[data-toggle="learned"] .active').dataset.val === 'si';

@@ -15,7 +15,17 @@
   <title>Zonga Elements — Suite para Dropshipping</title>
 </head>
 <body>
-
+<div id="authOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; display:flex; align-items:center; justify-content:center;">
+  <div style="background:#111; padding:2rem; border-radius:16px; width:320px; display:flex; flex-direction:column; gap:1rem;">
+    <h2 style="color:white; margin:0; font-family:Inter,sans-serif;">Acceder</h2>
+    <input id="emailInput" type="email" placeholder="Email" style="padding:10px; border-radius:8px; border:1px solid #333; background:#1a1a1a; color:white;" />
+    <input id="passInput" type="password" placeholder="Contraseña" style="padding:10px; border-radius:8px; border:1px solid #333; background:#1a1a1a; color:white;" />
+    <button id="btnLogin" style="padding:10px; background:#2563EB; color:white; border:none; border-radius:8px; cursor:pointer;">Iniciar sesión</button>
+    <button id="btnRegister" style="padding:10px; background:#374151; color:white; border:none; border-radius:8px; cursor:pointer;">Registrarse</button>
+    <button id="btnGoogle" style="padding:10px; background:white; color:#111; border:none; border-radius:8px; cursor:pointer; font-weight:600;">Entrar con Google</button>
+    <p id="authError" style="color:#f87171; font-size:0.85rem; margin:0;"></p>
+  </div>
+</div>
   <!-- ======= NAVBAR ======= -->
   <header class="navbar" id="navbar">
     <div class="container nav-inner">
@@ -199,5 +209,6 @@
 
   <script src="script.js"></script>
   <script src="/zonga-memory.js"></script>
-</body>
-</html>
+<script type="module" src="firebase.js"></script>
+<script type="module" src="auth.js"></script>
+<script type="module" src="script.js"></script>

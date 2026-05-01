@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diario</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-family: 'DM Sans', sans-serif; background: #fff; color: #1a1a1a; -webkit-font-smoothing: antialiased; }
+  body { min-height: 100dvh; }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-thumb { background: #ddd; border-radius: 3px; }
+  input, textarea, button { font-family: inherit; }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+
+const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+// ── Helpers ──
+const STORAGE_KEY = 'diario_entries';
+const STREAKS_KEY = 'diario_streaks';
+
+function loadEntries() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch { return {}; }
+}
+function saveEntries(e) { localStorage.setItem(STORAGE_KEY, JSON.stringify(e)); }
+function loadStreaks() {
+  try { return JSON.parse(localStorage.getItem(STREAKS_KEY)) || []; } catch { return []; }
+}
+function saveStreaksData(s) { localStorage.setItem(STREAKS_KEY, JSON.stringify(s)); }
+
+function dateKey(y, m, d) { return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
+function parseKey(k) { const [y,m,d] = k.split('-').map(Number); return { y, m: m-1, d }; }
+
+const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const DAYS_ES = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+
+function randomColor() {
+  const hues = [15, 45, 120, 200, 260, 320, 340];
+  const h = hues[Math.floor(Math.random() * hues.length)];
+  return `oklch(0.7 0.15 ${h})`;
+}
+
+function getFireColor(days) {
+  if (days >= 100) return '#22c55e';
+  if (days >= 60) return '#3b82f6';
+  if (days >= 40) return '#8b5cf6';
+  if (days >= 20) return '#ef4444';
+  return '#f97316';
+}
+function getFireScale(days) {
+  if (days >= 100) return 1.3;
+  if (days >= 60) return 1.2;
+  if (days >= 40) return 1.1;
+  if (days >= 20) return 1.05;
+  return 1;
+}
+
+function getStreakDays(streak, entries) {
+  const start = new Date(streak.startDate);
+  const today = new Date(); today.setHours(0,0,0,0);
+  let count = 0;
+  let d = new Date(start);
+  while (d <= today) {
+    const k = dateKey(d.getFullYear(), d.getMonth(), d.getDate());
+    const entry = entries[k];
+    if (entry && entry.streaks && entry.streaks[streak.id]) {
+      count++;
+    } else if (d < today) {
+      // Don't break streak for today (not yet logged)
+    }
+    d.setDate(d.getDate() + 1);
+  }
+  return count;
+}
+
+// ── Fire Icon SVG ──
+function FireIcon({ days, size = 16 }) {
+  const color = getFireColor(days);
+  const sc = getFireScale(days);
+  return (
+    <svg width={size * sc} height={size * sc} viewBox="0 0 24 24" fill={color}>
+      <path d="M12 23c-4.97 0-8-3.03-8-7 0-2.45 1.17-4.35 2.68-5.88C8.19 8.61 9 6.62 9 4.5c0-.5.05-1 .14-1.48C9.2 2.63 9.53 2.25 10 2.5c.47.25.75.75 1 1.25.5 1 1.25 2.25 2.5 2.75.3.12.56-.13.43-.42C13.35 4.68 13 3.1 13.5 1.5c.13-.42.63-.55.88-.22C16.08 3.58 20 7.58 20 16c0 3.97-3.03 7-8 7z"/>
+    </svg>
+  );
+}
+
+// ── Rating Colors ──
+function ratingColor(r) {
+  if (r <= 3) return '#ef4444';
+  if (r <= 5) return '#f59e0b';
+  if (r <= 7) return '#22c55e';
+  return '#10b981';
+}
+
+// ── MODAL OVERLAY ──
+function Overlay({ children, onClose }) {
+  return (
+    <div onClick={onClose} style={{
+      position:'fixed', inset:0, background:'rgba(0,0,0,0.3)', backdropFilter:'blur(8px)',
+      WebkitBackdropFilter:'blur(8px)', zIndex:100, display:'flex', alignItems:'center',
+      justifyContent:'center', padding:16, animation:'fadeIn .2s ease'
+    }}>
+      <div onClick={e => e.stopPropagation()} style={{
+        background:'#fff', borderRadius:20, width:'100%', maxWidth:520,
+        maxHeight:'90vh', overflow:'auto', boxShadow:'0 25px 60px rgba(0,0,0,0.15)',
+        animation:'slideUp .25s ease'
+      }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// ── RATING SLIDER ──
+function RatingSlider({ value, onChange, disabled }) {
+  return (
+    <div style={{ padding:'0' }}>
+      <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8, fontSize:13, color:'#999' }}>
+        <span>Terrible</span><span>Increíble</span>
+      </div>
+      <div style={{ position:'relative', height:40, display:'flex', alignItems:'center' }}>
+        <input type="range" min="1" max="10" value={value} onChange={e => onChange(+e.target.value)}
+          disabled={disabled}
+          style={{
+            width:'100%', appearance:'none', background:'transparent', cursor: disabled ? 'default' : 'pointer',
+          }} />
+        <style>{`
+          input[type=range]::-webkit-slider-runnable-track {
+            height:6px; border-radius:3px;
+            background: linear-gradient(90deg, #ef4444, #f59e0b, #22c55e, #10b981);
+          }
+          input[type=range]::-webkit-slider-thumb {
+            appearance:none; width:28px; height:28px; border-radius:50%;
+            background:#fff; border:3px solid ${ratingColor(value)};
+            margin-top:-11px; box-shadow:0 2px 8px rgba(0,0,0,0.15);
+            transition: border-color .2s;
+          }
+        `}</style>
+      </div>
+      <div style={{ textAlign:'center', marginTop:4 }}>
+        <span style={{
+          fontSize:32, fontWeight:700, fontFamily:"'DM Serif Display', serif",
+          color: ratingColor(value), transition:'color .2s'
+        }}>{value}</span>
+        <span style={{ fontSize:14, color:'#aaa', marginLeft:4 }}>/10</span>
+      </div>
+    </div>
+  );
+}
+
+// ── ENTRY EDITOR ──
+function EntryEditor({ dk, entry, onSave, onClose, streaks, isNew }) {
+  const { d } = parseKey(dk);
+  const [rating, setRating] = useState(entry?.rating || 5);
+  const [text, setText] = useState(entry?.text || '');
+  const [bookmark, setBookmark] = useState(entry?.bookmark || false);
+  const [bookmarkColor, setBookmarkColor] = useState(entry?.bookmarkColor || randomColor());
+  const [photo, setPhoto] = useState(entry?.photo || null);
+  const [streakStatus, setStreakStatus] = useState(entry?.streaks || {});
+  const fileRef = useRef();
+
+  const handlePhoto = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => setPhoto(ev.target.result);
+    reader.readAsDataURL(file);
+  };
+
+  const handleSave = () => {
+    onSave(dk, { rating, text, bookmark, bookmarkColor, photo, streaks: streakStatus, date: dk });
+    onClose();
+  };
+
+  const pdk = parseKey(dk);
+  const dayName = new Date(pdk.y, pdk.m, pdk.d).toLocaleDateString('es-ES', { weekday:'long' });
+
+  return (
+    <Overlay onClose={onClose}>
+      <div style={{ padding:'28px 24px' }}>
+        {/* Header */}
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:24 }}>
+          <div>
+            <div style={{ fontSize:13, color:'#aaa', textTransform:'capitalize', marginBottom:2 }}>{dayName}</div>
+            <div style={{ fontSize:22, fontWeight:700, fontFamily:"'DM Serif Display', serif" }}>
+              {pdk.d} de {MONTHS_ES[pdk.m]}, {pdk.y}
+            </div>
+          </div>
+          <button onClick={onClose} style={{
+            background:'#f5f5f5', border:'none', borderRadius:10, width:36, height:36,
+            cursor:'pointer', fontSize:18, color:'#999', display:'flex', alignItems:'center', justifyContent:'center'
+          }}>✕</button>
+        </div>
+
+        {/* Rating */}
+        <div style={{ marginBottom:24 }}>
+          <div style={{ fontSize:14, fontWeight:600, marginBottom:12, color:'#555' }}>¿Cómo ha ido tu día?</div>
+          <RatingSlider value={rating} onChange={setRating} />
+        </div>
+
+        {/* Text */}
+        <div style={{ marginBottom:20 }}>
+          <div style={{ fontSize:14, fontWeight:600, marginBottom:8, color:'#555' }}>Escribe sobre tu día</div>
+          <textarea value={text} onChange={e => setText(e.target.value)}
+            placeholder="Hoy ha sido un día..."
+            style={{
+              width:'100%', minHeight:120, border:'1.5px solid #e5e5e5', borderRadius:14,
+              padding:'14px 16px', fontSize:15, lineHeight:1.6, resize:'vertical',
+              outline:'none', transition:'border-color .2s', color:'#333',
+            }}
+            onFocus={e => e.target.style.borderColor = '#bbb'}
+            onBlur={e => e.target.style.borderColor = '#e5e5e5'}
+          />
+        </div>
+
+        {/* Photo */}
+        <div style={{ marginBottom:20 }}>
+          <div style={{ fontSize:14, fontWeight:600, marginBottom:8, color:'#555' }}>Foto del día</div>
+          {photo ? (
+            <div style={{ position:'relative', borderRadius:14, overflow:'hidden' }}>
+              <img src={photo} style={{ width:'100%', maxHeight:200, objectFit:'cover', display:'block', borderRadius:14 }} />
+              <button onClick={() => setPhoto(null)} style={{
+                position:'absolute', top:8, right:8, background:'rgba(0,0,0,0.5)', color:'#fff',
+                border:'none', borderRadius:8, width:28, height:28, cursor:'pointer', fontSize:14,
+                display:'flex', alignItems:'center', justifyContent:'center'
+              }}>✕</button>
+            </div>
+          ) : (
+            <button onClick={() => fileRef.current.click()} style={{
+              width:'100%', padding:'18px', border:'2px dashed #e0e0e0', borderRadius:14,
+              background:'#fafafa', cursor:'pointer', color:'#aaa', fontSize:14,
+              display:'flex', alignItems:'center', justifyContent:'center', gap:8,
+              transition:'border-color .2s'
+            }}
+              onMouseEnter={e => e.currentTarget.style.borderColor = '#ccc'}
+              onMouseLeave={e => e.currentTarget.style.borderColor = '#e0e0e0'}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#bbb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>
+              </svg>
+              Añadir foto
+            </button>
+          )}
+          <input ref={fileRef} type="file" accept="image/*" onChange={handlePhoto} style={{ display:'none' }} />
+        </div>
+
+        {/* Bookmark */}
+        <div style={{ marginBottom:20 }}>
+          <label style={{
+            display:'flex', alignItems:'center', gap:12, cursor:'pointer', padding:'12px 16px',
+            background: bookmark ? 'oklch(0.97 0.01 200)' : '#fafafa',
+            borderRadius:14, border: bookmark ? '1.5px solid oklch(0.85 0.08 200)' : '1.5px solid #eee',
+            transition:'all .2s'
+          }}>
+            <div style={{
+              width:22, height:22, borderRadius:6, border:'2px solid #ccc',
+              background: bookmark ? bookmarkColor : '#fff', transition:'all .2s',
+              display:'flex', alignItems:'center', justifyContent:'center',
+            }}>
+              {bookmark && <svg width="12" height="12" viewBox="0 0 24 24" fill="#fff"><path d="M20 6L9 17l-5-5" stroke="#fff" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+            </div>
+            <input type="checkbox" checked={bookmark} onChange={e => { setBookmark(e.target.checked); if (e.target.checked) setBookmarkColor(randomColor()); }}
+              style={{ display:'none' }} />
+            <div>
+              <div style={{ fontSize:14, fontWeight:600, color:'#333' }}>¿Añadir marcador?</div>
+              <div style={{ fontSize:12, color:'#aaa' }}>Se mostrará un círculo de color en el calendario</div>
+            </div>
+          </label>
+        </div>
+
+        {/* Streaks */}
+        {streaks.length > 0 && (
+          <div style={{ marginBottom:24 }}>
+            <div style={{ fontSize:14, fontWeight:600, marginBottom:10, color:'#555' }}>Rachas</div>
+            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+              {streaks.map(s => {
+                const active = streakStatus[s.id] || false;
+                return (
+                  <label key={s.id} style={{
+                    display:'flex', alignItems:'center', gap:12, cursor:'pointer', padding:'12px 16px',
+                    background: active ? 'oklch(0.97 0.02 80)' : '#fafafa',
+                    borderRadius:14, border: active ? '1.5px solid oklch(0.85 0.1 80)' : '1.5px solid #eee',
+                    transition:'all .2s'
+                  }}>
+                    <div style={{
+                      width:22, height:22, borderRadius:6, border:'2px solid #ccc',
+                      background: active ? '#f97316' : '#fff', transition:'all .2s',
+                      display:'flex', alignItems:'center', justifyContent:'center',
+                    }}>
+                      {active && <svg width="12" height="12" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5" stroke="#fff" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                    </div>
+                    <input type="checkbox" checked={active}
+                      onChange={e => setStreakStatus({ ...streakStatus, [s.id]: e.target.checked })}
+                      style={{ display:'none' }} />
+                    <div>
+                      <div style={{ fontSize:14, fontWeight:600, color:'#333' }}>¿Has logrado "{s.name}"?</div>
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Save */}
+        <button onClick={handleSave} style={{
+          width:'100%', padding:'16px', background:'#1a1a1a', color:'#fff',
+          border:'none', borderRadius:14, fontSize:15, fontWeight:600, cursor:'pointer',
+          transition:'opacity .2s'
+        }}
+          onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+          onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+        >
+          Guardar
+        </button>
+      </div>
+    </Overlay>
+  );
+}
+
+// ── ENTRY VIEWER ──
+function EntryViewer({ dk, entry, onClose, onEdit }) {
+  const pdk = parseKey(dk);
+  const dayName = new Date(pdk.y, pdk.m, pdk.d).toLocaleDateString('es-ES', { weekday:'long' });
+
+  return (
+    <Overlay onClose={onClose}>
+      <div style={{ padding:'28px 24px' }}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:20 }}>
+          <div>
+            <div style={{ fontSize:13, color:'#aaa', textTransform:'capitalize', marginBottom:2 }}>{dayName}</div>
+            <div style={{ fontSize:22, fontWeight:700, fontFamily:"'DM Serif Display', serif" }}>
+              {pdk.d} de {MONTHS_ES[pdk.m]}, {pdk.y}
+            </div>
+          </div>
+          <div style={{ display:'flex', gap:8 }}>
+            <button onClick={onEdit} style={{
+              background:'#f5f5f5', border:'none', borderRadius:10, padding:'8px 16px',
+              cursor:'pointer', fontSize:13, fontWeight:600, color:'#555',
+              transition:'background .2s'
+            }}
+              onMouseEnter={e => e.currentTarget.style.background = '#eee'}
+              onMouseLeave={e => e.currentTarget.style.background = '#f5f5f5'}
+            >Editar</button>
+            <button onClick={onClose} style={{
+              background:'#f5f5f5', border:'none', borderRadius:10, width:36, height:36,
+              cursor:'pointer', fontSize:18, color:'#999', display:'flex', alignItems:'center', justifyContent:'center'
+            }}>✕</button>
+          </div>
+        </div>
+
+        {/* Rating display */}
+        <div style={{
+          display:'flex', alignItems:'center', gap:16, padding:'16px 20px',
+          background:'#fafafa', borderRadius:16, marginBottom:20
+        }}>
+          <div style={{
+            width:56, height:56, borderRadius:16, background: ratingColor(entry.rating),
+            display:'flex', alignItems:'center', justifyContent:'center',
+            fontSize:24, fontWeight:700, color:'#fff', fontFamily:"'DM Serif Display', serif"
+          }}>{entry.rating}</div>
+          <div>
+            <div style={{ fontSize:14, fontWeight:600, color:'#333' }}>Puntuación del día</div>
+            <div style={{ fontSize:13, color:'#aaa' }}>
+              {entry.rating <= 3 ? 'Día difícil' : entry.rating <= 5 ? 'Día regular' : entry.rating <= 7 ? 'Buen día' : 'Día excelente'}
+            </div>
+          </div>
+        </div>
+
+        {/* Photo */}
+        {entry.photo && (
+          <div style={{ marginBottom:20, borderRadius:16, overflow:'hidden' }}>
+            <img src={entry.photo} style={{ width:'100%', maxHeight:300, objectFit:'cover', display:'block' }} />
+          </div>
+        )}
+
+        {/* Text */}
+        {entry.text && (
+          <div style={{
+            padding:'20px', background:'#fafafa', borderRadius:16,
+            fontSize:15, lineHeight:1.7, color:'#444', whiteSpace:'pre-wrap'
+          }}>
+            {entry.text}
+          </div>
+        )}
+
+        {/* Bookmark indicator */}
+        {entry.bookmark && (
+          <div style={{
+            display:'flex', alignItems:'center', gap:8, marginTop:16,
+            fontSize:13, color:'#aaa'
+          }}>
+            <div style={{ width:10, height:10, borderRadius:5, background: entry.bookmarkColor }} />
+            Día marcado
+          </div>
+        )}
+      </div>
+    </Overlay>
+  );
+}
+
+// ── STREAK CREATOR ──
+function StreakCreator({ onClose, onCreate }) {
+  const [name, setName] = useState('');
+  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
+
+  return (
+    <Overlay onClose={onClose}>
+      <div style={{ padding:'28px 24px' }}>
+        <div style={{ fontSize:22, fontWeight:700, fontFamily:"'DM Serif Display', serif", marginBottom:20 }}>
+          Nueva racha
+        </div>
+        <div style={{ marginBottom:16 }}>
+          <div style={{ fontSize:14, fontWeight:600, marginBottom:6, color:'#555' }}>Nombre</div>
+          <input value={name} onChange={e => setName(e.target.value)} placeholder="Ej: Hacer ejercicio"
+            style={{
+              width:'100%', padding:'14px 16px', border:'1.5px solid #e5e5e5', borderRadius:14,
+              fontSize:15, outline:'none'
+            }} />
+        </div>
+        <div style={{ marginBottom:24 }}>
+          <div style={{ fontSize:14, fontWeight:600, marginBottom:6, color:'#555' }}>Fecha de inicio</div>
+          <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
+            style={{
+              width:'100%', padding:'14px 16px', border:'1.5px solid #e5e5e5', borderRadius:14,
+              fontSize:15, outline:'none'
+            }} />
+        </div>
+        <button onClick={() => { if (name.trim()) { onCreate({ id: Date.now().toString(), name: name.trim(), startDate }); onClose(); }}} style={{
+          width:'100%', padding:'16px', background:'#1a1a1a', color:'#fff',
+          border:'none', borderRadius:14, fontSize:15, fontWeight:600, cursor:'pointer',
+          opacity: name.trim() ? 1 : 0.4
+        }}>Crear racha</button>
+      </div>
+    </Overlay>
+  );
+}
+
+// ── SUMMARY VIEW ──
+function SummaryView({ entries, onClose }) {
+  const today = new Date();
+  const todayKey = dateKey(today.getFullYear(), today.getMonth(), today.getDate());
+
+  // Monthly average
+  const currentMonthEntries = Object.entries(entries).filter(([k]) => {
+    const p = parseKey(k);
+    return p.y === today.getFullYear() && p.m === today.getMonth();
+  });
+  const monthAvg = currentMonthEntries.length > 0
+    ? (currentMonthEntries.reduce((s, [,e]) => s + e.rating, 0) / currentMonthEntries.length).toFixed(1)
+    : '—';
+
+  // Yearly average
+  const currentYearEntries = Object.entries(entries).filter(([k]) => parseKey(k).y === today.getFullYear());
+  const yearAvg = currentYearEntries.length > 0
+    ? (currentYearEntries.reduce((s, [,e]) => s + e.rating, 0) / currentYearEntries.length).toFixed(1)
+    : '—';
+
+  // Memory from 1 month ago
+  const oneMonthAgo = new Date(today);
+  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+  const memoryKey = dateKey(oneMonthAgo.getFullYear(), oneMonthAgo.getMonth(), oneMonthAgo.getDate());
+  const memory = entries[memoryKey];
+
+  // Recent trend (last 7 days with entries)
+  const recentEntries = Object.entries(entries)
+    .filter(([k]) => {
+      const d = new Date(k);
+      const diff = (today - d) / (1000*60*60*24);
+      return diff >= 0 && diff <= 30;
+    })
+    .sort(([a],[b]) => a.localeCompare(b));
+
+  // Best and worst day this month
+  const bestDay = currentMonthEntries.length > 0 ? currentMonthEntries.reduce((best, cur) => cur[1].rating > best[1].rating ? cur : best) : null;
+  const worstDay = currentMonthEntries.length > 0 ? currentMonthEntries.reduce((worst, cur) => cur[1].rating < worst[1].rating ? cur : worst) : null;
+
+  // Trend analysis
+  const last7 = recentEntries.slice(-7);
+  const first7 = recentEntries.slice(0, 7);
+  let trendMsg = '';
+  if (last7.length >= 3 && first7.length >= 3) {
+    const recentAvg = last7.reduce((s,[,e]) => s + e.rating, 0) / last7.length;
+    const earlyAvg = first7.reduce((s,[,e]) => s + e.rating, 0) / first7.length;
+    if (recentAvg > earlyAvg + 0.5) trendMsg = '📈 ¡Estás mejorando! Tu puntuación media ha subido últimamente.';
+    else if (recentAvg < earlyAvg - 0.5) trendMsg = '📉 Parece que los últimos días han sido más difíciles. ¡Ánimo!';
+    else trendMsg = '📊 Tu estado de ánimo se mantiene estable. ¡Sigue así!';
+  }
+
+  // Tips
+  const tips = [];
+  if (currentMonthEntries.length < 5) tips.push('✍️ Intenta escribir más a menudo — la constancia ayuda a reflexionar.');
+  if (parseFloat(monthAvg) < 5 && monthAvg !== '—') tips.push('💡 Tu media este mes está por debajo de 5. ¿Qué pequeño cambio podrías hacer?');
+  if (parseFloat(monthAvg) > 7 && monthAvg !== '—') tips.push('🌟 ¡Gran mes! Tu media está por encima de 7. Sigue haciendo lo que funciona.');
+
+  const StatCard = ({ label, value, color, sub }) => (
+    <div style={{
+      flex:'1 1 140px', background:'#fafafa', borderRadius:18, padding:'20px',
+      display:'flex', flexDirection:'column', gap:4
+    }}>
+      <div style={{ fontSize:12, color:'#aaa', fontWeight:500 }}>{label}</div>
+      <div style={{ fontSize:32, fontWeight:700, fontFamily:"'DM Serif Display', serif", color: color || '#1a1a1a' }}>{value}</div>
+      {sub && <div style={{ fontSize:12, color:'#bbb' }}>{sub}</div>}
+    </div>
+  );
+
+  return (
+    <Overlay onClose={onClose}>
+      <div style={{ padding:'28px 24px' }}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:24 }}>
+          <div style={{ fontSize:22, fontWeight:700, fontFamily:"'DM Serif Display', serif" }}>Resumen</div>
+          <button onClick={onClose} style={{
+            background:'#f5f5f5', border:'none', borderRadius:10, width:36, height:36,
+            cursor:'pointer', fontSize:18, color:'#999', display:'flex', alignItems:'center', justifyContent:'center'
+          }}>✕</button>
+        </div>
+
+        {/* Averages */}
+        <div style={{ display:'flex', gap:12, marginBottom:20, flexWrap:'wrap' }}>
+          <StatCard label="Media del mes" value={monthAvg} color={monthAvg !== '—' ? ratingColor(Math.round(parseFloat(monthAvg))) : '#ccc'} sub={MONTHS_ES[today.getMonth()]} />
+          <StatCard label="Media del año" value={yearAvg} color={yearAvg !== '—' ? ratingColor(Math.round(parseFloat(yearAvg))) : '#ccc'} sub={today.getFullYear().toString()} />
+        </div>
+
+        {/* Days logged */}
+        <div style={{
+          background:'#fafafa', borderRadius:18, padding:'20px', marginBottom:20,
+          display:'flex', alignItems:'center', gap:16
+        }}>
+          <div style={{ fontSize:32, fontWeight:700, fontFamily:"'DM Serif Display', serif", color:'#1a1a1a' }}>
+            {currentMonthEntries.length}
+          </div>
+          <div>
+            <div style={{ fontSize:14, fontWeight:600, color:'#333' }}>Días escritos este mes</div>
+            <div style={{ fontSize:12, color:'#aaa' }}>de {new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate()} días</div>
+          </div>
+        </div>
+
+        {/* Trend */}
+        {trendMsg && (
+          <div style={{
+            background:'#fafafa', borderRadius:18, padding:'20px', marginBottom:20,
+            fontSize:14, lineHeight:1.6, color:'#555'
+          }}>{trendMsg}</div>
+        )}
+
+        {/* Best / Worst */}
+        {bestDay && worstDay && bestDay[0] !== worstDay[0] && (
+          <div style={{ display:'flex', gap:12, marginBottom:20, flexWrap:'wrap' }}>
+            <div style={{ flex:'1 1 140px', background:'oklch(0.97 0.02 150)', borderRadius:18, padding:'16px 20px' }}>
+              <div style={{ fontSize:12, color:'#888', marginBottom:4 }}>🌟 Mejor día</div>
+              <div style={{ fontSize:18, fontWeight:700, color:'#22c55e' }}>{bestDay[1].rating}/10</div>
+              <div style={{ fontSize:12, color:'#aaa', marginTop:2 }}>{parseKey(bestDay[0]).d} de {MONTHS_ES[parseKey(bestDay[0]).m]}</div>
+            </div>
+            <div style={{ flex:'1 1 140px', background:'oklch(0.97 0.02 25)', borderRadius:18, padding:'16px 20px' }}>
+              <div style={{ fontSize:12, color:'#888', marginBottom:4 }}>💪 Día más difícil</div>
+              <div style={{ fontSize:18, fontWeight:700, color:'#ef4444' }}>{worstDay[1].rating}/10</div>
+              <div style={{ fontSize:12, color:'#aaa', marginTop:2 }}>{parseKey(worstDay[0]).d} de {MONTHS_ES[parseKey(worstDay[0]).m]}</div>
+            </div>
+          </div>
+        )}
+
+        {/* Memory */}
+        {memory && (
+          <div style={{
+            background:'linear-gradient(135deg, oklch(0.97 0.01 260), oklch(0.97 0.01 320))',
+            borderRadius:18, padding:'20px', marginBottom:20
+          }}>
+            <div style={{ fontSize:13, color:'#888', marginBottom:8 }}>🕰️ Recuerdo de hace 1 mes</div>
+            <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:8 }}>
+              <div style={{
+                width:40, height:40, borderRadius:12, background: ratingColor(memory.rating),
+                display:'flex', alignItems:'center', justifyContent:'center',
+                fontSize:18, fontWeight:700, color:'#fff'
+              }}>{memory.rating}</div>
+              <div style={{ fontSize:13, color:'#aaa' }}>
+                {oneMonthAgo.getDate()} de {MONTHS_ES[oneMonthAgo.getMonth()]}, {oneMonthAgo.getFullYear()}
+              </div>
+            </div>
+            {memory.photo && (
+              <img src={memory.photo} style={{ width:'100%', maxHeight:150, objectFit:'cover', borderRadius:12, marginBottom:8 }} />
+            )}
+            {memory.text && (
+              <div style={{ fontSize:14, lineHeight:1.6, color:'#555', whiteSpace:'pre-wrap' }}>
+                {memory.text.length > 200 ? memory.text.slice(0, 200) + '...' : memory.text}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Tips */}
+        {tips.length > 0 && (
+          <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+            <div style={{ fontSize:14, fontWeight:600, color:'#555', marginBottom:4 }}>Consejos</div>
+            {tips.map((t, i) => (
+              <div key={i} style={{
+                background:'#fafafa', borderRadius:14, padding:'14px 16px',
+                fontSize:13, lineHeight:1.5, color:'#666'
+              }}>{t}</div>
+            ))}
+          </div>
+        )}
+
+        {Object.keys(entries).length === 0 && (
+          <div style={{ textAlign:'center', padding:'40px 0', color:'#ccc', fontSize:14 }}>
+            Empieza a escribir en tu diario para ver tu resumen aquí
+          </div>
+        )}
+      </div>
+    </Overlay>
+  );
+}
+
+
+// ── CALENDAR ──
+function Calendar({ year, month, entries, streaks, onDayClick }) {
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const startOffset = (firstDay === 0 ? 6 : firstDay - 1); // Monday start
+  const today = new Date();
+  const isToday = (d) => today.getFullYear() === year && today.getMonth() === month && today.getDate() === d;
+
+  const cells = [];
+  for (let i = 0; i < startOffset; i++) cells.push(<div key={'e'+i} />);
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dk = dateKey(year, month, d);
+    const entry = entries[dk];
+    const hasEntry = !!entry;
+    const todayStyle = isToday(d);
+
+    // Streak fire for this day
+    const dayStreaks = [];
+    if (entry?.streaks) {
+      streaks.forEach(s => {
+        if (entry.streaks[s.id]) {
+          const days = getStreakDays(s, entries);
+          dayStreaks.push({ ...s, days });
+        }
+      });
+    }
+
+    cells.push(
+      <div key={d} onClick={() => onDayClick(dk)}
+        style={{
+          position:'relative', aspectRatio:'1', borderRadius:14, cursor:'pointer',
+          display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
+          gap:2,
+          background: todayStyle ? '#1a1a1a' : hasEntry ? '#fafafa' : 'transparent',
+          color: todayStyle ? '#fff' : '#1a1a1a',
+          transition:'all .15s',
+          border: todayStyle ? 'none' : hasEntry ? '1px solid #f0f0f0' : '1px solid transparent',
+        }}
+        onMouseEnter={e => { if (!todayStyle && !hasEntry) e.currentTarget.style.background = '#f8f8f8'; }}
+        onMouseLeave={e => { if (!todayStyle && !hasEntry) e.currentTarget.style.background = 'transparent'; }}
+      >
+        <span style={{ fontSize:14, fontWeight: todayStyle ? 600 : hasEntry ? 500 : 400 }}>{d}</span>
+
+        {/* Rating badge */}
+        {hasEntry && (
+          <span style={{
+            fontSize:9, fontWeight:700, color: todayStyle ? '#fff' : ratingColor(entry.rating),
+            lineHeight:1
+          }}>{entry.rating}</span>
+        )}
+
+        {/* Indicators row */}
+        <div style={{ display:'flex', gap:2, alignItems:'center', position:'absolute', bottom:3, left:'50%', transform:'translateX(-50%)' }}>
+          {entry?.bookmark && (
+            <div style={{ width:6, height:6, borderRadius:3, background: entry.bookmarkColor }} />
+          )}
+          {entry?.photo && (
+            <svg width="8" height="8" viewBox="0 0 24 24" fill={todayStyle ? '#fff' : '#bbb'}>
+              <rect x="2" y="4" width="20" height="16" rx="3"/><circle cx="8" cy="10" r="2" fill={todayStyle ? '#1a1a1a' : '#fff'}/><path d="M22 16l-5-5-9 9h14z" fill={todayStyle ? '#555' : '#ddd'}/>
+            </svg>
+          )}
+        </div>
+
+        {/* Streak fire */}
+        {dayStreaks.length > 0 && (
+          <div style={{ position:'absolute', top:2, right:3 }}>
+            <FireIcon days={dayStreaks[0].days} size={10} />
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:2, marginBottom:4 }}>
+        {DAYS_ES.map(d => (
+          <div key={d} style={{ textAlign:'center', fontSize:11, fontWeight:600, color:'#bbb', padding:'4px 0' }}>{d}</div>
+        ))}
+      </div>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:4 }}>
+        {cells}
+      </div>
+    </div>
+  );
+}
+
+
+// ── MAIN APP ──
+function App() {
+  const [entries, setEntries] = useState(loadEntries);
+  const [streaks, setStreaks] = useState(loadStreaks);
+  const today = new Date();
+  const [viewYear, setViewYear] = useState(today.getFullYear());
+  const [viewMonth, setViewMonth] = useState(today.getMonth());
+
+  // Modals
+  const [editingDay, setEditingDay] = useState(null);
+  const [viewingDay, setViewingDay] = useState(null);
+  const [showSummary, setShowSummary] = useState(false);
+  const [showStreakCreator, setShowStreakCreator] = useState(false);
+
+  useEffect(() => { saveEntries(entries); }, [entries]);
+  useEffect(() => { saveStreaksData(streaks); }, [streaks]);
+
+  const handleDayClick = (dk) => {
+    if (entries[dk]) setViewingDay(dk);
+    else setEditingDay(dk);
+  };
+
+  const handleSave = (dk, data) => {
+    setEntries(prev => ({ ...prev, [dk]: data }));
+  };
+
+  const prevMonth = () => {
+    if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1); }
+    else setViewMonth(m => m - 1);
+  };
+  const nextMonth = () => {
+    if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1); }
+    else setViewMonth(m => m + 1);
+  };
+
+  // Active streaks summary for main page
+  const activeStreaks = streaks.map(s => ({ ...s, days: getStreakDays(s, entries) })).filter(s => s.days > 0);
+
+  return (
+    <div style={{ maxWidth:480, margin:'0 auto', padding:'20px 16px 40px', minHeight:'100dvh' }}>
+      <style>{`
+        @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
+        @keyframes slideUp { from { opacity:0; transform:translateY(20px) } to { opacity:1; transform:translateY(0) } }
+      `}</style>
+
+      {/* Header */}
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:28 }}>
+        <div>
+          <div style={{ fontSize:28, fontWeight:700, fontFamily:"'DM Serif Display', serif", letterSpacing:-0.5 }}>
+            Diario
+          </div>
+          <div style={{ fontSize:13, color:'#bbb', marginTop:2 }}>
+            {today.getDate()} de {MONTHS_ES[today.getMonth()]}, {today.getFullYear()}
+          </div>
+        </div>
+        <button onClick={() => setShowSummary(true)} style={{
+          background:'#fafafa', border:'1px solid #eee', borderRadius:12, padding:'10px 16px',
+          cursor:'pointer', fontSize:13, fontWeight:600, color:'#555', transition:'background .2s'
+        }}
+          onMouseEnter={e => e.currentTarget.style.background = '#f0f0f0'}
+          onMouseLeave={e => e.currentTarget.style.background = '#fafafa'}
+        >Resumen</button>
+      </div>
+
+      {/* Streaks display */}
+      {activeStreaks.length > 0 && (
+        <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' }}>
+          {activeStreaks.map(s => (
+            <div key={s.id} style={{
+              display:'flex', alignItems:'center', gap:6, padding:'8px 14px',
+              background:'#fafafa', borderRadius:12, border:'1px solid #f0f0f0',
+              fontSize:13, fontWeight:500
+            }}>
+              <FireIcon days={s.days} size={16} />
+              <span>{s.name}</span>
+              <span style={{ color:'#aaa', fontWeight:600, fontSize:12 }}>{s.days}d</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Streak create button */}
+      <div style={{ marginBottom:20 }}>
+        <button onClick={() => setShowStreakCreator(true)} style={{
+          background:'transparent', border:'1.5px dashed #e0e0e0', borderRadius:12,
+          padding:'10px 16px', cursor:'pointer', fontSize:13, color:'#bbb', width:'100%',
+          transition:'border-color .2s'
+        }}
+          onMouseEnter={e => e.currentTarget.style.borderColor = '#ccc'}
+          onMouseLeave={e => e.currentTarget.style.borderColor = '#e0e0e0'}
+        >+ Nueva racha</button>
+      </div>
+
+      {/* Month nav */}
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
+        <button onClick={prevMonth} style={{
+          background:'none', border:'none', cursor:'pointer', padding:8, fontSize:18, color:'#aaa',
+          borderRadius:8, transition:'background .15s'
+        }}
+          onMouseEnter={e => e.currentTarget.style.background = '#f5f5f5'}
+          onMouseLeave={e => e.currentTarget.style.background = 'none'}
+        >‹</button>
+        <div style={{ fontSize:17, fontWeight:600 }}>{MONTHS_ES[viewMonth]} {viewYear}</div>
+        <button onClick={nextMonth} style={{
+          background:'none', border:'none', cursor:'pointer', padding:8, fontSize:18, color:'#aaa',
+          borderRadius:8, transition:'background .15s'
+        }}
+          onMouseEnter={e => e.currentTarget.style.background = '#f5f5f5'}
+          onMouseLeave={e => e.currentTarget.style.background = 'none'}
+        >›</button>
+      </div>
+
+      {/* Calendar */}
+      <Calendar year={viewYear} month={viewMonth} entries={entries} streaks={streaks} onDayClick={handleDayClick} />
+
+      {/* Modals */}
+      {editingDay && (
+        <EntryEditor dk={editingDay} entry={entries[editingDay]} onSave={handleSave}
+          onClose={() => setEditingDay(null)} streaks={streaks} isNew={!entries[editingDay]} />
+      )}
+      {viewingDay && (
+        <EntryViewer dk={viewingDay} entry={entries[viewingDay]}
+          onClose={() => setViewingDay(null)}
+          onEdit={() => { setEditingDay(viewingDay); setViewingDay(null); }} />
+      )}
+      {showSummary && <SummaryView entries={entries} onClose={() => setShowSummary(false)} />}
+      {showStreakCreator && (
+        <StreakCreator onClose={() => setShowStreakCreator(false)}
+          onCreate={s => setStreaks(prev => [...prev, s])} />
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

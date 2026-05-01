@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Diario de 30 días — Zonga Elements</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --c-primary: #2563EB;
+      --c-primary-dark: #1E40AF;
+      --c-primary-soft: #DBEAFE;
+      --c-bg: #FFFFFF;
+      --c-bg-alt: #F8FAFC;
+      --c-text: #0F172A;
+      --c-text-soft: #64748B;
+      --c-border: #E2E8F0;
+      --c-ok: #16A34A;
+      --c-err: #DC2626;
+      --c-warn: #F59E0B;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+      --shadow-sm: 0 1px 3px rgba(15,23,42,0.05);
+      --shadow-md: 0 10px 30px -10px rgba(37,99,235,0.18);
+      --shadow-lg: 0 20px 50px -20px rgba(37,99,235,0.3);
+      --ease: cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      color: var(--c-text);
+      background:
+        radial-gradient(1200px 600px at 50% -200px, var(--c-primary-soft) 0%, transparent 60%),
+        var(--c-bg);
+      min-height: 100vh;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      font-size: 15px;
+    }
+
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 32px 20px 80px;
+    }
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 32px;
+    }
+    .back {
+      color: var(--c-text-soft);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: color .2s var(--ease);
+    }
+    .back:hover { color: var(--c-primary); }
+    .brand {
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--c-primary), #60A5FA);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .card {
+      background: white;
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius-xl);
+      padding: 40px;
+      box-shadow: var(--shadow-md);
+    }
+
+    h1 {
+      font-size: clamp(28px, 4vw, 40px);
+      line-height: 1.15;
+      margin: 0 0 12px;
+      letter-spacing: -0.02em;
+      font-weight: 800;
+    }
+    h1 .grad {
+      background: linear-gradient(135deg, var(--c-primary), #60A5FA);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    h2 {
+      font-size: 22px;
+      margin: 0 0 8px;
+      letter-spacing: -0.01em;
+    }
+    .subtitle {
+      color: var(--c-text-soft);
+      margin: 0 0 28px;
+      font-size: 16px;
+    }
+
+    .field {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      font-weight: 600;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+    label .hint {
+      color: var(--c-text-soft);
+      font-weight: 400;
+      margin-left: 6px;
+    }
+
+    textarea, input[type="number"], input[type="text"] {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius-md);
+      font-family: inherit;
+      font-size: 15px;
+      color: var(--c-text);
+      background: var(--c-bg);
+      transition: border-color .2s var(--ease), box-shadow .2s var(--ease);
+      resize: vertical;
+    }
+    textarea { min-height: 140px; }
+    textarea:focus, input:focus {
+      outline: none;
+      border-color: var(--c-primary);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 22px;
+      border-radius: var(--radius-md);
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: transform .1s var(--ease), box-shadow .2s var(--ease), background .2s var(--ease);
+      text-decoration: none;
+      font-family: inherit;
+    }
+    .btn-primary {
+      background: var(--c-primary);
+      color: white;
+      box-shadow: var(--shadow-md);
+    }
+    .btn-primary:hover { background: var(--c-primary-dark); transform: translateY(-1px); }
+    .btn-ghost {
+      background: transparent;
+      color: var(--c-text);
+      border-color: var(--c-border);
+    }
+    .btn-ghost:hover { border-color: var(--c-primary); color: var(--c-primary); }
+    .btn-lg { padding: 14px 28px; font-size: 16px; }
+    .btn-danger {
+      background: transparent;
+      color: var(--c-err);
+      border-color: transparent;
+    }
+    .btn-danger:hover { background: #FEF2F2; }
+
+    /* Slider */
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .slider-row input[type="range"] {
+      flex: 1;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 8px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--c-primary) var(--pct, 50%), var(--c-border) var(--pct, 50%));
+      outline: none;
+    }
+    .slider-row input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: white;
+      border: 3px solid var(--c-primary);
+      cursor: pointer;
+      box-shadow: var(--shadow-sm);
+    }
+    .slider-row input[type="range"]::-moz-range-thumb {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: white;
+      border: 3px solid var(--c-primary);
+      cursor: pointer;
+    }
+    .slider-value {
+      min-width: 56px;
+      text-align: center;
+      font-weight: 700;
+      font-size: 20px;
+      color: var(--c-primary);
+      padding: 6px 10px;
+      background: var(--c-primary-soft);
+      border-radius: var(--radius-sm);
+    }
+
+    /* Toggle group (yes/no) */
+    .toggle-group {
+      display: inline-flex;
+      background: var(--c-bg-alt);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius-md);
+      padding: 4px;
+      gap: 4px;
+    }
+    .toggle-group button {
+      background: transparent;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      color: var(--c-text-soft);
+      font-family: inherit;
+      transition: background .2s var(--ease), color .2s var(--ease);
+    }
+    .toggle-group button.active {
+      background: white;
+      color: var(--c-primary);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .conditional {
+      margin-top: 16px;
+      padding: 16px;
+      background: var(--c-bg-alt);
+      border-radius: var(--radius-md);
+      border-left: 3px solid var(--c-primary);
+    }
+    .conditional.hidden { display: none; }
+
+    .row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 540px) { .row-2 { grid-template-columns: 1fr; } }
+
+    /* Progress */
+    .progress-wrap {
+      margin-bottom: 28px;
+    }
+    .progress-head {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      color: var(--c-text-soft);
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+    .progress-bar {
+      height: 10px;
+      background: var(--c-border);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--c-primary), #60A5FA);
+      border-radius: 999px;
+      transition: width .5s var(--ease);
+    }
+
+    /* Day grid */
+    .day-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(42px, 1fr));
+      gap: 6px;
+      margin-top: 20px;
+    }
+    .day-cell {
+      aspect-ratio: 1;
+      border-radius: 8px;
+      background: var(--c-bg-alt);
+      border: 1px solid var(--c-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--c-text-soft);
+    }
+    .day-cell.done {
+      background: var(--c-primary);
+      color: white;
+      border-color: var(--c-primary);
+    }
+    .day-cell.current {
+      border-color: var(--c-primary);
+      color: var(--c-primary);
+      border-width: 2px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+      flex-wrap: wrap;
+    }
+
+    .notice {
+      margin-top: 14px;
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      background: #FEF3C7;
+      color: #92400E;
+      border: 1px solid #FDE68A;
+    }
+
+    /* Recap */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin: 24px 0;
+    }
+    .stat {
+      background: var(--c-bg-alt);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius-md);
+      padding: 18px;
+    }
+    .stat .label {
+      font-size: 12px;
+      color: var(--c-text-soft);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+    }
+    .stat .value {
+      font-size: 28px;
+      font-weight: 800;
+      margin-top: 4px;
+      letter-spacing: -0.02em;
+    }
+    .stat .value.grad {
+      background: linear-gradient(135deg, var(--c-primary), #60A5FA);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .before-after {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 20px;
+    }
+    @media (max-width: 640px) { .before-after { grid-template-columns: 1fr; } }
+    .panel {
+      padding: 20px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--c-border);
+    }
+    .panel.before { background: #FEF2F2; border-color: #FECACA; }
+    .panel.after { background: #F0FDF4; border-color: #BBF7D0; }
+    .panel h3 {
+      margin: 0 0 10px;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .panel p {
+      margin: 0;
+      white-space: pre-wrap;
+      font-size: 14px;
+      color: var(--c-text);
+    }
+
+    .learning-list {
+      list-style: none;
+      padding: 0;
+      margin: 16px 0 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .learning-list li {
+      padding: 12px 16px;
+      background: var(--c-bg-alt);
+      border-left: 3px solid var(--c-primary);
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+    }
+    .learning-list li .day-tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--c-primary);
+      background: var(--c-primary-soft);
+      padding: 2px 8px;
+      border-radius: 999px;
+      margin-right: 8px;
+    }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="top-bar">
+      <a href="../index.html" class="back">← Volver a Zonga Elements</a>
+      <span class="brand">Diario 30 días</span>
+    </div>
+
+    <!-- ============ LANDING (Day 1 baseline) ============ -->
+    <section id="view-landing" class="card hidden">
+      <h1>Tu diario de <span class="grad">30 días</span></h1>
+      <p class="subtitle">Empieza escribiendo cómo estás hoy. Al final del mes verás cuánto has cambiado.</p>
+
+      <div class="field">
+        <label for="baseline">Día 1 — ¿Cómo estás ahora?
+          <span class="hint">facturación, relación con la IA, hábitos, estado mental…</span>
+        </label>
+        <textarea id="baseline" placeholder="Ej: Ahora mismo facturo X al mes, siento que uso la IA de forma superficial, me cuesta concentrarme más de 1h seguida…"></textarea>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-primary btn-lg" id="startBtn">Empezar el reto →</button>
+      </div>
+    </section>
+
+    <!-- ============ DAILY VIEW ============ -->
+    <section id="view-daily" class="card hidden">
+      <div class="progress-wrap">
+        <div class="progress-head">
+          <span id="progressLabel">Día 1 de 30</span>
+          <span id="progressPct">0%</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      </div>
+
+      <h2 id="dailyTitle">Día 1</h2>
+      <p class="subtitle" id="dailyDate"></p>
+
+      <div class="field">
+        <label>¿Cómo ha ido el día? <span class="hint">(1 = pésimo · 10 = increíble)</span></label>
+        <div class="slider-row">
+          <input type="range" id="dayScore" min="1" max="10" value="5" />
+          <div class="slider-value" id="dayScoreVal">5</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>¿Has aprendido algo hoy?</label>
+        <div class="toggle-group" data-toggle="learned">
+          <button type="button" data-val="no" class="active">No</button>
+          <button type="button" data-val="si">Sí</button>
+        </div>
+        <div class="conditional hidden" id="learnedWrap">
+          <label for="learnedText">¿Qué has aprendido?</label>
+          <textarea id="learnedText" placeholder="Describe lo que has aprendido hoy…" style="min-height:90px"></textarea>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>¿Has tenido pedidos?</label>
+        <div class="toggle-group" data-toggle="orders">
+          <button type="button" data-val="no" class="active">No</button>
+          <button type="button" data-val="si">Sí</button>
+        </div>
+        <div class="conditional hidden" id="ordersWrap">
+          <div class="row-2">
+            <div>
+              <label for="orderCount">Nº de pedidos</label>
+              <input type="number" id="orderCount" min="0" step="1" placeholder="0" />
+            </div>
+            <div>
+              <label for="orderRevenue">Facturación (USD)</label>
+              <input type="number" id="orderRevenue" min="0" step="0.01" placeholder="0.00" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-primary btn-lg" id="saveDayBtn">Guardar día →</button>
+        <button class="btn btn-ghost" id="resetBtn">Reiniciar reto</button>
+      </div>
+
+      <div class="day-grid" id="dayGrid"></div>
+
+      <div class="notice hidden" id="alreadySavedNotice">Ya guardaste este día. Vuelve mañana para el siguiente.</div>
+    </section>
+
+    <!-- ============ RECAP ============ -->
+    <section id="view-recap" class="card hidden">
+      <h1>30 días completados <span class="grad">✦</span></h1>
+      <p class="subtitle">Este es tu resumen del mes. Mira cuánto has avanzado.</p>
+
+      <div class="stat-grid">
+        <div class="stat">
+          <div class="label">Puntuación media</div>
+          <div class="value grad" id="rAvg">—</div>
+        </div>
+        <div class="stat">
+          <div class="label">Pedidos totales</div>
+          <div class="value" id="rOrders">—</div>
+        </div>
+        <div class="stat">
+          <div class="label">Facturación total</div>
+          <div class="value" id="rRevenue">—</div>
+        </div>
+        <div class="stat">
+          <div class="label">Días con aprendizaje</div>
+          <div class="value" id="rLearned">—</div>
+        </div>
+      </div>
+
+      <h2>Antes vs. Ahora</h2>
+      <div class="before-after">
+        <div class="panel before">
+          <h3>Día 1 — Cómo estabas</h3>
+          <p id="rBefore"></p>
+        </div>
+        <div class="panel after">
+          <h3>Día 30 — Cómo estás</h3>
+          <p id="rAfter"></p>
+        </div>
+      </div>
+
+      <div class="field" id="finalReflectionWrap" style="margin-top:24px">
+        <label for="finalReflection">Escribe cómo estás ahora (opcional si no lo has hecho en el día 30)</label>
+        <textarea id="finalReflection" placeholder="Cómo te sientes ahora, qué ha cambiado…"></textarea>
+        <button class="btn btn-ghost" id="saveFinalBtn" style="margin-top:10px">Guardar reflexión final</button>
+      </div>
+
+      <h2 style="margin-top:32px">Lo que has aprendido</h2>
+      <ul class="learning-list" id="rLearnings"></ul>
+
+      <div class="actions">
+        <button class="btn btn-danger" id="restartBtn">Empezar nuevo reto de 30 días</button>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const KEY = 'zonga_diario_30d_v1';
+
+    const defaultState = () => ({
+      baseline: '',
+      startedAt: null,
+      days: [], // { day, date, score, learned: bool, learnedText, orders: bool, orderCount, orderRevenue }
+      finalReflection: ''
+    });
+
+    let state = load();
+
+    function load() {
+      try {
+        const raw = localStorage.getItem(KEY);
+        if (!raw) return defaultState();
+        return { ...defaultState(), ...JSON.parse(raw) };
+      } catch { return defaultState(); }
+    }
+    function save() { localStorage.setItem(KEY, JSON.stringify(state)); }
+
+    function show(view) {
+      ['landing','daily','recap'].forEach(v => {
+        document.getElementById('view-'+v).classList.toggle('hidden', v !== view);
+      });
+    }
+
+    function route() {
+      if (!state.startedAt) { show('landing'); return; }
+      if (state.days.length >= 30) { renderRecap(); show('recap'); return; }
+      renderDaily(); show('daily');
+    }
+
+    /* ---- Landing ---- */
+    document.getElementById('startBtn').addEventListener('click', () => {
+      const val = document.getElementById('baseline').value.trim();
+      if (!val) {
+        alert('Escribe cómo estás hoy antes de empezar.');
+        return;
+      }
+      state.baseline = val;
+      state.startedAt = new Date().toISOString();
+      state.days = [];
+      save();
+      route();
+    });
+
+    /* ---- Daily ---- */
+    const scoreEl = document.getElementById('dayScore');
+    const scoreVal = document.getElementById('dayScoreVal');
+    function updateSliderBg() {
+      const pct = ((scoreEl.value - 1) / 9) * 100;
+      scoreEl.style.setProperty('--pct', pct + '%');
+      scoreVal.textContent = scoreEl.value;
+    }
+    scoreEl.addEventListener('input', updateSliderBg);
+
+    // Toggle groups
+    document.querySelectorAll('.toggle-group').forEach(group => {
+      group.addEventListener('click', (e) => {
+        const btn = e.target.closest('button');
+        if (!btn) return;
+        group.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+        const name = group.dataset.toggle;
+        const isYes = btn.dataset.val === 'si';
+        if (name === 'learned') document.getElementById('learnedWrap').classList.toggle('hidden', !isYes);
+        if (name === 'orders')  document.getElementById('ordersWrap').classList.toggle('hidden', !isYes);
+      });
+    });
+
+    function resetDailyForm() {
+      scoreEl.value = 5; updateSliderBg();
+      document.querySelectorAll('.toggle-group').forEach(g => {
+        g.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.val === 'no'));
+      });
+      document.getElementById('learnedWrap').classList.add('hidden');
+      document.getElementById('ordersWrap').classList.add('hidden');
+      document.getElementById('learnedText').value = '';
+      document.getElementById('orderCount').value = '';
+      document.getElementById('orderRevenue').value = '';
+    }
+
+    function renderDaily() {
+      const n = state.days.length + 1;
+      document.getElementById('dailyTitle').textContent = 'Día ' + n;
+      document.getElementById('progressLabel').textContent = 'Día ' + n + ' de 30';
+      const pct = Math.round(((n-1) / 30) * 100);
+      document.getElementById('progressFill').style.width = pct + '%';
+      document.getElementById('progressPct').textContent = pct + '%';
+      document.getElementById('dailyDate').textContent = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+      resetDailyForm();
+      renderDayGrid(n);
+    }
+
+    function renderDayGrid(currentDay) {
+      const grid = document.getElementById('dayGrid');
+      grid.innerHTML = '';
+      for (let i = 1; i <= 30; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'day-cell';
+        if (i <= state.days.length) cell.classList.add('done');
+        if (i === currentDay) cell.classList.add('current');
+        cell.textContent = i;
+        grid.appendChild(cell);
+      }
+    }
+
+    document.getElementById('saveDayBtn').addEventListener('click', () => {
+      const learnedActive = document.querySelector('[data-toggle="learned"] .active').dataset.val === 'si';
+      const ordersActive = document.querySelector('[data-toggle="orders"] .active').dataset.val === 'si';
+      const learnedText = document.getElementById('learnedText').value.trim();
+      if (learnedActive && !learnedText) { alert('Escribe lo que has aprendido o marca "No".'); return; }
+
+      const orderCount = ordersActive ? parseInt(document.getElementById('orderCount').value || '0', 10) : 0;
+      const orderRevenue = ordersActive ? parseFloat(document.getElementById('orderRevenue').value || '0') : 0;
+      if (ordersActive && (!orderCount || orderCount < 1)) { alert('Indica cuántos pedidos has tenido.'); return; }
+
+      const entry = {
+        day: state.days.length + 1,
+        date: new Date().toISOString(),
+        score: parseInt(scoreEl.value, 10),
+        learned: learnedActive,
+        learnedText: learnedActive ? learnedText : '',
+        orders: ordersActive,
+        orderCount,
+        orderRevenue
+      };
+      state.days.push(entry);
+      save();
+      route();
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      if (!confirm('¿Reiniciar el reto? Se perderán todos los días guardados.')) return;
+      state = defaultState();
+      save();
+      route();
+    });
+
+    /* ---- Recap ---- */
+    function renderRecap() {
+      const days = state.days;
+      const totalScore = days.reduce((s,d) => s + d.score, 0);
+      const avg = (totalScore / days.length).toFixed(1);
+      const totalOrders = days.reduce((s,d) => s + (d.orderCount || 0), 0);
+      const totalRev = days.reduce((s,d) => s + (d.orderRevenue || 0), 0);
+      const learnedDays = days.filter(d => d.learned).length;
+
+      document.getElementById('rAvg').textContent = avg + ' / 10';
+      document.getElementById('rOrders').textContent = totalOrders;
+      document.getElementById('rRevenue').textContent = '$' + totalRev.toFixed(2);
+      document.getElementById('rLearned').textContent = learnedDays + ' / 30';
+
+      document.getElementById('rBefore').textContent = state.baseline || '(sin registro)';
+      document.getElementById('rAfter').textContent = state.finalReflection || '(escribe abajo cómo te sientes ahora)';
+      document.getElementById('finalReflection').value = state.finalReflection || '';
+
+      const ul = document.getElementById('rLearnings');
+      const learnings = days.filter(d => d.learned && d.learnedText);
+      ul.innerHTML = learnings.length
+        ? learnings.map(d => `<li><span class="day-tag">Día ${d.day}</span>${escapeHtml(d.learnedText)}</li>`).join('')
+        : '<li>No se registraron aprendizajes.</li>';
+    }
+
+    function escapeHtml(s) {
+      return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    document.getElementById('saveFinalBtn').addEventListener('click', () => {
+      state.finalReflection = document.getElementById('finalReflection').value.trim();
+      save();
+      renderRecap();
+    });
+
+    document.getElementById('restartBtn').addEventListener('click', () => {
+      if (!confirm('¿Empezar un nuevo reto de 30 días? El recap actual se borrará.')) return;
+      state = defaultState();
+      save();
+      route();
+    });
+
+    updateSliderBg();
+    route();
+  </script>
+</body>
+</html>

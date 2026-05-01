@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Generador de comentarios — Zonga Elements</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    :root {
+      --c-primary: #2563EB;
+      --c-primary-dark: #1E40AF;
+      --c-primary-soft: #DBEAFE;
+      --c-bg: #0F172A;
+      --c-panel: #1E293B;
+      --c-panel-2: #0B1220;
+      --c-text: #E2E8F0;
+      --c-text-soft: #94A3B8;
+      --c-border: #334155;
+      --c-err: #DC2626;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 20px;
+      --shadow-md: 0 10px 30px -10px rgba(0,0,0,0.5);
+      --ease: cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; height: 100%; }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      color: var(--c-text);
+      background: var(--c-bg);
+      min-height: 100vh;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      font-size: 14px;
+    }
+    a { color: inherit; }
+
+    .app {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      min-height: 100vh;
+    }
+    .stage { transition: transform .2s var(--ease); }
+
+    /* ===== Sidebar ===== */
+    .sidebar {
+      background: var(--c-panel-2);
+      border-right: 1px solid var(--c-border);
+      padding: 24px 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+    .back {
+      color: var(--c-text-soft);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: color .2s var(--ease);
+    }
+    .back:hover { color: var(--c-primary); }
+
+    .brand {
+      font-weight: 800;
+      font-size: 15px;
+      background: linear-gradient(135deg, #60A5FA, #A78BFA);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 700;
+      color: var(--c-text-soft);
+      margin: 0 0 12px;
+    }
+
+    /* Platform tabs */
+    .platforms {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .plat-btn {
+      background: var(--c-panel);
+      border: 1px solid var(--c-border);
+      color: var(--c-text);
+      padding: 14px 10px;
+      border-radius: var(--radius-md);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      transition: all .15s var(--ease);
+    }
+    .plat-btn:hover { border-color: var(--c-primary); }
+    .plat-btn.active {
+      border-color: var(--c-primary);
+      background: rgba(37,99,235,0.15);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+    }
+    .plat-btn svg { width: 24px; height: 24px; }
+
+    /* Controls */
+    .control {
+      margin-bottom: 18px;
+    }
+    .control label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--c-text-soft);
+      margin-bottom: 6px;
+    }
+    .input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      background: var(--c-panel);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius-md);
+      padding: 2px;
+      transition: border-color .15s var(--ease);
+    }
+    .input-wrap:focus-within { border-color: var(--c-primary); }
+    .input-wrap .icon {
+      width: 18px; height: 18px;
+      color: var(--c-text-soft);
+      margin-left: 10px;
+      flex-shrink: 0;
+    }
+    input[type="text"], textarea {
+      flex: 1;
+      background: transparent;
+      border: 0;
+      outline: 0;
+      color: var(--c-text);
+      font-family: inherit;
+      font-size: 14px;
+      padding: 10px 12px;
+      resize: vertical;
+      width: 100%;
+    }
+    textarea { min-height: 80px; }
+    .char-count {
+      font-size: 11px;
+      color: var(--c-text-soft);
+      padding: 0 10px;
+      flex-shrink: 0;
+    }
+
+    /* Upload + verified row */
+    .row-inline {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .upload-btn {
+      flex: 1;
+      background: var(--c-panel);
+      border: 1px dashed var(--c-border);
+      color: var(--c-text-soft);
+      padding: 10px 12px;
+      border-radius: var(--radius-md);
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: border-color .15s var(--ease), color .15s var(--ease);
+    }
+    .upload-btn:hover { border-color: var(--c-primary); color: var(--c-primary); }
+    .avatar-preview {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: var(--c-panel);
+      border: 1px solid var(--c-border);
+    }
+    .avatar-preview.empty { display: flex; align-items: center; justify-content: center; color: var(--c-text-soft); }
+
+    /* Switch */
+    .switch-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--c-panel);
+      border: 1px solid var(--c-border);
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+    }
+    .switch-row .txt {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .switch {
+      position: relative;
+      width: 40px; height: 22px;
+      background: var(--c-border);
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background .2s var(--ease);
+      flex-shrink: 0;
+    }
+    .switch::after {
+      content: "";
+      position: absolute;
+      top: 2px; left: 2px;
+      width: 18px; height: 18px;
+      background: white;
+      border-radius: 50%;
+      transition: left .2s var(--ease);
+    }
+    .switch.on { background: var(--c-primary); }
+    .switch.on::after { left: 20px; }
+
+    /* Download button */
+    .download-btn {
+      width: 100%;
+      background: linear-gradient(135deg, var(--c-primary), #60A5FA);
+      color: white;
+      border: 0;
+      padding: 14px;
+      border-radius: var(--radius-md);
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: var(--shadow-md);
+      transition: transform .1s var(--ease), box-shadow .2s var(--ease);
+      margin-top: auto;
+    }
+    .download-btn:hover { transform: translateY(-1px); box-shadow: 0 15px 40px -10px rgba(37,99,235,0.5); }
+    .download-btn:active { transform: translateY(0); }
+
+    /* ===== Main canvas ===== */
+    .main {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      background:
+        radial-gradient(800px 400px at 50% 20%, rgba(37,99,235,0.12) 0%, transparent 60%),
+        var(--c-bg);
+    }
+    .stage {
+      background: transparent;
+      padding: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 300px;
+    }
+
+    /* ===== TikTok comment ===== */
+    .tt-comment {
+      background: #FFFFFF;
+      color: #161823;
+      border-radius: 20px;
+      padding: 24px 28px 28px 24px;
+      display: flex;
+      gap: 20px;
+      width: 560px;
+      position: relative;
+      font-family: 'Inter', sans-serif;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.35);
+      align-items: flex-start;
+    }
+    .tt-comment::after {
+      content: "";
+      position: absolute;
+      bottom: -10px;
+      left: 40px;
+      width: 22px; height: 22px;
+      background: #FFFFFF;
+      clip-path: polygon(0 0, 100% 0, 0 100%);
+    }
+    .tt-avatar {
+      width: 70px; height: 70px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #CBD5E1;
+      flex-shrink: 0;
+      margin-top: 24px;
+    }
+    .tt-body { flex: 1; min-width: 0; }
+    .tt-reply {
+      font-size: 17px;
+      color: #6B7280;
+      font-weight: 500;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 4px;
+      line-height: 1.2;
+    }
+    .tt-reply .uname {
+      color: #6B7280;
+      font-weight: 500;
+    }
+    .tt-verified {
+      width: 20px; height: 20px;
+      display: inline-block;
+      vertical-align: middle;
+      flex-shrink: 0;
+      margin: 0 2px;
+    }
+    .tt-text {
+      font-size: 30px;
+      font-weight: 800;
+      line-height: 1.2;
+      color: #161823;
+      word-wrap: break-word;
+      letter-spacing: -0.01em;
+    }
+
+    /* ===== Instagram comment ===== */
+    .ig-comment {
+      background: #FFFFFF;
+      color: #262626;
+      border-radius: 16px;
+      padding: 20px 24px;
+      display: flex;
+      gap: 18px;
+      width: 520px;
+      font-family: 'Inter', sans-serif;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+      align-items: flex-start;
+    }
+    .ig-avatar {
+      width: 74px; height: 74px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #CBD5E1;
+      flex-shrink: 0;
+    }
+    .ig-body { flex: 1; min-width: 0; padding-top: 2px; }
+    .ig-text {
+      font-size: 24px;
+      font-weight: 500;
+      color: #141414;
+      line-height: 1.25;
+      word-wrap: break-word;
+      letter-spacing: -0.005em;
+    }
+    .ig-reply {
+      font-size: 18px;
+      color: #A8A8A8;
+      margin-top: 14px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-weight: 400;
+    }
+
+    /* Hide non-active preview */
+    .preview { display: none; }
+    .preview.active { display: flex; }
+
+    @media (max-width: 860px) {
+      .app {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+      }
+      .sidebar {
+        order: 2;
+        border-right: 0;
+        border-top: 1px solid var(--c-border);
+        padding: 20px 16px 24px;
+      }
+      .main {
+        order: 1;
+        padding: 24px 16px;
+        min-height: 340px;
+      }
+      .stage { padding: 16px; width: 100%; }
+
+      .tt-comment {
+        width: 100%;
+        max-width: 420px;
+        padding: 16px 18px 18px 16px;
+        gap: 14px;
+        border-radius: 16px;
+      }
+      .tt-avatar { width: 48px; height: 48px; margin-top: 16px; }
+      .tt-reply { font-size: 13px; margin-bottom: 4px; gap: 3px; }
+      .tt-verified { width: 14px; height: 14px; }
+      .tt-text { font-size: 20px; }
+      .tt-comment::after { left: 28px; width: 16px; height: 16px; bottom: -7px; }
+
+      .ig-comment {
+        width: 100%;
+        max-width: 420px;
+        padding: 14px 16px;
+        gap: 12px;
+        border-radius: 14px;
+      }
+      .ig-avatar { width: 50px; height: 50px; }
+      .ig-text { font-size: 16px; }
+      .ig-reply { font-size: 13px; margin-top: 8px; }
+
+      .platforms .plat-btn { padding: 12px 8px; font-size: 12px; }
+      .download-btn { margin-top: 16px; }
+    }
+
+    @media (max-width: 420px) {
+      .tt-text { font-size: 17px; }
+      .tt-reply { font-size: 12px; }
+      .tt-avatar { width: 42px; height: 42px; margin-top: 14px; }
+      .ig-text { font-size: 15px; }
+      .ig-avatar { width: 44px; height: 44px; }
+      .main { padding: 20px 12px; }
+      .stage { padding: 8px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- ============ SIDEBAR ============ -->
+    <aside class="sidebar">
+      <div class="top-bar">
+        <a href="../index.html" class="back">← Volver</a>
+        <span class="brand">Generador de comentarios</span>
+      </div>
+
+      <!-- Platforms -->
+      <div>
+        <p class="section-title">Plataformas</p>
+        <div class="platforms">
+          <button class="plat-btn active" data-platform="tiktok" type="button">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005.8 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1.84-.1z"/></svg>
+            TikTok
+          </button>
+          <button class="plat-btn" data-platform="instagram" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+            Instagram
+          </button>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div>
+        <p class="section-title">Controles</p>
+
+        <div class="control">
+          <label for="username">Username</label>
+          <div class="input-wrap">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <input type="text" id="username" maxlength="30" value="username" />
+            <span class="char-count"><span id="userCount">8</span>/30</span>
+          </div>
+
+          <div class="row-inline">
+            <div id="avatarBox" class="avatar-preview empty">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <label class="upload-btn" for="avatarInput">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Cargar foto
+            </label>
+            <input type="file" id="avatarInput" accept="image/*" hidden />
+          </div>
+        </div>
+
+        <div class="control" id="verifiedControl">
+          <div class="switch-row">
+            <span class="txt">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="#2563EB"><path d="M12 2L9.5 4.5 6 4l-.5 3.5L2 9.5 3.5 13 2 16.5 5.5 18 6 21.5 9.5 21 12 23.5 14.5 21l3.5.5.5-3.5 3.5-1.5-1.5-3.5 1.5-3.5L18 7.5 17.5 4l-3.5.5zm-1 13l-4-4 1.4-1.4L11 12.2l4.6-4.6L17 9z"/></svg>
+              Insignia verificado
+            </span>
+            <div class="switch" id="verifiedSwitch"></div>
+          </div>
+        </div>
+
+        <div class="control">
+          <label for="commentText">Comentario</label>
+          <div class="input-wrap" style="align-items:flex-start">
+            <textarea id="commentText" maxlength="150">Write any comment and see what happens 😊</textarea>
+          </div>
+          <div style="text-align:right;font-size:11px;color:var(--c-text-soft);margin-top:4px">
+            <span id="commentCount">41</span>/150
+          </div>
+        </div>
+      </div>
+
+      <button class="download-btn" id="downloadBtn" type="button">
+        ↓ Descargar comentario PNG
+      </button>
+    </aside>
+
+    <!-- ============ MAIN / PREVIEW ============ -->
+    <main class="main">
+      <div class="stage" id="stage">
+        <!-- TikTok preview -->
+        <div class="preview active" id="preview-tiktok">
+          <div class="tt-comment" id="ttComment">
+            <img class="tt-avatar" id="ttAvatar" alt="" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><rect width='40' height='40' fill='%23CBD5E1'/><circle cx='20' cy='16' r='7' fill='%23fff'/><path d='M6 38c2-8 8-12 14-12s12 4 14 12' fill='%23fff'/></svg>" />
+            <div class="tt-body">
+              <div class="tt-reply">
+                <span>Reply to</span>
+                <span class="uname" id="ttUname">username</span><span>'s</span>
+                <svg class="tt-verified" id="ttVerified" style="display:none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#20D5EC"/><path d="M7 12l3.5 3.5L17 9" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span>comment</span>
+              </div>
+              <div class="tt-text" id="ttText">Write any comment and see what happens 😊</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Instagram preview -->
+        <div class="preview" id="preview-instagram">
+          <div class="ig-comment" id="igComment">
+            <img class="ig-avatar" id="igAvatar" alt="" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23CBD5E1'/><circle cx='16' cy='13' r='5' fill='%23fff'/><path d='M5 30c1.6-6 6.4-9 11-9s9.4 3 11 9' fill='%23fff'/></svg>" />
+            <div class="ig-body">
+              <div class="ig-text" id="igText">Write any comment and see what happens 😊</div>
+              <div class="ig-reply">
+                <span>Replying to</span>
+                <span id="igUname" style="color:#A8A8A8;font-weight:400">username</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const state = {
+      platform: 'tiktok',
+      username: 'username',
+      comment: 'Write any comment and see what happens 😊',
+      avatar: null,
+      verified: false
+    };
+
+    const $ = id => document.getElementById(id);
+
+    /* ---- Platform ---- */
+    document.querySelectorAll('.plat-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.plat-btn').forEach(b => b.classList.toggle('active', b === btn));
+        state.platform = btn.dataset.platform;
+        document.querySelectorAll('.preview').forEach(p => p.classList.remove('active'));
+        $('preview-' + state.platform).classList.add('active');
+        $('verifiedControl').style.display = state.platform === 'instagram' ? 'none' : '';
+      });
+    });
+
+    /* ---- Username ---- */
+    $('username').addEventListener('input', (e) => {
+      state.username = e.target.value || ' ';
+      $('ttUname').textContent = state.username;
+      $('igUname').textContent = state.username;
+      $('userCount').textContent = e.target.value.length;
+    });
+
+    /* ---- Comment ---- */
+    $('commentText').addEventListener('input', (e) => {
+      state.comment = e.target.value;
+      $('ttText').textContent = state.comment;
+      $('igText').textContent = state.comment;
+      $('commentCount').textContent = e.target.value.length;
+    });
+
+    /* ---- Avatar ---- */
+    $('avatarInput').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        state.avatar = ev.target.result;
+        $('ttAvatar').src = state.avatar;
+        $('igAvatar').src = state.avatar;
+        const box = $('avatarBox');
+        box.innerHTML = '';
+        box.classList.remove('empty');
+        const img = document.createElement('img');
+        img.src = state.avatar;
+        img.style.cssText = 'width:100%;height:100%;border-radius:50%;object-fit:cover';
+        box.appendChild(img);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    /* ---- Verified switch ---- */
+    $('verifiedSwitch').addEventListener('click', () => {
+      state.verified = !state.verified;
+      $('verifiedSwitch').classList.toggle('on', state.verified);
+      $('ttVerified').style.display = state.verified ? 'inline-block' : 'none';
+      $('igVerified').style.display = state.verified ? 'inline-block' : 'none';
+    });
+
+    /* ---- Download PNG ---- */
+    $('downloadBtn').addEventListener('click', async () => {
+      const target = state.platform === 'tiktok' ? $('ttComment') : $('igComment');
+      const extraBottom = state.platform === 'tiktok' ? 14 : 0;
+      try {
+        const rect = target.getBoundingClientRect();
+        const canvas = await html2canvas(target, {
+          backgroundColor: null,
+          scale: 3,
+          useCORS: true,
+          width: Math.ceil(rect.width),
+          height: Math.ceil(rect.height + extraBottom),
+          windowWidth: document.documentElement.clientWidth,
+          windowHeight: document.documentElement.clientHeight
+        });
+        const link = document.createElement('a');
+        link.download = `comentario-${state.platform}-${Date.now()}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      } catch (err) {
+        alert('No se pudo generar la imagen. Intenta de nuevo.');
+        console.error(err);
+      }
+    });
+  </script>
+</body>
+</html>

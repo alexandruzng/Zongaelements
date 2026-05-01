@@ -13,17 +13,232 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
   <title>Zonga Elements — Suite para Dropshipping</title>
+  <style>
+    /* ── Auth overlay ── */
+    #authOverlay {
+      position: fixed; inset: 0; z-index: 9999;
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+      background:
+        radial-gradient(900px 500px at 20% 10%, rgba(37,99,235,0.35) 0%, transparent 60%),
+        radial-gradient(700px 400px at 85% 90%, rgba(96,165,250,0.25) 0%, transparent 60%),
+        rgba(7,12,28,0.88);
+      backdrop-filter: blur(14px) saturate(140%);
+      -webkit-backdrop-filter: blur(14px) saturate(140%);
+      animation: authFade .35s cubic-bezier(.4,0,.2,1);
+    }
+    #authOverlay.hidden { display: none !important; }
+    @keyframes authFade { from { opacity: 0 } to { opacity: 1 } }
+    @keyframes authSlide { from { opacity: 0; transform: translateY(20px) scale(0.98) } to { opacity: 1; transform: translateY(0) scale(1) } }
+
+    .auth-card {
+      width: 100%; max-width: 420px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 24px; padding: 36px 32px 28px;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03) inset;
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      color: #fff; font-family: 'Inter', system-ui, sans-serif;
+      animation: authSlide .4s cubic-bezier(.2,.8,.3,1);
+    }
+    .auth-brand {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 6px;
+    }
+    .auth-brand svg { width: 28px; height: 28px; }
+    .auth-brand span {
+      font-weight: 800; font-size: 15px; letter-spacing: -0.01em;
+      background: linear-gradient(135deg, #fff, #c7d2fe);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .auth-title {
+      font-size: 26px; font-weight: 800; letter-spacing: -0.02em; margin: 12px 0 6px;
+    }
+    .auth-sub {
+      font-size: 14px; color: rgba(255,255,255,0.6); margin: 0 0 24px;
+      line-height: 1.5;
+    }
+
+    .auth-tabs {
+      display: flex; gap: 4px; padding: 4px;
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px; margin-bottom: 22px;
+    }
+    .auth-tab {
+      flex: 1; padding: 9px 12px; border: none; border-radius: 9px;
+      background: transparent; color: rgba(255,255,255,0.6);
+      font: 600 13px 'Inter', sans-serif; cursor: pointer;
+      transition: all .2s ease;
+    }
+    .auth-tab.active {
+      background: rgba(255,255,255,0.1); color: #fff;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .auth-tab:hover:not(.active) { color: rgba(255,255,255,0.85); }
+
+    .auth-form { display: none; flex-direction: column; gap: 12px; }
+    .auth-form.active { display: flex; animation: authSlide .25s ease; }
+
+    .auth-field { position: relative; }
+    .auth-field-icon {
+      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+      width: 16px; height: 16px; color: rgba(255,255,255,0.4);
+      pointer-events: none;
+    }
+    .auth-input {
+      width: 100%; padding: 13px 14px 13px 40px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px; color: #fff; font: 400 14px 'Inter', sans-serif;
+      outline: none; transition: all .2s ease;
+    }
+    .auth-input::placeholder { color: rgba(255,255,255,0.35); }
+    .auth-input:focus {
+      border-color: #60A5FA; background: rgba(255,255,255,0.06);
+      box-shadow: 0 0 0 3px rgba(96,165,250,0.15);
+    }
+    .auth-input:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .auth-btn {
+      padding: 13px 16px; border: none; border-radius: 12px;
+      font: 600 14px 'Inter', sans-serif; cursor: pointer;
+      transition: all .2s ease; display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .auth-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    .auth-btn-primary {
+      background: linear-gradient(135deg, #2563EB, #4F8AF7);
+      color: #fff; box-shadow: 0 8px 24px rgba(37,99,235,0.35);
+    }
+    .auth-btn-primary:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 30px rgba(37,99,235,0.45);
+    }
+    .auth-btn-google {
+      background: #fff; color: #1f2937;
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+    .auth-btn-google:hover:not(:disabled) { background: #f8fafc; transform: translateY(-1px); }
+    .auth-btn-google svg { width: 18px; height: 18px; }
+
+    .auth-link {
+      background: none; border: none; color: rgba(255,255,255,0.55);
+      font: 500 12px 'Inter', sans-serif; cursor: pointer;
+      padding: 6px 4px; text-align: center; align-self: center;
+      transition: color .2s ease;
+    }
+    .auth-link:hover { color: #93c5fd; }
+
+    .auth-divider {
+      display: flex; align-items: center; gap: 12px;
+      margin: 6px 0 6px; color: rgba(255,255,255,0.35);
+      font: 500 11px 'Inter', sans-serif; text-transform: uppercase; letter-spacing: 0.1em;
+    }
+    .auth-divider::before, .auth-divider::after {
+      content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.1);
+    }
+
+    .auth-error {
+      display: none; padding: 10px 14px; border-radius: 10px;
+      background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2);
+      color: #fca5a5; font: 500 13px 'Inter', sans-serif; line-height: 1.5;
+      margin-top: 4px;
+    }
+    .auth-error.show { display: block; animation: authSlide .25s ease; }
+    .auth-error.ok { background: rgba(34,197,94,0.1); border-color: rgba(34,197,94,0.2); color: #86efac; }
+
+    .auth-foot {
+      margin-top: 22px; padding-top: 18px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      font: 500 11px 'Inter', sans-serif; color: rgba(255,255,255,0.4);
+      text-align: center; line-height: 1.6;
+    }
+    .auth-foot strong { color: rgba(255,255,255,0.7); font-weight: 600; }
+
+    @media (max-width: 480px) {
+      .auth-card { padding: 28px 22px 22px; border-radius: 20px; }
+      .auth-title { font-size: 22px; }
+    }
+  </style>
 </head>
 <body>
-<div id="authOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; display:flex; align-items:center; justify-content:center;">
-  <div style="background:#111; padding:2rem; border-radius:16px; width:320px; display:flex; flex-direction:column; gap:1rem;">
-    <h2 style="color:white; margin:0; font-family:Inter,sans-serif;">Acceder</h2>
-    <input id="emailInput" type="email" placeholder="Email" style="padding:10px; border-radius:8px; border:1px solid #333; background:#1a1a1a; color:white;" />
-    <input id="passInput" type="password" placeholder="Contraseña" style="padding:10px; border-radius:8px; border:1px solid #333; background:#1a1a1a; color:white;" />
-    <button id="btnLogin" style="padding:10px; background:#2563EB; color:white; border:none; border-radius:8px; cursor:pointer;">Iniciar sesión</button>
-    <button id="btnRegister" style="padding:10px; background:#374151; color:white; border:none; border-radius:8px; cursor:pointer;">Registrarse</button>
-    <button id="btnGoogle" style="padding:10px; background:white; color:#111; border:none; border-radius:8px; cursor:pointer; font-weight:600;">Entrar con Google</button>
-    <p id="authError" style="color:#f87171; font-size:0.85rem; margin:0;"></p>
+<!-- ======= AUTH OVERLAY ======= -->
+<div id="authOverlay" aria-modal="true" role="dialog">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <svg viewBox="0 0 100 100" aria-hidden="true">
+        <rect width="100" height="100" rx="22" fill="url(#authLogoGrad)"/>
+        <text x="50" y="68" font-size="60" text-anchor="middle" fill="white" font-family="Inter, sans-serif" font-weight="800">Z</text>
+        <defs>
+          <linearGradient id="authLogoGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#2563EB"/>
+            <stop offset="100%" stop-color="#60A5FA"/>
+          </linearGradient>
+        </defs>
+      </svg>
+      <span>Zonga Elements</span>
+    </div>
+
+    <h2 class="auth-title">Bienvenido</h2>
+    <p class="auth-sub">Tus datos se guardan en la nube y te siguen en cualquier dispositivo.</p>
+
+    <div class="auth-tabs" role="tablist">
+      <button id="tabLogin" class="auth-tab active" role="tab">Iniciar sesión</button>
+      <button id="tabRegister" class="auth-tab" role="tab">Registrarse</button>
+    </div>
+
+    <!-- Login form -->
+    <form id="formLogin" class="auth-form active" autocomplete="on">
+      <div class="auth-field">
+        <svg class="auth-field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="3"/><path d="M22 7L12 14 2 7"/></svg>
+        <input id="emailInput" class="auth-input" type="email" placeholder="tu@email.com" autocomplete="email" />
+      </div>
+      <div class="auth-field">
+        <svg class="auth-field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <input id="passInput" class="auth-input" type="password" placeholder="Contraseña" autocomplete="current-password" />
+      </div>
+      <button id="btnLogin" class="auth-btn auth-btn-primary" type="submit">
+        Iniciar sesión
+      </button>
+      <button id="btnReset" class="auth-link" type="button">¿Olvidaste tu contraseña?</button>
+
+      <div class="auth-divider">o continúa con</div>
+
+      <button id="btnGoogle" class="auth-btn auth-btn-google" type="button">
+        <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Google
+      </button>
+    </form>
+
+    <!-- Register form -->
+    <form id="formRegister" class="auth-form" autocomplete="on">
+      <div class="auth-field">
+        <svg class="auth-field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="3"/><path d="M22 7L12 14 2 7"/></svg>
+        <input id="emailInputReg" class="auth-input" type="email" placeholder="tu@email.com" autocomplete="email" />
+      </div>
+      <div class="auth-field">
+        <svg class="auth-field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <input id="passInputReg" class="auth-input" type="password" placeholder="Contraseña (mín. 6 caracteres)" autocomplete="new-password" />
+      </div>
+      <div class="auth-field">
+        <svg class="auth-field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        <input id="passInputReg2" class="auth-input" type="password" placeholder="Repite la contraseña" autocomplete="new-password" />
+      </div>
+      <button id="btnRegister" class="auth-btn auth-btn-primary" type="submit">
+        Crear cuenta
+      </button>
+
+      <div class="auth-divider">o regístrate con</div>
+
+      <button id="btnGoogleReg" class="auth-btn auth-btn-google" type="button">
+        <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Google
+      </button>
+    </form>
+
+    <p id="authError" class="auth-error"></p>
+
+    <p class="auth-foot">
+      Al continuar aceptas que tus datos se sincronicen con <strong>Firebase</strong> para que estén disponibles en cualquier dispositivo.
+    </p>
   </div>
 </div>
   <!-- ======= NAVBAR ======= -->
@@ -207,8 +422,9 @@
     </div>
   </footer>
 
+  <script type="module" src="firebase.js"></script>
+  <script type="module" src="auth.js"></script>
   <script src="script.js"></script>
   <script src="/zonga-memory.js"></script>
-<script type="module" src="firebase.js"></script>
-<script type="module" src="auth.js"></script>
-<script type="module" src="script.js"></script>
+</body>
+</html>

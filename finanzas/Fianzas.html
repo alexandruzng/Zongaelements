@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Fianzas · Gestión de finanzas personales</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
+<script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', 'ui-sans-serif', 'system-ui'],
+          mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+          serif: ['Fraunces', 'ui-serif'],
+        },
+      }
+    }
+  }
+</script>
+<style>
+  :root {
+    --bg: #ffffff;
+    --surface: #fafaf9;
+    --surface-2: #f5f5f4;
+    --border: #eceae6;
+    --ink: #0b0b0a;
+    --ink-2: #3f3f3a;
+    --ink-3: #78756d;
+    --pos: #10b981;
+    --pos-soft: #ecfdf5;
+    --pos-ink: #047857;
+    --neg: #ef4444;
+    --neg-soft: #fef2f2;
+    --neg-ink: #b91c1c;
+    --accent: #0b0b0a;
+  }
+  [data-theme="dark"] {
+    --bg: #0b0b0c;
+    --surface: #141416;
+    --surface-2: #1b1b1e;
+    --border: #26262a;
+    --ink: #f5f5f4;
+    --ink-2: #d4d4d0;
+    --ink-3: #8e8b83;
+    --pos: #34d399;
+    --pos-soft: #052e22;
+    --pos-ink: #6ee7b7;
+    --neg: #f87171;
+    --neg-soft: #3b0d0d;
+    --neg-ink: #fca5a5;
+    --accent: #f5f5f4;
+  }
+  html, body { background: var(--bg); color: var(--ink); }
+  body { font-family: 'Inter', sans-serif; font-feature-settings: "ss01","cv11"; -webkit-font-smoothing: antialiased; }
+  .num { font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+  .serif { font-family: 'Fraunces', serif; font-optical-sizing: auto; }
+
+  .surface { background: var(--surface); border: 1px solid var(--border); }
+  .surface-2 { background: var(--surface-2); border: 1px solid var(--border); }
+  .hairline { border-color: var(--border); }
+  .ink-2 { color: var(--ink-2); }
+  .ink-3 { color: var(--ink-3); }
+
+  .card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+  }
+  .card:hover { box-shadow: 0 1px 2px rgba(0,0,0,.03), 0 8px 24px -12px rgba(0,0,0,.08); }
+  .soft-shadow { box-shadow: 0 1px 2px rgba(0,0,0,.03), 0 8px 24px -12px rgba(0,0,0,.06); }
+
+  .fade-up { animation: fadeUp .5s cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(8px);} to { opacity: 1; transform: none;} }
+
+  .fade-in { animation: fadeIn .35s ease both; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .scale-in { animation: scaleIn .3s cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes scaleIn { from { opacity: 0; transform: scale(.96);} to { opacity: 1; transform: scale(1);} }
+
+  .pulse-dot { animation: pulseDot 1.8s ease-in-out infinite; }
+  @keyframes pulseDot { 0%,100%{ opacity: 1;} 50%{ opacity: .35;} }
+
+  .sparkpath { stroke-dasharray: 500; stroke-dashoffset: 500; animation: draw 1.4s .1s ease-out forwards; }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--ink-3); }
+
+  /* focus */
+  .focusable:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; border-radius: 10px; }
+
+  /* chip */
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px; border-radius: 999px;
+    background: var(--surface); border: 1px solid var(--border);
+    font-size: 12px; color: var(--ink-2);
+  }
+
+  /* donut gap */
+  .recharts-pie path { stroke: var(--bg); stroke-width: 2; }
+  .recharts-cartesian-axis-tick text { fill: var(--ink-3) !important; font-family: 'JetBrains Mono', monospace; font-size: 10px; }
+  .recharts-tooltip-wrapper { outline: none !important; }
+
+  /* toggle */
+  .toggle-track {
+    display: inline-flex; padding: 4px; background: var(--surface-2);
+    border: 1px solid var(--border); border-radius: 12px;
+  }
+  .toggle-pill {
+    padding: 8px 14px; border-radius: 8px; font-weight: 500; font-size: 13px;
+    color: var(--ink-3); transition: all .2s ease; cursor: pointer; user-select: none;
+  }
+  .toggle-pill[data-active="true"] {
+    background: var(--bg); color: var(--ink);
+    box-shadow: 0 1px 2px rgba(0,0,0,.06);
+  }
+
+  /* primary button */
+  .btn-primary {
+    background: var(--ink); color: var(--bg);
+    padding: 12px 18px; border-radius: 12px; font-weight: 500; font-size: 14px;
+    transition: transform .15s ease, opacity .15s ease;
+  }
+  .btn-primary:hover { transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); opacity: .9; }
+
+  .btn-ghost {
+    color: var(--ink-2); padding: 10px 14px; border-radius: 10px; font-size: 13px;
+    border: 1px solid var(--border); background: var(--bg);
+    transition: all .15s ease;
+  }
+  .btn-ghost:hover { background: var(--surface); color: var(--ink); }
+
+  /* input */
+  .input {
+    width: 100%; padding: 12px 14px; border-radius: 12px;
+    background: var(--bg); border: 1px solid var(--border);
+    color: var(--ink); font-size: 14px; transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  .input:focus { outline: none; border-color: var(--ink); box-shadow: 0 0 0 3px rgba(0,0,0,.04); }
+
+  .modal-backdrop { background: rgba(10,10,10,.45); backdrop-filter: blur(6px); }
+  [data-theme="dark"] .modal-backdrop { background: rgba(0,0,0,.6); }
+
+  /* health gradient bar */
+  .health-track {
+    height: 10px; border-radius: 999px; background: var(--surface-2);
+    overflow: hidden; position: relative;
+  }
+  .health-fill {
+    height: 100%; border-radius: 999px;
+    background: linear-gradient(90deg, #ef4444 0%, #f59e0b 45%, #10b981 100%);
+    transition: width 1.2s cubic-bezier(.2,.8,.2,1);
+  }
+
+  /* calendar */
+  .cal-day {
+    aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+    border-radius: 10px; font-size: 13px; cursor: pointer;
+    transition: background .15s ease, color .15s ease;
+    color: var(--ink-2);
+  }
+  .cal-day:hover { background: var(--surface); }
+  .cal-day[data-selected="true"] { background: var(--ink); color: var(--bg); }
+  .cal-day[data-muted="true"] { color: var(--ink-3); opacity: .45; }
+  .cal-day[data-today="true"] { box-shadow: inset 0 0 0 1px var(--ink); }
+
+  /* marquee dot separator */
+  .dot-sep::before { content: "·"; margin: 0 8px; color: var(--ink-3); }
+
+  /* category pill swatches */
+  .swatch { width: 10px; height: 10px; border-radius: 3px; }
+
+  /* gentle row stagger */
+  .stagger > * { animation: fadeUp .5s cubic-bezier(.2,.8,.2,1) both; }
+  .stagger > *:nth-child(1) { animation-delay: .02s; }
+  .stagger > *:nth-child(2) { animation-delay: .06s; }
+  .stagger > *:nth-child(3) { animation-delay: .10s; }
+  .stagger > *:nth-child(4) { animation-delay: .14s; }
+  .stagger > *:nth-child(5) { animation-delay: .18s; }
+  .stagger > *:nth-child(6) { animation-delay: .22s; }
+  .stagger > *:nth-child(7) { animation-delay: .26s; }
+  .stagger > *:nth-child(8) { animation-delay: .30s; }
+
+  /* subtle brand wordmark */
+  .brand {
+    font-family: 'Fraunces', serif; font-weight: 500; letter-spacing: -0.02em;
+    font-variation-settings: "opsz" 144, "SOFT" 50;
+  }
+
+  /* FAB */
+  .fab {
+    position: fixed; right: 28px; bottom: 28px; z-index: 40;
+    width: 58px; height: 58px; border-radius: 999px;
+    background: var(--ink); color: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 10px 28px -8px rgba(0,0,0,.35), 0 2px 6px rgba(0,0,0,.12);
+    transition: transform .2s cubic-bezier(.2,.8,.2,1);
+  }
+  .fab:hover { transform: translateY(-2px) scale(1.02); }
+  .fab:active { transform: translateY(0) scale(.98); }
+
+  /* segment filter */
+  .seg-btn {
+    padding: 7px 12px; border-radius: 999px; font-size: 12px; font-weight: 500;
+    border: 1px solid var(--border); background: var(--bg); color: var(--ink-2);
+    transition: all .15s ease;
+  }
+  .seg-btn[data-active="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .seg-btn:hover:not([data-active="true"]) { background: var(--surface); color: var(--ink); }
+
+  /* tip card carousel indicators */
+  .tip-dot { width: 6px; height: 6px; border-radius: 999px; background: var(--border); transition: all .2s ease; }
+  .tip-dot[data-active="true"] { background: var(--ink); width: 18px; }
+
+  /* tweaks panel */
+  .tweak-panel {
+    position: fixed; right: 20px; top: 84px; z-index: 50;
+    width: 280px; padding: 14px; border-radius: 16px;
+    background: var(--bg); border: 1px solid var(--border);
+    box-shadow: 0 20px 40px -10px rgba(0,0,0,.15);
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="fianzas/data.js"></script>
+<script type="text/babel" src="fianzas/icons.jsx"></script>
+<script type="text/babel" src="fianzas/ui.jsx"></script>
+<script type="text/babel" src="fianzas/modal.jsx"></script>
+<script type="text/babel" src="fianzas/dashboard.jsx"></script>
+<script type="text/babel" src="fianzas/month.jsx"></script>
+<script type="text/babel" src="fianzas/goals.jsx"></script>
+<script type="text/babel" src="fianzas/app.jsx"></script>
+</body>
+</html>

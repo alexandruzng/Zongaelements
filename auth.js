@@ -10,41 +10,8 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
 import { doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
 
-// ── Cloud sync (Firestore) ──
-const SKIP_PREFIXES = ["__zonga", "firebase:", "__zonga_memory_meta__"];
-const skipKey = (k) => SKIP_PREFIXES.some(p => k.startsWith(p));
-
-async function pullFromCloud(uid) {
-  try {
-    const snap = await getDoc(doc(db, "users", uid));
-    if (!snap.exists()) return false;
-    const data = snap.data().localStorage || {};
-    let count = 0;
-    Object.keys(data).forEach(k => {
-      try { localStorage.setItem(k, data[k]); count++; } catch {}
-    });
-    if (count > 0) console.log(`[zonga] Restauradas ${count} entradas desde la nube`);
-    return true;
-  } catch (e) { console.warn("pullFromCloud", e); return false; }
-}
-
-async function pushToCloud(uid) {
-  try {
-    const data = {};
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (skipKey(k)) continue;
-      data[k] = localStorage.getItem(k);
-    }
-    await setDoc(doc(db, "users", uid), {
-      localStorage: data,
-      updatedAt: Date.now(),
-      origin: location.hostname
-    }, { merge: true });
-  } catch (e) { console.warn("pushToCloud", e); }
-}
-
-window.__zongaAuth = { user: null, db, pullFromCloud, pushToCloud };
+// La sincronización con Firestore (pull/push/onSnapshot real-time) está en sync.js
+window.__zongaAuth = { user: null, db };
 
 // ── Overlay handling ──
 const overlay = document.getElementById("authOverlay");
@@ -72,7 +39,6 @@ onAuthStateChanged(auth, async (user) => {
   if (user) {
     overlay?.classList.add("hidden");
     document.documentElement.classList.add("auth-ok");
-    await pullFromCloud(user.uid);
     if (window.__zongaAuth.onAuthEnter) {
       try { await window.__zongaAuth.onAuthEnter(user); } catch (e) { console.warn(e); }
     }
@@ -82,20 +48,6 @@ onAuthStateChanged(auth, async (user) => {
     document.documentElement.classList.remove("auth-ok");
     if (window.ZongaMemory?.onAuthChange) window.ZongaMemory.onAuthChange(null);
   }
-});
-
-// Periodic + on-storage push
-window.addEventListener("storage", () => {
-  const u = window.__zongaAuth.user;
-  if (u) pushToCloud(u.uid);
-});
-setInterval(() => {
-  const u = window.__zongaAuth.user;
-  if (u) pushToCloud(u.uid);
-}, 30000);
-window.addEventListener("beforeunload", () => {
-  const u = window.__zongaAuth.user;
-  if (u) pushToCloud(u.uid);
 });
 
 // ── Tab switching ──
@@ -181,8 +133,7 @@ document.getElementById("btnReset")?.addEventListener("click", async (e) => {
 
 // expose logout
 window.zongaLogout = async () => {
-  const u = window.__zongaAuth.user;
-  if (u) await pushToCloud(u.uid);
+  try { window.__zongaSync?.forcePush?.(); } catch {}
   await signOut(auth);
 };
 

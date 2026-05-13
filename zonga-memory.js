@@ -13,18 +13,24 @@
   const style = document.createElement('style');
   style.textContent = `
     .zm-fab {
-      position: fixed; right: 18px; bottom: 18px; z-index: 99999;
+      position: fixed; left: 18px; top: 18px; z-index: 99999;
       background: #1a1a1a; color: #fff; border: none;
-      border-radius: 999px; padding: 12px 18px;
-      font: 600 13px/1 'DM Sans', system-ui, -apple-system, 'Inter', sans-serif;
-      cursor: pointer; display: flex; align-items: center; gap: 8px;
+      border-radius: 999px;
+      width: 44px; height: 44px; padding: 0;
+      font-size: 18px; line-height: 1;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
       box-shadow: 0 8px 24px rgba(0,0,0,0.18), 0 0 0 1px rgba(255,255,255,0.05);
       transition: transform .15s ease, box-shadow .2s ease;
     }
     .zm-fab:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(0,0,0,0.24); }
-    .zm-fab .zm-dot { width:8px; height:8px; border-radius:50%; background:#fbbf24; display:none; }
-    .zm-fab.zm-stale .zm-dot { display: inline-block; }
-    @media (max-width: 540px) { .zm-fab { right: 12px; bottom: 12px; padding: 10px 14px; font-size: 12px; } }
+    .zm-fab .zm-dot {
+      position: absolute; top: 4px; right: 4px;
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #fbbf24; display: none;
+      box-shadow: 0 0 0 2px #1a1a1a;
+    }
+    .zm-fab.zm-stale .zm-dot { display: block; }
+    @media (max-width: 540px) { .zm-fab { left: 12px; top: 12px; width: 40px; height: 40px; font-size: 16px; } }
 
     .zm-backdrop {
       position: fixed; inset: 0; background: rgba(15,23,42,0.55);
@@ -282,7 +288,8 @@
     if (document.querySelector('.zm-fab')) return;
     fab = document.createElement('button');
     fab.className = 'zm-fab';
-    fab.innerHTML = '<span class="zm-dot"></span>💾 Mis datos';
+    fab.setAttribute('aria-label', 'Mis datos');
+    fab.innerHTML = '<span class="zm-dot"></span>💾';
     fab.addEventListener('click', openModal);
     document.body.appendChild(fab);
     refreshFab();

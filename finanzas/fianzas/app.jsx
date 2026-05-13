@@ -102,6 +102,7 @@ function App() {
 
   const [modalOpen, setModalOpen] = useS(false);
   const [modalType, setModalType] = useS('expense');
+  const [editingTx, setEditingTx] = useS(null);
 
   // Current month for month-filter view
   const initialMonthKey = (() => {
@@ -231,7 +232,9 @@ function App() {
 
   // Actions
   const addTx = (tx) => setTransactions((prev) => [tx, ...prev]);
+  const updateTx = (id, patch) => setTransactions((prev) => prev.map((t) => t.id === id ? { ...t, ...patch } : t));
   const deleteTx = (id) => setTransactions((prev) => prev.filter((t) => t.id !== id));
+  const editTx = (tx) => { setEditingTx(tx); setModalType(tx.type); setModalOpen(true); };
   const updateGoal = (id, current) => setGoals((prev) => prev.map((g) => g.id === id ? { ...g, current: Math.min(g.target, current) } : g));
   const addGoal = (goal) => setGoals((prev) => [...prev, goal]);
   const deleteGoal = (id) => setGoals((prev) => prev.filter((g) => g.id !== id));
@@ -246,7 +249,7 @@ function App() {
     URL.revokeObjectURL(url);
   };
 
-  const actions = { addTx, deleteTx, updateGoal, addGoal, deleteGoal, exportCSV, setView };
+  const actions = { addTx, updateTx, deleteTx, editTx, updateGoal, addGoal, deleteGoal, exportCSV, setView };
 
   const resetAll = () => {
     if (!confirm('¿Seguro que quieres borrar todos tus datos? Esta acción no se puede deshacer.')) return;
@@ -260,7 +263,14 @@ function App() {
     setBudgets({});
   };
 
-  const openModal = (type = 'expense') => {setModalType(type);setModalOpen(true);};
+  const openModal = (type = 'expense') => { setEditingTx(null); setModalType(type); setModalOpen(true); };
+  const closeModal = () => { setModalOpen(false); setEditingTx(null); };
+
+  const handleSave = (tx) => {
+    if (editingTx) updateTx(editingTx.id, tx);
+    else addTx(tx);
+  };
+  const handleDeleteFromModal = (id) => { deleteTx(id); closeModal(); };
 
   // Tweaks
   const { tweaks, visible: tweaksVisible, update: updateTweak } = useTweaks();
@@ -302,9 +312,11 @@ function App() {
 
       <A_Modal.TxModal
         open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onSave={addTx}
+        onClose={closeModal}
+        onSave={handleSave}
         defaultType={modalType}
+        editingTx={editingTx}
+        onDeleteTx={handleDeleteFromModal}
         customCats={customCats}
         onAddCategory={addCategory}
         onDeleteCategory={deleteCategory} />

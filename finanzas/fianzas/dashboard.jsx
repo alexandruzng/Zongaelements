@@ -140,7 +140,7 @@ function Dashboard({ state, actions, derived }) {
               </button>
             </div>
             <div className="stagger">
-              {recent.map(tx => <DS.TxRow key={tx.id} tx={tx} onDelete={actions.deleteTx}/>)}
+              {recent.map(tx => <DS.TxRow key={tx.id} tx={tx} onDelete={actions.deleteTx} onEdit={actions.editTx}/>)}
             </div>
           </div>
         </>
@@ -184,7 +184,7 @@ function Dashboard({ state, actions, derived }) {
               </div>
               <div className="stagger">
                 {recent.length === 0 && <div className="ink-3 text-[13px] py-8 text-center">Sin transacciones aún.</div>}
-                {recent.map(tx => <DS.TxRow key={tx.id} tx={tx} onDelete={actions.deleteTx}/>)}
+                {recent.map(tx => <DS.TxRow key={tx.id} tx={tx} onDelete={actions.deleteTx} onEdit={actions.editTx}/>)}
               </div>
             </div>
 

@@ -126,7 +126,7 @@ function MonthView({ state, actions, derived }) {
 
         <div className="stagger">
           {filteredTx.length === 0 && <div className="ink-3 text-[13px] py-10 text-center">Ningún movimiento coincide con los filtros.</div>}
-          {filteredTx.map(tx => <MUI.TxRow key={tx.id} tx={tx} onDelete={actions.deleteTx}/>)}
+          {filteredTx.map(tx => <MUI.TxRow key={tx.id} tx={tx} onDelete={actions.deleteTx} onEdit={actions.editTx}/>)}
         </div>
       </div>
     </div>

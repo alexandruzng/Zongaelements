@@ -100,7 +100,8 @@ function slugify(s) {
 }
 
 // ── TxModal ─────────────────────────────────────────────────────────────
-function TxModal({ open, onClose, onSave, defaultType='expense', customCats=[], onAddCategory, onDeleteCategory }) {
+function TxModal({ open, onClose, onSave, defaultType='expense', editingTx=null, onDeleteTx, customCats=[], onAddCategory, onDeleteCategory }) {
+  const isEdit = !!editingTx;
   const [type, setType]           = useStateM(defaultType);
   const [date, setDate]           = useStateM(() => {
     const t = new Date(); return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
@@ -121,15 +122,27 @@ function TxModal({ open, onClose, onSave, defaultType='expense', customCats=[], 
 
   useEffectM(() => {
     if (!open) return;
-    setType(defaultType);
-    setConcept(''); setAmountStr(''); setCurrency('EUR'); setSaving(false); setShowCal(false);
-    setCategory(defaultType==='expense' ? 'food' : 'salary');
+    setSaving(false); setShowCal(false);
     setShowNewCat(false); setNewCatLabel(''); setNewCatColor(CAT_PALETTE[0]); setNewCatIcon(CAT_ICONS[0]); setNewCatError('');
-    const t = new Date(); setDate(`${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`);
+
+    if (editingTx) {
+      setType(editingTx.type);
+      setDate(editingTx.date);
+      setConcept(editingTx.concept || '');
+      // El amount se guarda siempre en EUR
+      setAmountStr(String(editingTx.amount).replace('.', ','));
+      setCurrency('EUR');
+      setCategory(editingTx.category || (editingTx.type === 'expense' ? 'food' : 'salary'));
+    } else {
+      setType(defaultType);
+      setConcept(''); setAmountStr(''); setCurrency('EUR');
+      setCategory(defaultType==='expense' ? 'food' : 'salary');
+      const t = new Date(); setDate(`${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`);
+    }
     const onKey = (e) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [open, defaultType]);
+  }, [open, defaultType, editingTx]);
 
   if (!open) return null;
 
@@ -185,14 +198,20 @@ function TxModal({ open, onClose, onSave, defaultType='expense', customCats=[], 
     setSaving(true);
     setTimeout(() => {
       onSave({
-        id: 'tx-' + Date.now(),
+        id: isEdit ? editingTx.id : 'tx-' + Date.now(),
         type, date, concept: concept.trim(),
         amount: amountEUR,
         category,
       });
       setSaving(false);
       onClose();
-    }, 450);
+    }, isEdit ? 200 : 450);
+  };
+
+  const handleDelete = () => {
+    if (!isEdit) return;
+    if (!confirm('¿Eliminar esta transacción? No se puede deshacer.')) return;
+    onDeleteTx?.(editingTx.id);
   };
 
   const { y, m, d } = pISO_M(date);
@@ -209,10 +228,12 @@ function TxModal({ open, onClose, onSave, defaultType='expense', customCats=[], 
           <div className="flex items-start justify-between">
             <div>
               <div className="text-[11px] font-medium uppercase tracking-wider" style={{color: tint.ink}}>
-                Nueva transacción
+                {isEdit ? 'Editar transacción' : 'Nueva transacción'}
               </div>
               <div className="serif text-[26px] font-medium mt-1" style={{color: 'var(--ink)', lineHeight: 1.1}}>
-                {isIncome ? 'Registrar ingreso' : 'Registrar gasto'}
+                {isEdit
+                  ? (isIncome ? 'Editar ingreso' : 'Editar gasto')
+                  : (isIncome ? 'Registrar ingreso' : 'Registrar gasto')}
               </div>
             </div>
             <button onClick={onClose} className="p-2 rounded-lg hover:bg-[var(--bg)] transition" aria-label="Cerrar">
@@ -435,6 +456,22 @@ function TxModal({ open, onClose, onSave, defaultType='expense', customCats=[], 
 
           {/* Actions */}
           <div className="flex items-center gap-3 pt-2">
+            {isEdit && (
+              <button type="button"
+                      onClick={handleDelete}
+                      className="flex items-center justify-center gap-1.5 rounded-xl transition"
+                      style={{
+                        padding: '12px 14px',
+                        border: '1px solid var(--border)',
+                        background: 'var(--bg)',
+                        color: 'var(--neg-ink)',
+                        fontSize: 13, fontWeight: 500
+                      }}
+                      title="Eliminar transacción"
+                      aria-label="Eliminar">
+                <Ic.trash size={14}/>
+              </button>
+            )}
             <button type="button" className="btn-ghost flex-1" onClick={onClose}>Cancelar</button>
             <button type="button"
                     className="btn-primary flex-1 flex items-center justify-center gap-2"
@@ -444,11 +481,11 @@ function TxModal({ open, onClose, onSave, defaultType='expense', customCats=[], 
               {saving ? (
                 <>
                   <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"/>
-                  Guardando…
+                  {isEdit ? 'Guardando…' : 'Guardando…'}
                 </>
               ) : (
                 <>
-                  <Ic.check size={14}/> Guardar
+                  <Ic.check size={14}/> {isEdit ? 'Guardar cambios' : 'Guardar'}
                 </>
               )}
             </button>

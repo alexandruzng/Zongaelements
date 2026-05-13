@@ -293,13 +293,21 @@ function CatBadge({ catKey, size = 'md' }) {
 }
 
 // ── Transaction row ─────────────────────────────────────────────────────
-function TxRow({ tx, onDelete }) {
+function TxRow({ tx, onDelete, onEdit }) {
   const isIncome = tx.type === 'income';
   const cat = CATEGORIES[tx.category];
   const { y, m, d } = parseISO(tx.date);
   const dateLabel = `${String(d).padStart(2,'0')} ${MONTH_SHORT[m-1]}`;
+  const clickable = !!onEdit;
   return (
-    <div className="flex items-center gap-3 py-3 px-2 -mx-2 rounded-lg transition hover:bg-[var(--surface)] group">
+    <div
+      className="flex items-center gap-3 py-3 px-2 -mx-2 rounded-lg transition hover:bg-[var(--surface)] group"
+      onClick={clickable ? () => onEdit(tx) : undefined}
+      role={clickable ? 'button' : undefined}
+      tabIndex={clickable ? 0 : undefined}
+      onKeyDown={clickable ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onEdit(tx); } } : undefined}
+      title={clickable ? 'Clic para editar' : undefined}
+      style={{ cursor: clickable ? 'pointer' : 'default' }}>
       <CatBadge catKey={tx.category} size="sm"/>
       <div className="min-w-0 flex-1">
         <div className="text-[13px] font-medium truncate" style={{color: 'var(--ink)'}}>{tx.concept}</div>
@@ -319,7 +327,7 @@ function TxRow({ tx, onDelete }) {
       </div>
       {onDelete && (
         <button
-          onClick={()=>onDelete(tx.id)}
+          onClick={(e)=>{ e.stopPropagation(); onDelete(tx.id); }}
           className="opacity-0 group-hover:opacity-100 transition p-1.5 rounded-md hover:bg-[var(--surface-2)]"
           title="Eliminar"
           aria-label="Eliminar">

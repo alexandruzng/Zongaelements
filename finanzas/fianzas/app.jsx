@@ -69,6 +69,29 @@ function App() {
     return A_FD.BUDGETS_SEED;
   });
 
+  // Categorías personalizadas (key, label, color, icon, type: 'expense'|'income', custom: true)
+  const [customCats, setCustomCats] = useS(() => {
+    try {
+      const raw = localStorage.getItem('fz:categories');
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    return [];
+  });
+
+  // Fusionar custom -> CATEGORIES global (sincrónico para que la primera render ya las vea)
+  customCats.forEach(c => { A_FD.CATEGORIES[c.key] = c; });
+
+  useE(() => {
+    customCats.forEach(c => { A_FD.CATEGORIES[c.key] = c; });
+    try { localStorage.setItem('fz:categories', JSON.stringify(customCats)); } catch(e) {}
+  }, [customCats]);
+
+  const addCategory = (cat) => setCustomCats(prev => [...prev, cat]);
+  const deleteCategory = (key) => {
+    setCustomCats(prev => prev.filter(c => c.key !== key));
+    delete A_FD.CATEGORIES[key];
+  };
+
   useE(() => { try { localStorage.setItem('fz:transactions', JSON.stringify(transactions)); } catch(e) {} }, [transactions]);
   useE(() => { try { localStorage.setItem('fz:goals', JSON.stringify(goals)); } catch(e) {} }, [goals]);
   useE(() => { try { localStorage.setItem('fz:budgets', JSON.stringify(budgets)); } catch(e) {} }, [budgets]);
@@ -124,7 +147,7 @@ function App() {
       const bd = {};
       monthTx.filter(t=>t.type==='expense').forEach(t => { bd[t.category] = (bd[t.category]||0) + t.amount; });
       const breakdown = Object.entries(bd)
-        .map(([k,total]) => ({ key:k, label: A_FD.CATEGORIES[k].label, color: A_FD.CATEGORIES[k].color, total }))
+        .map(([k,total]) => ({ key:k, label: (A_FD.CATEGORIES[k]?.label) || 'Otros', color: (A_FD.CATEGORIES[k]?.color) || '#78716c', total }))
         .sort((a,b) => b.total - a.total);
 
       // best / worst month by balance
@@ -179,7 +202,7 @@ function App() {
     const bd = {};
     monthTx.filter((t) => t.type === 'expense').forEach((t) => {bd[t.category] = (bd[t.category] || 0) + t.amount;});
     const breakdown = Object.entries(bd).
-    map(([k, total]) => ({ key: k, label: A_FD.CATEGORIES[k].label, color: A_FD.CATEGORIES[k].color, total })).
+    map(([k, total]) => ({ key: k, label: (A_FD.CATEGORIES[k]?.label) || 'Otros', color: (A_FD.CATEGORIES[k]?.color) || '#78716c', total })).
     sort((a, b) => b.total - a.total);
 
     // recent = last 5 tx across all time
@@ -281,7 +304,10 @@ function App() {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         onSave={addTx}
-        defaultType={modalType} />
+        defaultType={modalType}
+        customCats={customCats}
+        onAddCategory={addCategory}
+        onDeleteCategory={deleteCategory} />
       
 
       {tweaksVisible && <TweaksPanel tweaks={tweaks} onUpdate={updateTweak} onReset={resetAll} />}
@@ -464,7 +490,7 @@ function computeTips({ breakdown, income, expense, balance, goals, activeKey, bu
     return spent >= lim;
   });
   if (over.length > 0) {
-    const names = over.map(([k]) => A_FD.CATEGORIES[k].label.toLowerCase()).join(', ');
+    const names = over.map(([k]) => ((A_FD.CATEGORIES[k]?.label) || 'otros').toLowerCase()).join(', ');
     tips.push({ title: `Presupuesto superado en ${over.length} categoría${over.length > 1 ? 's' : ''}`, body: `Has pasado el límite en ${names}. Ajusta los presupuestos o modera el gasto en los próximos días del mes.` });
   }
 

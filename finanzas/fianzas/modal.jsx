@@ -76,8 +76,31 @@ function Calendar({ value, onChange }) {
   );
 }
 
+// ── Paleta y selección de iconos para categorías custom ────────────────
+const CAT_PALETTE = [
+  '#f97316', '#ef4444', '#ec4899', '#a855f7', '#6366f1',
+  '#3b82f6', '#14b8a6', '#10b981', '#22c55e', '#eab308',
+  '#f59e0b', '#78716c'
+];
+const CAT_ICONS = [
+  'tag', 'utensils', 'car', 'home', 'heart', 'bag', 'repeat', 'briefcase',
+  'laptop', 'gift', 'sparkles', 'target', 'piggy', 'wallet', 'lightbulb',
+  'bell', 'more'
+];
+
+// Built-in keys por tipo (los originales)
+const BUILTIN_EXPENSE = ['food','transport','home','leisure','shopping','subs','health','other'];
+const BUILTIN_INCOME  = ['salary','freelance','gift','other'];
+
+function slugify(s) {
+  return String(s).toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g,'')
+    .replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'')
+    .slice(0, 32) || 'cat';
+}
+
 // ── TxModal ─────────────────────────────────────────────────────────────
-function TxModal({ open, onClose, onSave, defaultType='expense' }) {
+function TxModal({ open, onClose, onSave, defaultType='expense', customCats=[], onAddCategory, onDeleteCategory }) {
   const [type, setType]           = useStateM(defaultType);
   const [date, setDate]           = useStateM(() => {
     const t = new Date(); return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
@@ -89,11 +112,19 @@ function TxModal({ open, onClose, onSave, defaultType='expense' }) {
   const [showCal, setShowCal]     = useStateM(false);
   const [saving, setSaving]       = useStateM(false);
 
+  // Estado del formulario "Nueva categoría"
+  const [showNewCat, setShowNewCat]   = useStateM(false);
+  const [newCatLabel, setNewCatLabel] = useStateM('');
+  const [newCatColor, setNewCatColor] = useStateM(CAT_PALETTE[0]);
+  const [newCatIcon, setNewCatIcon]   = useStateM(CAT_ICONS[0]);
+  const [newCatError, setNewCatError] = useStateM('');
+
   useEffectM(() => {
     if (!open) return;
     setType(defaultType);
     setConcept(''); setAmountStr(''); setCurrency('EUR'); setSaving(false); setShowCal(false);
     setCategory(defaultType==='expense' ? 'food' : 'salary');
+    setShowNewCat(false); setNewCatLabel(''); setNewCatColor(CAT_PALETTE[0]); setNewCatIcon(CAT_ICONS[0]); setNewCatError('');
     const t = new Date(); setDate(`${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`);
     const onKey = (e) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
@@ -103,7 +134,37 @@ function TxModal({ open, onClose, onSave, defaultType='expense' }) {
   if (!open) return null;
 
   const isIncome = type === 'income';
-  const availableCats = isIncome ? ['salary','freelance','gift','other'] : ['food','transport','home','leisure','shopping','subs','health','other'];
+  const builtIn = isIncome ? BUILTIN_INCOME : BUILTIN_EXPENSE;
+  const userCats = (customCats || []).filter(c => c.type === type).map(c => c.key);
+  const availableCats = [...builtIn, ...userCats];
+
+  const createCategory = () => {
+    setNewCatError('');
+    const label = newCatLabel.trim();
+    if (label.length < 2) { setNewCatError('Mínimo 2 caracteres'); return; }
+    if (label.length > 24) { setNewCatError('Máximo 24 caracteres'); return; }
+
+    // Generar key única
+    let baseKey = slugify(label);
+    let key = baseKey;
+    let i = 2;
+    const existing = new Set(Object.keys(CATS_M));
+    while (existing.has(key)) { key = `${baseKey}-${i++}`; }
+
+    const cat = { key, label, color: newCatColor, icon: newCatIcon, type, custom: true };
+    onAddCategory?.(cat);
+    // Registrar inmediatamente en el map global para que los pills la vean en este render
+    CATS_M[key] = cat;
+    setCategory(key);
+    setShowNewCat(false);
+    setNewCatLabel(''); setNewCatColor(CAT_PALETTE[0]); setNewCatIcon(CAT_ICONS[0]);
+  };
+
+  const removeCustom = (k) => {
+    if (!confirm('¿Eliminar esta categoría? Las transacciones existentes no se borrarán.')) return;
+    onDeleteCategory?.(k);
+    if (category === k) setCategory(isIncome ? 'salary' : 'food');
+  };
 
   // Validation
   const amountNum = parseFloat(String(amountStr).replace(',','.'));
@@ -214,10 +275,14 @@ function TxModal({ open, onClose, onSave, defaultType='expense' }) {
             <div className="flex flex-wrap gap-2 mt-1.5">
               {availableCats.map(k => {
                 const cat = CATS_M[k];
+                if (!cat) return null;
                 const Icn = Ic[cat.icon] || Ic.more;
                 const active = category === k;
+                const isCustom = !!cat.custom;
                 return (
                   <button key={k} type="button" onClick={()=>setCategory(k)}
+                          onContextMenu={(e)=>{ if (isCustom) { e.preventDefault(); removeCustom(k); } }}
+                          title={isCustom ? 'Clic derecho para eliminar' : undefined}
                           className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] transition"
                           style={{
                             border: `1px solid ${active ? cat.color : 'var(--border)'}`,
@@ -226,10 +291,108 @@ function TxModal({ open, onClose, onSave, defaultType='expense' }) {
                             fontWeight: active ? 600 : 400,
                           }}>
                     <Icn size={12}/> {cat.label}
+                    {isCustom && active && (
+                      <span
+                        role="button"
+                        aria-label="Eliminar categoría"
+                        onClick={(e)=>{ e.stopPropagation(); removeCustom(k); }}
+                        style={{
+                          marginLeft: 4, opacity: 0.6, cursor: 'pointer',
+                          display: 'inline-flex', alignItems: 'center'
+                        }}>
+                        <Ic.x size={11}/>
+                      </span>
+                    )}
                   </button>
                 );
               })}
+              {/* Botón "+ Nueva" */}
+              <button type="button" onClick={()=>setShowNewCat(s=>!s)}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] transition"
+                      style={{
+                        border: `1px dashed var(--border)`,
+                        background: showNewCat ? 'var(--surface)' : 'transparent',
+                        color: 'var(--ink-2)',
+                      }}>
+                <Ic.plus size={12}/> Nueva
+              </button>
             </div>
+
+            {/* Mini-form: nueva categoría */}
+            {showNewCat && (
+              <div className="surface-2 fade-in" style={{borderRadius: 14, padding: 14, marginTop: 10}}>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="text-[12px] font-medium">Nueva categoría · {isIncome ? 'Ingreso' : 'Gasto'}</div>
+                  <button type="button" onClick={()=>setShowNewCat(false)}
+                          className="p-1 rounded-md hover:bg-[var(--bg)] transition"
+                          aria-label="Cerrar">
+                    <Ic.x size={12}/>
+                  </button>
+                </div>
+
+                <input type="text" className="input"
+                       placeholder="Nombre (ej. Mascotas, Inversiones, Café)"
+                       value={newCatLabel}
+                       maxLength={24}
+                       onChange={(e)=>{ setNewCatLabel(e.target.value); setNewCatError(''); }}
+                       onKeyDown={(e)=>{ if (e.key === 'Enter') { e.preventDefault(); createCategory(); } }} />
+
+                {/* Color */}
+                <div className="mt-3">
+                  <div className="text-[10px] ink-3 uppercase tracking-wider mb-1.5">Color</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {CAT_PALETTE.map(c => (
+                      <button key={c} type="button" onClick={()=>setNewCatColor(c)}
+                              aria-label={`Color ${c}`}
+                              style={{
+                                width: 24, height: 24, borderRadius: 8, background: c, cursor: 'pointer',
+                                border: newCatColor === c ? '2px solid var(--ink)' : '2px solid transparent',
+                                transition: 'transform .15s ease',
+                                transform: newCatColor === c ? 'scale(1.08)' : 'scale(1)'
+                              }}/>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Icono */}
+                <div className="mt-3">
+                  <div className="text-[10px] ink-3 uppercase tracking-wider mb-1.5">Icono</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {CAT_ICONS.map(iconKey => {
+                      const Icn = Ic[iconKey] || Ic.more;
+                      const active = newCatIcon === iconKey;
+                      return (
+                        <button key={iconKey} type="button" onClick={()=>setNewCatIcon(iconKey)}
+                                aria-label={`Icono ${iconKey}`}
+                                style={{
+                                  width: 30, height: 30, borderRadius: 8, cursor: 'pointer',
+                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                  border: `1px solid ${active ? newCatColor : 'var(--border)'}`,
+                                  background: active ? `${newCatColor}14` : 'var(--bg)',
+                                  color: active ? newCatColor : 'var(--ink-2)',
+                                }}>
+                          <Icn size={14}/>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {newCatError && (
+                  <div className="text-[11px] mt-2" style={{color: 'var(--neg-ink)'}}>{newCatError}</div>
+                )}
+
+                <div className="flex items-center gap-2 mt-3">
+                  <button type="button" className="btn-ghost flex-1" onClick={()=>setShowNewCat(false)}>Cancelar</button>
+                  <button type="button" className="btn-primary flex-1 flex items-center justify-center gap-1.5"
+                          disabled={newCatLabel.trim().length < 2}
+                          style={{opacity: newCatLabel.trim().length < 2 ? 0.4 : 1}}
+                          onClick={createCategory}>
+                    <Ic.check size={12}/> Crear
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* AMOUNT + CURRENCY */}

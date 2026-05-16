@@ -50,6 +50,23 @@
     padding: 8px 12px; border-radius: 10px; transition: background .15s;
   }
   .back-link:hover { background: var(--surface); color: var(--ink); }
+  .header-actions { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+  #btnImport { background: var(--blue-soft); color: var(--blue-dark); font-weight: 600; }
+  #btnImport:hover { background: #c5dafa; color: var(--blue-dark); }
+  @media (max-width: 540px) {
+    .header-actions { gap: 2px; }
+    #btnImport, .header-actions .back-link { padding: 7px 10px; font-size: 12px; }
+  }
+
+  /* Stat header (label + mini action) */
+  .stat-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .edit-mini {
+    background: var(--surface); border: none; border-radius: 8px;
+    width: 26px; height: 26px; cursor: pointer; color: var(--ink-3);
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: all .15s;
+  }
+  .edit-mini:hover { background: var(--blue-soft); color: var(--blue-dark); }
 
   /* Stat cards */
   .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
@@ -250,6 +267,69 @@
     font-variant-numeric: tabular-nums;
   }
 
+  /* Import modal — bigger to fit the day grid */
+  .modal.modal-lg { max-width: 520px; max-height: 92dvh; overflow-y: auto; }
+  .row { display: flex; gap: 10px; }
+  .row > * { flex: 1; }
+  .select {
+    width: 100%; padding: 11px 14px;
+    font-size: 14px; font-weight: 500;
+    border: 1px solid var(--border); border-radius: 12px;
+    background: var(--bg); color: var(--ink);
+    appearance: none; -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238e8b83' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 12px center;
+    cursor: pointer;
+  }
+  .select:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-soft); }
+
+  .day-head {
+    display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;
+    margin-bottom: 4px;
+  }
+  .day-head div {
+    text-align: center; font-size: 10px; font-weight: 600;
+    color: var(--blue-dark); text-transform: uppercase; letter-spacing: .04em;
+    padding: 4px 0;
+  }
+  .day-grid {
+    display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;
+    background: var(--surface); padding: 8px; border-radius: 12px;
+    border: 1px solid var(--border);
+  }
+  .day-cell {
+    aspect-ratio: 1 / 1;
+    display: flex; flex-direction: column; align-items: stretch;
+    background: transparent;
+  }
+  .day-cell.muted { visibility: hidden; }
+  .day-cell .dnum {
+    font-size: 9px; font-weight: 600; color: var(--ink-3);
+    text-align: left; padding: 0 2px;
+  }
+  .day-cell input {
+    width: 100%; flex: 1; min-height: 28px;
+    padding: 0; text-align: center;
+    font-size: 14px; font-weight: 600;
+    border: 1px solid var(--border); border-radius: 7px;
+    background: var(--bg); color: var(--ink);
+    font-variant-numeric: tabular-nums;
+    -moz-appearance: textfield; appearance: textfield;
+  }
+  .day-cell input::-webkit-outer-spin-button,
+  .day-cell input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .day-cell input:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 2px var(--blue-soft); }
+  .day-cell input[data-state="has"]  { background: var(--green-soft); color: var(--green-ink); border-color: var(--green-soft); }
+  .day-cell input[data-state="zero"] { background: var(--red-soft);   color: var(--red-ink);   border-color: var(--red-soft); }
+  .tip-line { color: var(--ink-3); font-size: 11px; margin-top: 8px; }
+
+  /* Banner de aviso dentro del modal de día */
+  .info-banner {
+    background: var(--blue-soft); color: var(--blue-dark);
+    font-size: 11px; padding: 8px 10px; border-radius: 8px;
+    margin-top: 10px; line-height: 1.4;
+  }
+
   /* Month picker overlay (when clicking the month label) */
   .picker {
     position: absolute; bottom: 78px; left: 50%; transform: translateX(-50%);
@@ -281,15 +361,26 @@
       <h1>Pedidos diarios</h1>
       <div class="sub">Registra tus pedidos y facturación del día</div>
     </div>
-    <a href="../index.html" class="back-link">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-      Volver
-    </a>
+    <div class="header-actions">
+      <button class="back-link" id="btnImport" type="button" title="Importar histórico de un mes">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Importar mes
+      </button>
+      <a href="../index.html" class="back-link">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Volver
+      </a>
+    </div>
   </div>
 
   <div class="stats">
     <div class="stat revenue">
-      <div class="label">Facturación del mes (USD)</div>
+      <div class="stat-head">
+        <div class="label">Facturación del mes (USD)</div>
+        <button class="edit-mini" id="btnEditMonthly" type="button" title="Editar facturación del mes" hidden>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+        </button>
+      </div>
       <div class="value" id="totalRevenue">$0</div>
       <div class="hint" id="totalRevenueHint">Suma de cada día</div>
     </div>
@@ -325,6 +416,7 @@
 (function () {
   // ── Estado ──────────────────────────────────────────
   const STORAGE_KEY = 'pd:days';
+  const MONTHLY_KEY = 'pd:monthly'; // { "YYYY-MM": { revenue, currency } }
   const VIEW_KEY = 'pd:view';
   const RATE_KEY = 'pd:rate-eur-usd'; // { rate, date, fetchedAt }
   const PREF_CURRENCY_KEY = 'pd:pref-currency'; // 'EUR' | 'USD'
@@ -332,12 +424,24 @@
   const RATE_FALLBACK = 1.1628; // EUR -> USD (15 may 2026)
   const RATE_TTL_MS = 12 * 3600 * 1000; // 12h
 
+  // Default currency = USD (cliente trabaja en dólares)
+  if (!localStorage.getItem(PREF_CURRENCY_KEY)) {
+    try { localStorage.setItem(PREF_CURRENCY_KEY, 'USD'); } catch {}
+  }
+
   function loadDays() {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
     catch { return {}; }
   }
   function saveDays(d) {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); } catch {}
+  }
+  function loadMonthly() {
+    try { return JSON.parse(localStorage.getItem(MONTHLY_KEY)) || {}; }
+    catch { return {}; }
+  }
+  function saveMonthly(m) {
+    try { localStorage.setItem(MONTHLY_KEY, JSON.stringify(m)); } catch {}
   }
   function loadView() {
     const raw = localStorage.getItem(VIEW_KEY);
@@ -353,7 +457,14 @@
   }
 
   let days = loadDays();
+  let monthly = loadMonthly();
   let view = loadView();
+
+  function monthKey(y, m) { return `${y}-${String(m).padStart(2,'0')}`; }
+  function monthlyInUSD(entry) {
+    if (!entry || !isFinite(entry.revenue)) return 0;
+    return entry.currency === 'USD' ? entry.revenue : entry.revenue * rateInfo.rate;
+  }
 
   // ── Tasa EUR -> USD ─────────────────────────────────
   function loadRate() {
@@ -412,6 +523,7 @@
   const totalOrdersEl  = document.getElementById('totalOrders');
   const totalRevenueHint = document.getElementById('totalRevenueHint');
   const totalOrdersHint  = document.getElementById('totalOrdersHint');
+  const btnEditMonthly = document.getElementById('btnEditMonthly');
 
   function render() {
     monthLabel.innerHTML = `${MONTHS[view.m - 1]} <span class="year">${view.y}</span>`;
@@ -419,8 +531,10 @@
     const dim = daysInMonth(view.y, view.m);
     // primer día de la semana (lunes=0)
     const firstWeekday = (new Date(view.y, view.m - 1, 1).getDay() + 6) % 7;
+    const mKey = monthKey(view.y, view.m);
+    const monthlyEntry = monthly[mKey] || null;
 
-    let totalRevenue = 0, totalOrders = 0, daysWithOrders = 0;
+    let totalRevenueFromDays = 0, totalOrders = 0, daysWithOrders = 0;
     const tKey = todayKey();
 
     let html = '';
@@ -440,7 +554,7 @@
           badgeClass = 'has';
           badgeText = data.orders;
           totalOrders += data.orders;
-          totalRevenue += dayInUSD(data);
+          totalRevenueFromDays += dayInUSD(data);
           daysWithOrders++;
         } else {
           badgeClass = 'zero';
@@ -464,11 +578,27 @@
       cell.addEventListener('click', () => openModal(cell.dataset.key, parseInt(cell.dataset.d, 10)));
     });
 
+    // Total mostrado: si el mes tiene total declarado, ese gana; si no, sumar día a día
+    const showingDeclared = !!monthlyEntry;
+    const totalRevenue = showingDeclared ? monthlyInUSD(monthlyEntry) : totalRevenueFromDays;
     totalRevenueEl.textContent = fmtUSD(totalRevenue);
     totalOrdersEl.textContent  = String(totalOrders);
-    totalRevenueHint.textContent = daysWithOrders > 0
-      ? `${daysWithOrders} día${daysWithOrders === 1 ? '' : 's'} con ventas · 1 € = ${rateInfo.rate.toFixed(4)} $`
-      : `1 € = ${rateInfo.rate.toFixed(4)} $ (tasa ${rateInfo.date})`;
+
+    if (showingDeclared) {
+      const origLabel = monthlyEntry.currency === 'USD'
+        ? `Declarado: ${fmtUSD(monthlyEntry.revenue)}`
+        : `Declarado: ${fmtEUR(monthlyEntry.revenue)} (≈ ${fmtUSD(monthlyInUSD(monthlyEntry))})`;
+      totalRevenueHint.textContent = `Total declarado del mes · 1 € = ${rateInfo.rate.toFixed(4)} $`;
+      totalRevenueHint.title = origLabel;
+      btnEditMonthly.hidden = false;
+    } else {
+      totalRevenueHint.textContent = daysWithOrders > 0
+        ? `${daysWithOrders} día${daysWithOrders === 1 ? '' : 's'} con ventas · 1 € = ${rateInfo.rate.toFixed(4)} $`
+        : `1 € = ${rateInfo.rate.toFixed(4)} $ (tasa ${rateInfo.date})`;
+      totalRevenueHint.title = '';
+      btnEditMonthly.hidden = true;
+    }
+
     totalOrdersHint.textContent  = daysWithOrders > 0
       ? `Media: ${(totalOrders / daysWithOrders).toFixed(1)} / día`
       : 'En el mes';
@@ -577,6 +707,10 @@
           </div>
           <div class="rate-hint" id="convHint"></div>
           <div class="err" id="revenueErr"></div>
+          ${monthly[monthKey(view.y, view.m)] ? `
+            <div class="info-banner">
+              Este mes tiene un total mensual declarado. La facturación diaria que metas no se sumará en la tarjeta superior (el total declarado tiene prioridad).
+            </div>` : ''}
         </div>
 
         <div class="modal-actions">
@@ -696,9 +830,251 @@
     });
   }
 
+  // ── Modal "Importar mes" ────────────────────────────
+  function openImportModal(prefillKey) {
+    closePicker();
+
+    // Default: mes pasado, o el que pase el caller
+    let pY, pM;
+    if (prefillKey) {
+      [pY, pM] = prefillKey.split('-').map(Number);
+    } else {
+      const t = new Date();
+      pY = t.getFullYear();
+      pM = t.getMonth(); // mes anterior (0-indexed → equivale a m-1 en 1-indexed)
+      if (pM === 0) { pM = 12; pY--; }
+    }
+    let curMonth = pM, curYear = pY;
+    let chosenCurrency = localStorage.getItem(PREF_CURRENCY_KEY) || 'USD';
+
+    const backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop';
+    backdrop.innerHTML = `
+      <div class="modal modal-lg">
+        <div class="modal-head">
+          <div>
+            <div class="tag">Importar histórico</div>
+            <h2>Datos de un mes pasado</h2>
+          </div>
+          <button class="modal-close" aria-label="Cerrar">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <label>Mes y año</label>
+        <div class="row">
+          <select class="select" id="impMonth">
+            ${MONTHS.map((n, i) => `<option value="${i+1}">${n}</option>`).join('')}
+          </select>
+          <select class="select" id="impYear">
+            ${(() => {
+              const ty = new Date().getFullYear();
+              const opts = [];
+              for (let y = ty - 5; y <= ty + 1; y++) opts.push(`<option value="${y}">${y}</option>`);
+              return opts.join('');
+            })()}
+          </select>
+        </div>
+
+        <label>Pedidos por día</label>
+        <div class="day-head">
+          <div>Lu</div><div>Ma</div><div>Mi</div><div>Ju</div><div>Vi</div><div>Sá</div><div>Do</div>
+        </div>
+        <div class="day-grid" id="impGrid"></div>
+        <div class="tip-line">Deja en blanco los días que no recuerdes. Pon <strong>0</strong> si no hubo pedidos.</div>
+
+        <label>Facturación total del mes</label>
+        <div class="currency-toggle" id="impCurrency" role="tablist">
+          <button type="button" data-cur="EUR" role="tab">€ EUR</button>
+          <button type="button" data-cur="USD" role="tab">$ USD</button>
+        </div>
+        <div class="input-with-symbol">
+          <input type="text" id="impRevenue" inputmode="decimal" placeholder="0.00">
+          <span class="sym" id="impSym">$</span>
+        </div>
+        <div class="rate-hint" id="impConv"></div>
+        <div class="err" id="impErr"></div>
+
+        <div class="modal-actions">
+          <button class="btn btn-danger" id="impDelete" type="button" hidden>Borrar mes</button>
+          <button class="btn btn-ghost" id="impCancel" type="button">Cancelar</button>
+          <button class="btn btn-primary" id="impSave" type="button">Guardar mes</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(backdrop);
+
+    const impMonth = backdrop.querySelector('#impMonth');
+    const impYear  = backdrop.querySelector('#impYear');
+    const impGrid  = backdrop.querySelector('#impGrid');
+    const impRevenue = backdrop.querySelector('#impRevenue');
+    const impSym = backdrop.querySelector('#impSym');
+    const impConv = backdrop.querySelector('#impConv');
+    const impErr = backdrop.querySelector('#impErr');
+    const impCurrency = backdrop.querySelector('#impCurrency');
+    const impSave = backdrop.querySelector('#impSave');
+    const impCancel = backdrop.querySelector('#impCancel');
+    const impDelete = backdrop.querySelector('#impDelete');
+    const impClose = backdrop.querySelector('.modal-close');
+
+    impMonth.value = String(curMonth);
+    impYear.value = String(curYear);
+
+    function close() {
+      backdrop.remove();
+      document.removeEventListener('keydown', onKey);
+    }
+    function onKey(e) { if (e.key === 'Escape') close(); }
+    document.addEventListener('keydown', onKey);
+    backdrop.addEventListener('click', (e) => { if (e.target === backdrop) close(); });
+    impCancel.addEventListener('click', close);
+    impClose.addEventListener('click', close);
+
+    function setCurrency(c) {
+      chosenCurrency = c;
+      try { localStorage.setItem(PREF_CURRENCY_KEY, c); } catch {}
+      impCurrency.querySelectorAll('button').forEach(b => {
+        b.dataset.active = String(b.dataset.cur === c);
+      });
+      impSym.textContent = c === 'USD' ? '$' : '€';
+      impRevenue.placeholder = c === 'USD' ? '0.00' : '0,00';
+      updateConv();
+    }
+    function updateConv() {
+      const raw = impRevenue.value.trim().replace(',', '.').replace(/[^0-9.]/g, '');
+      const n = parseFloat(raw);
+      if (!isFinite(n) || n <= 0) { impConv.textContent = ''; return; }
+      if (chosenCurrency === 'EUR') {
+        impConv.textContent = `≈ ${fmtUSD(n * rateInfo.rate)} · tasa 1 € = ${rateInfo.rate.toFixed(4)} $`;
+      } else {
+        impConv.textContent = `≈ ${fmtEUR(n / rateInfo.rate)} · tasa 1 € = ${rateInfo.rate.toFixed(4)} $`;
+      }
+    }
+    impCurrency.querySelectorAll('button').forEach(b => {
+      b.addEventListener('click', () => setCurrency(b.dataset.cur));
+    });
+    impRevenue.addEventListener('input', () => {
+      impRevenue.value = impRevenue.value.replace(/[^0-9.,]/g, '');
+      updateConv();
+    });
+
+    function paintInputState(inp) {
+      const v = inp.value.trim();
+      if (v === '') { inp.removeAttribute('data-state'); return; }
+      const n = parseInt(v, 10);
+      if (isNaN(n) || n < 0) { inp.removeAttribute('data-state'); return; }
+      inp.dataset.state = n === 0 ? 'zero' : 'has';
+    }
+
+    function buildGrid() {
+      const y = parseInt(impYear.value, 10);
+      const m = parseInt(impMonth.value, 10);
+      const dim = daysInMonth(y, m);
+      const firstWeekday = (new Date(y, m - 1, 1).getDay() + 6) % 7;
+      let html = '';
+      for (let i = 0; i < firstWeekday; i++) html += '<div class="day-cell muted"></div>';
+      for (let d = 1; d <= dim; d++) {
+        const k = dateKey(y, m, d);
+        const existing = days[k];
+        const val = existing && existing.orders != null ? existing.orders : '';
+        html += `
+          <div class="day-cell">
+            <div class="dnum">${d}</div>
+            <input type="number" inputmode="numeric" min="0" step="1" data-d="${d}" value="${val}">
+          </div>`;
+      }
+      const total = firstWeekday + dim;
+      const trailing = (7 - (total % 7)) % 7;
+      for (let i = 0; i < trailing; i++) html += '<div class="day-cell muted"></div>';
+      impGrid.innerHTML = html;
+      impGrid.querySelectorAll('input').forEach(inp => {
+        paintInputState(inp);
+        inp.addEventListener('input', () => {
+          inp.value = inp.value.replace(/[^0-9]/g, '');
+          paintInputState(inp);
+        });
+      });
+
+      // Cargar facturación existente del mes
+      const mk = monthKey(y, m);
+      const existingMonthly = monthly[mk];
+      if (existingMonthly) {
+        setCurrency(existingMonthly.currency || chosenCurrency);
+        impRevenue.value = chosenCurrency === 'USD'
+          ? String(existingMonthly.revenue)
+          : String(existingMonthly.revenue).replace('.', ',');
+        impDelete.hidden = false;
+      } else {
+        impRevenue.value = '';
+        impDelete.hidden = true;
+      }
+      updateConv();
+    }
+
+    impMonth.addEventListener('change', buildGrid);
+    impYear.addEventListener('change', buildGrid);
+
+    impDelete.addEventListener('click', () => {
+      const y = parseInt(impYear.value, 10);
+      const m = parseInt(impMonth.value, 10);
+      const mk = monthKey(y, m);
+      if (!confirm(`¿Borrar todos los datos importados de ${MONTHS[m-1]} ${y}? Esto eliminará los pedidos por día y el total mensual declarado.`)) return;
+      // borrar días de ese mes
+      const prefix = mk + '-';
+      Object.keys(days).forEach(k => { if (k.startsWith(prefix)) delete days[k]; });
+      delete monthly[mk];
+      saveDays(days); saveMonthly(monthly);
+      render(); close();
+    });
+
+    impSave.addEventListener('click', () => {
+      impErr.textContent = '';
+      const y = parseInt(impYear.value, 10);
+      const m = parseInt(impMonth.value, 10);
+
+      // 1. pedidos por día
+      impGrid.querySelectorAll('input').forEach(inp => {
+        const v = inp.value.trim();
+        const d = parseInt(inp.dataset.d, 10);
+        const k = dateKey(y, m, d);
+        if (v === '') return; // sin dato: no escribir (preserva si ya existía)
+        const n = parseInt(v, 10);
+        if (isNaN(n) || n < 0) return;
+        days[k] = Object.assign({}, days[k] || {}, { orders: n });
+      });
+
+      // 2. facturación mensual
+      const mk = monthKey(y, m);
+      const raw = impRevenue.value.trim().replace(',', '.').replace(/[^0-9.]/g, '');
+      const rev = parseFloat(raw);
+      if (raw !== '' && (!isFinite(rev) || rev < 0)) {
+        impErr.textContent = 'Facturación no válida. Déjalo en blanco si solo quieres guardar los pedidos.';
+        return;
+      }
+      if (isFinite(rev) && rev > 0) {
+        monthly[mk] = { revenue: rev, currency: chosenCurrency };
+      } else {
+        delete monthly[mk];
+      }
+
+      saveDays(days); saveMonthly(monthly);
+      // navegar al mes importado para que el cliente lo vea
+      view = { y, m }; saveView(view);
+      render(); close();
+    });
+
+    // construir grid inicial
+    setCurrency(chosenCurrency);
+    buildGrid();
+  }
+
+  document.getElementById('btnImport').addEventListener('click', () => openImportModal());
+  btnEditMonthly.addEventListener('click', () => openImportModal(monthKey(view.y, view.m)));
+
   // ── Reaccionar a sync.js (otro dispositivo escribe en localStorage) ─
   window.addEventListener('zonga:sync', () => {
     days = loadDays();
+    monthly = loadMonthly();
     view = loadView();
     render();
   });

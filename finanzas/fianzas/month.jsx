@@ -22,6 +22,12 @@ function MonthView({ state, actions, derived }) {
     });
   }, [monthTx, catFilter, query, typeFilter]);
 
+  const filteredTotals = useMemoX(() => {
+    const income  = filteredTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+    const expense = filteredTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+    return { income, expense, net: income - expense, count: filteredTx.length };
+  }, [filteredTx]);
+
   const catsInMonth = Array.from(new Set(monthTx.map(t => t.category)));
 
   return (
@@ -128,6 +134,52 @@ function MonthView({ state, actions, derived }) {
           {filteredTx.length === 0 && <div className="ink-3 text-[13px] py-10 text-center">Ningún movimiento coincide con los filtros.</div>}
           {filteredTx.map(tx => <MUI.TxRow key={tx.id} tx={tx} onDelete={actions.deleteTx} onEdit={actions.editTx}/>)}
         </div>
+
+        {filteredTx.length > 0 && (
+          <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--border)' }}>
+            {filteredTotals.income > 0 && filteredTotals.expense > 0 ? (
+              <>
+                <div className="flex items-center justify-between py-1">
+                  <span className="text-[12px] ink-3">Ingresos</span>
+                  <span className="num font-medium" style={{ color: 'var(--pos-ink)', fontSize: 13 }}>
+                    +{MUI.fmtEUR(filteredTotals.income, {decimals: 2}).replace('−','')}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between py-1">
+                  <span className="text-[12px] ink-3">Gastos</span>
+                  <span className="num font-medium" style={{ color: 'var(--neg-ink)', fontSize: 13 }}>
+                    −{MUI.fmtEUR(filteredTotals.expense, {decimals: 2}).replace('−','')}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between pt-2 mt-1"
+                     style={{ borderTop: '1px dashed var(--border)' }}>
+                  <div className="text-[13px] font-medium">
+                    Balance
+                    <span className="ink-3 text-[11px] num ml-2">({filteredTotals.count} mov.)</span>
+                  </div>
+                  <span className="num font-semibold"
+                        style={{ fontSize: 16, color: filteredTotals.net >= 0 ? 'var(--pos)' : 'var(--neg)' }}>
+                    {filteredTotals.net < 0 ? '−' : ''}{MUI.fmtEUR(Math.abs(filteredTotals.net), {decimals: 2}).replace('−','')}
+                  </span>
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center justify-between py-1">
+                <div className="text-[13px] font-medium">
+                  Total {filteredTotals.expense > 0 ? 'gastos' : 'ingresos'}
+                  <span className="ink-3 text-[11px] num ml-2">({filteredTotals.count} mov.)</span>
+                </div>
+                <span className="num font-semibold"
+                      style={{
+                        fontSize: 16,
+                        color: filteredTotals.expense > 0 ? 'var(--neg-ink)' : 'var(--pos-ink)'
+                      }}>
+                  {filteredTotals.expense > 0 ? '−' : '+'}{MUI.fmtEUR(filteredTotals.expense || filteredTotals.income, {decimals: 2}).replace('−','')}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

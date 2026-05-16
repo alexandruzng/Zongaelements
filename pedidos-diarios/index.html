@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Pedidos diarios · Zonga</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue: #2563EB;
+    --blue-dark: #1E40AF;
+    --blue-soft: #DBEAFE;
+    --bg: #ffffff;
+    --ink: #0b0b0a;
+    --ink-2: #3f3f3a;
+    --ink-3: #8e8b83;
+    --border: #ececec;
+    --surface: #fafafa;
+    --green-soft: #BBF7D0;
+    --green-ink: #15803D;
+    --red-soft: #FECACA;
+    --red-ink: #B91C1C;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg); color: var(--ink);
+    font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100dvh;
+  }
+  button, input { font-family: inherit; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-thumb { background: #ddd; border-radius: 3px; }
+
+  .app { max-width: 720px; margin: 0 auto; padding: 80px 16px 120px; }
+
+  /* Header */
+  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+  .header h1 {
+    font-family: 'DM Serif Display', serif; font-weight: 400;
+    font-size: 32px; letter-spacing: -0.02em;
+  }
+  .header .sub { color: var(--ink-3); font-size: 13px; margin-top: 2px; }
+  .back-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    color: var(--ink-3); text-decoration: none; font-size: 13px; font-weight: 500;
+    padding: 8px 12px; border-radius: 10px; transition: background .15s;
+  }
+  .back-link:hover { background: var(--surface); color: var(--ink); }
+
+  /* Stat cards */
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+  .stat {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 16px;
+    padding: 18px 18px 16px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.02), 0 8px 24px -16px rgba(0,0,0,.06);
+  }
+  .stat .label { font-size: 11px; color: var(--ink-3); text-transform: uppercase; letter-spacing: .04em; font-weight: 600; }
+  .stat .value {
+    font-family: 'DM Serif Display', serif; font-size: 30px;
+    margin-top: 6px; line-height: 1; letter-spacing: -0.02em;
+  }
+  .stat.revenue .value { color: var(--blue-dark); }
+  .stat .hint { color: var(--ink-3); font-size: 11px; margin-top: 4px; }
+
+  /* Calendar */
+  .calendar {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 18px;
+    overflow: hidden; margin-bottom: 24px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.02), 0 8px 24px -16px rgba(0,0,0,.06);
+  }
+  .cal-head {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    background: var(--blue); color: #fff;
+  }
+  .cal-head div {
+    padding: 10px 0; text-align: center; font-weight: 600; font-size: 12px;
+    text-transform: uppercase; letter-spacing: .04em;
+  }
+  .cal-grid {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    border-top: 1px solid var(--border);
+  }
+  .cal-cell {
+    aspect-ratio: 1 / 1.1;
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 6px;
+    display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+    cursor: pointer;
+    background: var(--bg);
+    transition: background .15s;
+    position: relative;
+  }
+  .cal-cell:nth-child(7n) { border-right: none; }
+  .cal-cell:hover:not(.muted) { background: var(--surface); }
+  .cal-cell.muted { opacity: .25; cursor: default; pointer-events: none; }
+  .cal-cell.today { background: var(--blue-soft); }
+  .cal-cell.today:hover { background: #c7dbf7; }
+  .cal-day-num { font-size: 13px; font-weight: 600; color: var(--ink-2); align-self: stretch; text-align: left; padding-left: 2px; }
+  .cal-cell.today .cal-day-num { color: var(--blue-dark); }
+
+  .cal-badge {
+    width: 100%;
+    border-radius: 10px;
+    padding: 6px 4px;
+    font-size: 16px; font-weight: 700; text-align: center;
+    font-variant-numeric: tabular-nums;
+    transition: transform .15s;
+  }
+  .cal-cell:hover .cal-badge { transform: scale(1.04); }
+  .cal-badge.empty { background: transparent; color: var(--ink-3); font-size: 13px; font-weight: 500; opacity: .5; }
+  .cal-badge.zero  { background: var(--red-soft);   color: var(--red-ink); }
+  .cal-badge.has   { background: var(--green-soft); color: var(--green-ink); }
+
+  @media (max-width: 540px) {
+    .app { padding: 60px 10px 110px; }
+    .header h1 { font-size: 26px; }
+    .stat .value { font-size: 24px; }
+    .cal-cell { padding: 4px; }
+    .cal-day-num { font-size: 11px; }
+    .cal-badge { font-size: 13px; padding: 4px 2px; border-radius: 8px; }
+    .cal-badge.empty { font-size: 11px; }
+    .cal-head div { font-size: 10px; padding: 8px 0; }
+  }
+
+  /* Month nav (sticky bottom) */
+  .month-bar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
+    background: rgba(255,255,255,.94);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid var(--border);
+    padding: 10px 16px env(safe-area-inset-bottom, 12px);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .month-bar .inner {
+    max-width: 720px; width: 100%;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  }
+  .month-btn {
+    width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--border);
+    background: var(--bg); cursor: pointer; display: flex; align-items: center; justify-content: center;
+    color: var(--ink-2); transition: all .15s;
+  }
+  .month-btn:hover { background: var(--blue-soft); color: var(--blue-dark); border-color: var(--blue-soft); }
+  .month-btn svg { width: 18px; height: 18px; }
+  .month-label {
+    flex: 1; text-align: center;
+    font-family: 'DM Serif Display', serif; font-size: 22px;
+    color: var(--ink); text-transform: capitalize; letter-spacing: -0.01em;
+    cursor: pointer; user-select: none;
+  }
+  .month-label:hover { color: var(--blue); }
+  .month-label .year { color: var(--ink-3); font-size: 16px; margin-left: 6px; }
+
+  /* Modal */
+  .modal-backdrop {
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(11,11,10,.45);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    animation: fadeIn .2s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(20px) scale(.97); } to { opacity: 1; transform: none; } }
+  .modal {
+    background: var(--bg); border-radius: 22px; width: 100%; max-width: 420px;
+    padding: 24px;
+    box-shadow: 0 25px 80px rgba(0,0,0,.25);
+    animation: slideUp .3s cubic-bezier(.2,.8,.3,1);
+  }
+  .modal-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; }
+  .modal-head .tag {
+    font-size: 11px; color: var(--blue); font-weight: 700;
+    text-transform: uppercase; letter-spacing: .06em;
+  }
+  .modal-head h2 {
+    font-family: 'DM Serif Display', serif; font-weight: 400;
+    font-size: 22px; line-height: 1.15; letter-spacing: -0.01em; margin-top: 4px;
+  }
+  .modal-close {
+    background: var(--surface); border: none; border-radius: 10px;
+    width: 32px; height: 32px; cursor: pointer; color: var(--ink-3);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .modal-close:hover { background: #eee; color: var(--ink); }
+  .modal label {
+    display: block; font-size: 11px; color: var(--ink-3);
+    text-transform: uppercase; letter-spacing: .04em; font-weight: 600;
+    margin: 14px 0 8px;
+  }
+  .modal input[type="number"], .modal input[type="text"] {
+    width: 100%; padding: 14px 16px;
+    font-size: 22px; font-weight: 600;
+    border: 1px solid var(--border); border-radius: 12px;
+    background: var(--bg); color: var(--ink);
+    font-variant-numeric: tabular-nums;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .modal input:focus {
+    outline: none; border-color: var(--blue);
+    box-shadow: 0 0 0 3px var(--blue-soft);
+  }
+  .modal .err {
+    color: var(--red-ink); font-size: 12px; margin-top: 6px; min-height: 16px;
+  }
+  .modal-actions { display: flex; gap: 10px; margin-top: 18px; }
+  .btn {
+    flex: 1; padding: 12px 14px; border-radius: 12px;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    border: 1px solid transparent; transition: all .15s;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .btn-ghost { background: var(--bg); color: var(--ink-2); border-color: var(--border); }
+  .btn-ghost:hover { background: var(--surface); color: var(--ink); }
+  .btn-primary { background: var(--blue); color: #fff; }
+  .btn-primary:hover { background: var(--blue-dark); }
+  .btn-primary:disabled { opacity: .4; cursor: not-allowed; }
+  .btn-danger {
+    background: #fff; color: var(--red-ink); border-color: var(--border);
+  }
+  .btn-danger:hover { background: #fef2f2; border-color: var(--red-soft); }
+
+  /* Month picker overlay (when clicking the month label) */
+  .picker {
+    position: absolute; bottom: 78px; left: 50%; transform: translateX(-50%);
+    background: var(--bg); border: 1px solid var(--border); border-radius: 16px;
+    padding: 14px; box-shadow: 0 20px 60px rgba(0,0,0,.18);
+    z-index: 60;
+    width: 280px;
+  }
+  .picker .yr-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .picker .yr-row button {
+    background: var(--surface); border: none; border-radius: 8px; padding: 6px 10px; cursor: pointer;
+    color: var(--ink-2); font-weight: 600;
+  }
+  .picker .yr-row .yr { font-family: 'DM Serif Display', serif; font-size: 18px; }
+  .picker .months { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .picker .months button {
+    padding: 8px 6px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--bg); cursor: pointer; font-size: 12px; font-weight: 500;
+    color: var(--ink-2); text-transform: capitalize; transition: all .15s;
+  }
+  .picker .months button:hover { background: var(--blue-soft); color: var(--blue-dark); border-color: var(--blue-soft); }
+  .picker .months button.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div>
+      <h1>Pedidos diarios</h1>
+      <div class="sub">Registra tus pedidos y facturación del día</div>
+    </div>
+    <a href="../index.html" class="back-link">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Volver
+    </a>
+  </div>
+
+  <div class="stats">
+    <div class="stat revenue">
+      <div class="label">Facturación del mes</div>
+      <div class="value" id="totalRevenue">0 €</div>
+      <div class="hint" id="totalRevenueHint">Suma de cada día</div>
+    </div>
+    <div class="stat">
+      <div class="label">Pedidos totales</div>
+      <div class="value" id="totalOrders">0</div>
+      <div class="hint" id="totalOrdersHint">En el mes</div>
+    </div>
+  </div>
+
+  <div class="calendar">
+    <div class="cal-head">
+      <div>Lu</div><div>Ma</div><div>Mi</div><div>Ju</div><div>Vi</div><div>Sá</div><div>Do</div>
+    </div>
+    <div class="cal-grid" id="grid"></div>
+  </div>
+</div>
+
+<!-- Sticky month nav -->
+<div class="month-bar">
+  <div class="inner">
+    <button class="month-btn" id="prevMonth" aria-label="Mes anterior">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+    </button>
+    <div class="month-label" id="monthLabel" title="Cambiar de mes">Mes <span class="year">Año</span></div>
+    <button class="month-btn" id="nextMonth" aria-label="Mes siguiente">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+    </button>
+  </div>
+</div>
+
+<script>
+(function () {
+  // ── Estado ──────────────────────────────────────────
+  const STORAGE_KEY = 'pd:days';
+  const VIEW_KEY = 'pd:view';
+  const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+  function loadDays() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
+    catch { return {}; }
+  }
+  function saveDays(d) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); } catch {}
+  }
+  function loadView() {
+    const raw = localStorage.getItem(VIEW_KEY);
+    if (raw) {
+      const [y, m] = raw.split('-').map(Number);
+      if (y && m) return { y, m };
+    }
+    const t = new Date();
+    return { y: t.getFullYear(), m: t.getMonth() + 1 };
+  }
+  function saveView(v) {
+    try { localStorage.setItem(VIEW_KEY, `${v.y}-${String(v.m).padStart(2,'0')}`); } catch {}
+  }
+
+  let days = loadDays();
+  let view = loadView();
+
+  function dateKey(y, m, d) {
+    return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  }
+  function todayKey() {
+    const t = new Date();
+    return dateKey(t.getFullYear(), t.getMonth() + 1, t.getDate());
+  }
+  function daysInMonth(y, m) { return new Date(y, m, 0).getDate(); }
+  function fmtEUR(n) {
+    return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 }).format(n || 0);
+  }
+
+  // ── Render ──────────────────────────────────────────
+  const grid = document.getElementById('grid');
+  const monthLabel = document.getElementById('monthLabel');
+  const totalRevenueEl = document.getElementById('totalRevenue');
+  const totalOrdersEl  = document.getElementById('totalOrders');
+  const totalRevenueHint = document.getElementById('totalRevenueHint');
+  const totalOrdersHint  = document.getElementById('totalOrdersHint');
+
+  function render() {
+    monthLabel.innerHTML = `${MONTHS[view.m - 1]} <span class="year">${view.y}</span>`;
+
+    const dim = daysInMonth(view.y, view.m);
+    // primer día de la semana (lunes=0)
+    const firstWeekday = (new Date(view.y, view.m - 1, 1).getDay() + 6) % 7;
+
+    let totalRevenue = 0, totalOrders = 0, daysWithOrders = 0;
+    const tKey = todayKey();
+
+    let html = '';
+    // huecos antes del día 1
+    for (let i = 0; i < firstWeekday; i++) {
+      html += '<div class="cal-cell muted"></div>';
+    }
+    for (let d = 1; d <= dim; d++) {
+      const k = dateKey(view.y, view.m, d);
+      const data = days[k];
+      const isToday = k === tKey;
+
+      let badgeClass = 'empty';
+      let badgeText  = '·';
+      if (data) {
+        if (data.orders > 0) {
+          badgeClass = 'has';
+          badgeText = data.orders;
+          totalOrders += data.orders;
+          totalRevenue += (data.revenue || 0);
+          daysWithOrders++;
+        } else {
+          badgeClass = 'zero';
+          badgeText = '0';
+        }
+      }
+
+      html += `
+        <div class="cal-cell ${isToday ? 'today' : ''}" data-key="${k}" data-d="${d}">
+          <div class="cal-day-num">${d}</div>
+          <div class="cal-badge ${badgeClass}">${badgeText}</div>
+        </div>`;
+    }
+    // rellenar la última fila con muted
+    const totalCells = firstWeekday + dim;
+    const trailing = (7 - (totalCells % 7)) % 7;
+    for (let i = 0; i < trailing; i++) html += '<div class="cal-cell muted"></div>';
+
+    grid.innerHTML = html;
+    grid.querySelectorAll('.cal-cell[data-key]').forEach(cell => {
+      cell.addEventListener('click', () => openModal(cell.dataset.key, parseInt(cell.dataset.d, 10)));
+    });
+
+    totalRevenueEl.textContent = fmtEUR(totalRevenue);
+    totalOrdersEl.textContent  = String(totalOrders);
+    totalRevenueHint.textContent = daysWithOrders > 0
+      ? `${daysWithOrders} día${daysWithOrders === 1 ? '' : 's'} con ventas`
+      : 'Sin ventas aún';
+    totalOrdersHint.textContent  = daysWithOrders > 0
+      ? `Media: ${(totalOrders / daysWithOrders).toFixed(1)} / día`
+      : 'En el mes';
+  }
+
+  // ── Navegación de meses ─────────────────────────────
+  function shiftMonth(delta) {
+    let nm = view.m + delta, ny = view.y;
+    if (nm > 12) { nm = 1; ny++; }
+    if (nm < 1)  { nm = 12; ny--; }
+    view = { y: ny, m: nm };
+    saveView(view);
+    render();
+  }
+  document.getElementById('prevMonth').addEventListener('click', () => shiftMonth(-1));
+  document.getElementById('nextMonth').addEventListener('click', () => shiftMonth(1));
+
+  // ── Picker de mes/año (al hacer clic en la etiqueta) ─
+  let pickerEl = null;
+  monthLabel.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (pickerEl) { closePicker(); return; }
+    openPicker();
+  });
+  document.addEventListener('click', (e) => {
+    if (pickerEl && !pickerEl.contains(e.target) && e.target !== monthLabel) closePicker();
+  });
+
+  function openPicker() {
+    closePicker();
+    let pickYear = view.y;
+    pickerEl = document.createElement('div');
+    pickerEl.className = 'picker';
+    function paint() {
+      pickerEl.innerHTML = `
+        <div class="yr-row">
+          <button data-y="-1">‹</button>
+          <div class="yr">${pickYear}</div>
+          <button data-y="+1">›</button>
+        </div>
+        <div class="months">
+          ${MONTHS.map((name, i) => `
+            <button data-m="${i+1}" class="${pickYear === view.y && (i+1) === view.m ? 'active' : ''}">${name.slice(0,3)}</button>
+          `).join('')}
+        </div>
+      `;
+      pickerEl.querySelector('[data-y="-1"]').onclick = (ev) => { ev.stopPropagation(); pickYear--; paint(); };
+      pickerEl.querySelector('[data-y="+1"]').onclick = (ev) => { ev.stopPropagation(); pickYear++; paint(); };
+      pickerEl.querySelectorAll('[data-m]').forEach(btn => {
+        btn.onclick = (ev) => {
+          ev.stopPropagation();
+          view = { y: pickYear, m: parseInt(btn.dataset.m, 10) };
+          saveView(view); render(); closePicker();
+        };
+      });
+    }
+    paint();
+    document.querySelector('.month-bar').appendChild(pickerEl);
+  }
+  function closePicker() {
+    if (pickerEl) { pickerEl.remove(); pickerEl = null; }
+  }
+
+  // ── Modal de día ────────────────────────────────────
+  function openModal(key, d) {
+    closePicker();
+    const existing = days[key] || {};
+    const dateStr = `${d} de ${MONTHS[view.m - 1].toLowerCase()} de ${view.y}`;
+    const dayDate = new Date(view.y, view.m - 1, d);
+    const weekday = dayDate.toLocaleDateString('es-ES', { weekday: 'long' });
+    const isPast  = dayDate < new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
+    const isToday = key === todayKey();
+    const tag = isToday ? 'Hoy' : isPast ? 'Día pasado' : 'Día futuro';
+
+    const backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop';
+    backdrop.innerHTML = `
+      <div class="modal">
+        <div class="modal-head">
+          <div>
+            <div class="tag">${tag}</div>
+            <h2 style="text-transform: capitalize;">${weekday}, ${dateStr}</h2>
+          </div>
+          <button class="modal-close" aria-label="Cerrar">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <div id="step1">
+          <label>¿Cuántos pedidos has tenido?</label>
+          <input type="number" id="ordersInput" min="0" step="1" placeholder="0" inputmode="numeric"
+                 value="${existing.orders != null ? existing.orders : ''}">
+          <div class="err" id="ordersErr"></div>
+        </div>
+
+        <div id="step2" style="display:none;">
+          <label>¿Cuál ha sido la facturación total del día?</label>
+          <input type="text" id="revenueInput" inputmode="decimal" placeholder="0,00 €"
+                 value="${existing.revenue != null ? String(existing.revenue).replace('.', ',') : ''}">
+          <div class="err" id="revenueErr"></div>
+        </div>
+
+        <div class="modal-actions">
+          ${existing.orders != null
+            ? `<button class="btn btn-danger" id="btnReset">Borrar</button>`
+            : ''}
+          <button class="btn btn-ghost" id="btnCancel">Cancelar</button>
+          <button class="btn btn-primary" id="btnNext">Continuar</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(backdrop);
+
+    const step1 = backdrop.querySelector('#step1');
+    const step2 = backdrop.querySelector('#step2');
+    const ordersInput = backdrop.querySelector('#ordersInput');
+    const revenueInput = backdrop.querySelector('#revenueInput');
+    const ordersErr = backdrop.querySelector('#ordersErr');
+    const revenueErr = backdrop.querySelector('#revenueErr');
+    const btnNext = backdrop.querySelector('#btnNext');
+    const btnCancel = backdrop.querySelector('#btnCancel');
+    const btnReset = backdrop.querySelector('#btnReset');
+    const btnClose = backdrop.querySelector('.modal-close');
+
+    setTimeout(() => ordersInput.focus(), 50);
+    ordersInput.select?.();
+
+    let phase = 1;
+
+    function close() {
+      backdrop.remove();
+      document.removeEventListener('keydown', onKey);
+    }
+    function onKey(e) { if (e.key === 'Escape') close(); }
+    document.addEventListener('keydown', onKey);
+    backdrop.addEventListener('click', (e) => { if (e.target === backdrop) close(); });
+    btnCancel.addEventListener('click', close);
+    btnClose.addEventListener('click', close);
+
+    if (btnReset) {
+      btnReset.addEventListener('click', () => {
+        if (!confirm('¿Borrar los datos de este día?')) return;
+        delete days[key];
+        saveDays(days); render(); close();
+      });
+    }
+
+    function commitZero() {
+      days[key] = { orders: 0, revenue: 0 };
+      saveDays(days); render(); close();
+    }
+
+    function nextOrSave() {
+      if (phase === 1) {
+        ordersErr.textContent = '';
+        const raw = ordersInput.value.trim();
+        if (raw === '') { ordersErr.textContent = 'Introduce un número (0 si no has tenido pedidos).'; return; }
+        const n = parseInt(raw, 10);
+        if (isNaN(n) || n < 0) { ordersErr.textContent = 'Número no válido.'; return; }
+        if (n === 0) { commitZero(); return; }
+        // pasar a step2
+        phase = 2;
+        step1.style.display = 'none';
+        step2.style.display = 'block';
+        btnNext.textContent = 'Guardar';
+        setTimeout(() => revenueInput.focus(), 30);
+      } else {
+        revenueErr.textContent = '';
+        const raw = revenueInput.value.trim().replace(',', '.').replace(/[^0-9.]/g, '');
+        const rev = parseFloat(raw);
+        if (isNaN(rev) || rev < 0) { revenueErr.textContent = 'Introduce una cantidad válida.'; return; }
+        const orders = parseInt(ordersInput.value, 10);
+        days[key] = { orders, revenue: rev };
+        saveDays(days); render(); close();
+      }
+    }
+
+    btnNext.addEventListener('click', nextOrSave);
+    ordersInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); nextOrSave(); } });
+    revenueInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); nextOrSave(); } });
+    revenueInput.addEventListener('input', () => {
+      // permitir solo números, coma o punto
+      revenueInput.value = revenueInput.value.replace(/[^0-9.,]/g, '');
+    });
+  }
+
+  // ── Reaccionar a sync.js (otro dispositivo escribe en localStorage) ─
+  window.addEventListener('zonga:sync', () => {
+    days = loadDays();
+    view = loadView();
+    render();
+  });
+
+  render();
+})();
+</script>
+<script src="/zonga-memory.js"></script>
+<script type="module" src="/firebase.js"></script>
+<script type="module" src="/sync.js"></script>
+</body>
+</html>

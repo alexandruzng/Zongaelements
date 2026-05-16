@@ -104,11 +104,14 @@ function App() {
   const [modalType, setModalType] = useS('expense');
   const [editingTx, setEditingTx] = useS(null);
 
-  // Current month for month-filter view
-  const initialMonthKey = (() => {
-    const t = A_FD.TODAY;
-    return `${t.y}-${String(t.m).padStart(2, '0')}`;
-  })();
+  // "Hoy" real del navegador — A_FD.TODAY es solo ancla del seed
+  const today = useM(() => {
+    const d = new Date();
+    return { y: d.getFullYear(), m: d.getMonth() + 1, d: d.getDate() };
+  }, []);
+
+  // Current month for month-filter view (mes real actual)
+  const initialMonthKey = `${today.y}-${String(today.m).padStart(2, '0')}`;
   const [currentKey, setCurrentKey] = useS(initialMonthKey);
   const [dashKey, setDashKey] = useS(initialMonthKey);
 
@@ -211,9 +214,8 @@ function App() {
     const txCountThisMonth = monthTx.length;
 
     // days elapsed in month (for "daily avg")
-    const tToday = A_FD.TODAY;
     const [y, m] = activeKey.split('-').map(Number);
-    const daysElapsed = y === tToday.y && m === tToday.m ? tToday.d : A_UI.daysInMonth(y, m);
+    const daysElapsed = y === today.y && m === today.m ? today.d : A_UI.daysInMonth(y, m);
 
     // Tips dynamic
     const tips = computeTips({ breakdown, income, expense, balance, goals, activeKey, budgets });
@@ -228,7 +230,7 @@ function App() {
       hasMonthOverMonth: prevTx.length > 0,
       isAllTime: false,
     };
-  }, [transactions, activeKey, goals, budgets, monthKeys, isAllTime]);
+  }, [transactions, activeKey, goals, budgets, monthKeys, isAllTime, today]);
 
   // Actions
   const addTx = (tx) => setTransactions((prev) => [tx, ...prev]);
@@ -329,7 +331,7 @@ function App() {
 
 // ── Header ───────────────────────────────────────────────────────────────
 function Header({ view, onView, theme, onTheme, monthKeys, currentKey, onMonth, onAdd, includeAll }) {
-  const today = new Date(A_FD.TODAY.y, A_FD.TODAY.m - 1, A_FD.TODAY.d);
+  const today = new Date();
   const dateLabel = today.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Buenos días' : hour < 20 ? 'Buenas tardes' : 'Buenas noches';

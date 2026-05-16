@@ -225,6 +225,31 @@
   }
   .btn-danger:hover { background: #fef2f2; border-color: var(--red-soft); }
 
+  /* Currency toggle (en el modal) */
+  .currency-toggle {
+    display: inline-flex; padding: 3px; gap: 2px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    margin-bottom: 8px;
+  }
+  .currency-toggle button {
+    background: none; border: none; border-radius: 7px;
+    padding: 6px 14px; font-weight: 600; font-size: 12px; cursor: pointer;
+    color: var(--ink-3); transition: all .15s;
+  }
+  .currency-toggle button[data-active="true"] {
+    background: var(--bg); color: var(--ink);
+    box-shadow: 0 1px 2px rgba(0,0,0,.05);
+  }
+  .input-with-symbol { position: relative; }
+  .input-with-symbol .sym {
+    position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+    color: var(--ink-3); font-size: 16px; font-weight: 600; pointer-events: none;
+  }
+  .rate-hint {
+    color: var(--ink-3); font-size: 11px; margin-top: 6px;
+    font-variant-numeric: tabular-nums;
+  }
+
   /* Month picker overlay (when clicking the month label) */
   .picker {
     position: absolute; bottom: 78px; left: 50%; transform: translateX(-50%);
@@ -264,8 +289,8 @@
 
   <div class="stats">
     <div class="stat revenue">
-      <div class="label">Facturación del mes</div>
-      <div class="value" id="totalRevenue">0 €</div>
+      <div class="label">Facturación del mes (USD)</div>
+      <div class="value" id="totalRevenue">$0</div>
       <div class="hint" id="totalRevenueHint">Suma de cada día</div>
     </div>
     <div class="stat">
@@ -301,7 +326,11 @@
   // ── Estado ──────────────────────────────────────────
   const STORAGE_KEY = 'pd:days';
   const VIEW_KEY = 'pd:view';
+  const RATE_KEY = 'pd:rate-eur-usd'; // { rate, date, fetchedAt }
+  const PREF_CURRENCY_KEY = 'pd:pref-currency'; // 'EUR' | 'USD'
   const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const RATE_FALLBACK = 1.1628; // EUR -> USD (15 may 2026)
+  const RATE_TTL_MS = 12 * 3600 * 1000; // 12h
 
   function loadDays() {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
@@ -326,6 +355,41 @@
   let days = loadDays();
   let view = loadView();
 
+  // ── Tasa EUR -> USD ─────────────────────────────────
+  function loadRate() {
+    try {
+      const r = JSON.parse(localStorage.getItem(RATE_KEY));
+      if (r && typeof r.rate === 'number' && r.rate > 0) return r;
+    } catch {}
+    return { rate: RATE_FALLBACK, date: '2026-05-15', fetchedAt: 0 };
+  }
+  function saveRate(r) {
+    try { localStorage.setItem(RATE_KEY, JSON.stringify(r)); } catch {}
+  }
+  let rateInfo = loadRate();
+  async function refreshRate() {
+    if (Date.now() - (rateInfo.fetchedAt || 0) < RATE_TTL_MS) return;
+    try {
+      const res = await fetch('https://api.frankfurter.app/latest?from=EUR&to=USD');
+      if (!res.ok) throw new Error('rate http ' + res.status);
+      const data = await res.json();
+      if (data && data.rates && typeof data.rates.USD === 'number') {
+        rateInfo = { rate: data.rates.USD, date: data.date, fetchedAt: Date.now() };
+        saveRate(rateInfo);
+        render();
+      }
+    } catch (e) { console.warn('[pedidos] no se pudo refrescar tasa', e); }
+  }
+  refreshRate();
+
+  function dayInUSD(data) {
+    if (!data) return 0;
+    const rev = data.revenue || 0;
+    if (data.currency === 'USD') return rev;
+    // por defecto (sin currency o EUR) -> convertir
+    return rev * rateInfo.rate;
+  }
+
   function dateKey(y, m, d) {
     return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
   }
@@ -336,6 +400,9 @@
   function daysInMonth(y, m) { return new Date(y, m, 0).getDate(); }
   function fmtEUR(n) {
     return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 }).format(n || 0);
+  }
+  function fmtUSD(n) {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(n || 0);
   }
 
   // ── Render ──────────────────────────────────────────
@@ -373,7 +440,7 @@
           badgeClass = 'has';
           badgeText = data.orders;
           totalOrders += data.orders;
-          totalRevenue += (data.revenue || 0);
+          totalRevenue += dayInUSD(data);
           daysWithOrders++;
         } else {
           badgeClass = 'zero';
@@ -397,11 +464,11 @@
       cell.addEventListener('click', () => openModal(cell.dataset.key, parseInt(cell.dataset.d, 10)));
     });
 
-    totalRevenueEl.textContent = fmtEUR(totalRevenue);
+    totalRevenueEl.textContent = fmtUSD(totalRevenue);
     totalOrdersEl.textContent  = String(totalOrders);
     totalRevenueHint.textContent = daysWithOrders > 0
-      ? `${daysWithOrders} día${daysWithOrders === 1 ? '' : 's'} con ventas`
-      : 'Sin ventas aún';
+      ? `${daysWithOrders} día${daysWithOrders === 1 ? '' : 's'} con ventas · 1 € = ${rateInfo.rate.toFixed(4)} $`
+      : `1 € = ${rateInfo.rate.toFixed(4)} $ (tasa ${rateInfo.date})`;
     totalOrdersHint.textContent  = daysWithOrders > 0
       ? `Media: ${(totalOrders / daysWithOrders).toFixed(1)} / día`
       : 'En el mes';
@@ -499,8 +566,16 @@
 
         <div id="step2" style="display:none;">
           <label>¿Cuál ha sido la facturación total del día?</label>
-          <input type="text" id="revenueInput" inputmode="decimal" placeholder="0,00 €"
-                 value="${existing.revenue != null ? String(existing.revenue).replace('.', ',') : ''}">
+          <div class="currency-toggle" id="currencyToggle" role="tablist">
+            <button type="button" data-cur="EUR" role="tab">€ EUR</button>
+            <button type="button" data-cur="USD" role="tab">$ USD</button>
+          </div>
+          <div class="input-with-symbol">
+            <input type="text" id="revenueInput" inputmode="decimal" placeholder="0,00"
+                   value="${existing.revenue != null ? String(existing.revenue).replace('.', ',') : ''}">
+            <span class="sym" id="revenueSym">€</span>
+          </div>
+          <div class="rate-hint" id="convHint"></div>
           <div class="err" id="revenueErr"></div>
         </div>
 
@@ -525,6 +600,38 @@
     const btnCancel = backdrop.querySelector('#btnCancel');
     const btnReset = backdrop.querySelector('#btnReset');
     const btnClose = backdrop.querySelector('.modal-close');
+    const currencyToggle = backdrop.querySelector('#currencyToggle');
+    const revenueSym = backdrop.querySelector('#revenueSym');
+    const convHint = backdrop.querySelector('#convHint');
+
+    // Divisa: usar la del registro previo si existe, si no la preferida, si no EUR
+    let currency = existing.currency
+      || localStorage.getItem(PREF_CURRENCY_KEY)
+      || 'EUR';
+    function setCurrency(c) {
+      currency = c;
+      try { localStorage.setItem(PREF_CURRENCY_KEY, c); } catch {}
+      currencyToggle.querySelectorAll('button').forEach(b => {
+        b.dataset.active = String(b.dataset.cur === c);
+      });
+      revenueSym.textContent = c === 'USD' ? '$' : '€';
+      revenueInput.placeholder = c === 'USD' ? '0.00' : '0,00';
+      updateConvHint();
+    }
+    function updateConvHint() {
+      const raw = revenueInput.value.trim().replace(',', '.').replace(/[^0-9.]/g, '');
+      const n = parseFloat(raw);
+      if (!isFinite(n) || n <= 0) { convHint.textContent = ''; return; }
+      if (currency === 'EUR') {
+        convHint.textContent = `≈ ${fmtUSD(n * rateInfo.rate)} · tasa 1 € = ${rateInfo.rate.toFixed(4)} $`;
+      } else {
+        convHint.textContent = `≈ ${fmtEUR(n / rateInfo.rate)} · tasa 1 € = ${rateInfo.rate.toFixed(4)} $`;
+      }
+    }
+    currencyToggle.querySelectorAll('button').forEach(b => {
+      b.addEventListener('click', () => setCurrency(b.dataset.cur));
+    });
+    setCurrency(currency);
 
     setTimeout(() => ordersInput.focus(), 50);
     ordersInput.select?.();
@@ -550,7 +657,7 @@
     }
 
     function commitZero() {
-      days[key] = { orders: 0, revenue: 0 };
+      days[key] = { orders: 0, revenue: 0, currency };
       saveDays(days); render(); close();
     }
 
@@ -567,14 +674,14 @@
         step1.style.display = 'none';
         step2.style.display = 'block';
         btnNext.textContent = 'Guardar';
-        setTimeout(() => revenueInput.focus(), 30);
+        setTimeout(() => { revenueInput.focus(); revenueInput.select?.(); updateConvHint(); }, 30);
       } else {
         revenueErr.textContent = '';
         const raw = revenueInput.value.trim().replace(',', '.').replace(/[^0-9.]/g, '');
         const rev = parseFloat(raw);
         if (isNaN(rev) || rev < 0) { revenueErr.textContent = 'Introduce una cantidad válida.'; return; }
         const orders = parseInt(ordersInput.value, 10);
-        days[key] = { orders, revenue: rev };
+        days[key] = { orders, revenue: rev, currency };
         saveDays(days); render(); close();
       }
     }
@@ -585,6 +692,7 @@
     revenueInput.addEventListener('input', () => {
       // permitir solo números, coma o punto
       revenueInput.value = revenueInput.value.replace(/[^0-9.,]/g, '');
+      updateConvHint();
     });
   }
 

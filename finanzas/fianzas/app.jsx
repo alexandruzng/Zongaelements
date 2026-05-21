@@ -104,6 +104,14 @@ function App() {
   const [modalType, setModalType] = useS('expense');
   const [editingTx, setEditingTx] = useS(null);
 
+  // Última fecha usada al registrar/editar una tx — para que el siguiente movimiento la herede
+  const [lastTxDate, setLastTxDate] = useS(() => {
+    try { return localStorage.getItem('fz:lastTxDate') || null; } catch { return null; }
+  });
+  useE(() => {
+    if (lastTxDate) try { localStorage.setItem('fz:lastTxDate', lastTxDate); } catch {}
+  }, [lastTxDate]);
+
   // "Hoy" real del navegador — A_FD.TODAY es solo ancla del seed
   const today = useM(() => {
     const d = new Date();
@@ -271,6 +279,7 @@ function App() {
   const handleSave = (tx) => {
     if (editingTx) updateTx(editingTx.id, tx);
     else addTx(tx);
+    if (tx && tx.date) setLastTxDate(tx.date);
   };
   const handleDeleteFromModal = (id) => { deleteTx(id); closeModal(); };
 
@@ -318,6 +327,7 @@ function App() {
         onSave={handleSave}
         defaultType={modalType}
         editingTx={editingTx}
+        lastDate={lastTxDate}
         onDeleteTx={handleDeleteFromModal}
         customCats={customCats}
         onAddCategory={addCategory}

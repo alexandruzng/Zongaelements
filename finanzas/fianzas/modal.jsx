@@ -100,7 +100,7 @@ function slugify(s) {
 }
 
 // ── TxModal ─────────────────────────────────────────────────────────────
-function TxModal({ open, onClose, onSave, defaultType='expense', editingTx=null, onDeleteTx, customCats=[], onAddCategory, onDeleteCategory }) {
+function TxModal({ open, onClose, onSave, defaultType='expense', editingTx=null, lastDate=null, onDeleteTx, customCats=[], onAddCategory, onDeleteCategory }) {
   const isEdit = !!editingTx;
   const [type, setType]           = useStateM(defaultType);
   const [date, setDate]           = useStateM(() => {
@@ -137,12 +137,18 @@ function TxModal({ open, onClose, onSave, defaultType='expense', editingTx=null,
       setType(defaultType);
       setConcept(''); setAmountStr(''); setCurrency('EUR');
       setCategory(defaultType==='expense' ? 'food' : 'salary');
-      const t = new Date(); setDate(`${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`);
+      // Si hay una última fecha usada, heredarla; si no, hoy.
+      if (lastDate) {
+        setDate(lastDate);
+      } else {
+        const t = new Date();
+        setDate(`${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`);
+      }
     }
     const onKey = (e) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [open, defaultType, editingTx]);
+  }, [open, defaultType, editingTx, lastDate]);
 
   if (!open) return null;
 

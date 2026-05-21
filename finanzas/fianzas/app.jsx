@@ -6,6 +6,13 @@ const A_I = window.FZ_Icon;
 const A_FD = window.FIANZAS_DATA;
 const A_Modal = window.FZ_Modal;
 const A_QuickAdd = window.FZ_QuickAdd;
+
+// Snapshot inmutable de las categorías originales del seed.
+// Se toma UNA vez al cargar el script para poder reconstruir la tabla de
+// categorías en cada render (built-in + overrides + custom).
+if (!A_FD.__BUILTIN_SEED) {
+  A_FD.__BUILTIN_SEED = JSON.parse(JSON.stringify(A_FD.CATEGORIES));
+}
 const { Dashboard } = window.FZ_Dashboard;
 const { MonthView } = window.FZ_Month;
 const { GoalsView } = window.FZ_Goals;
@@ -79,18 +86,48 @@ function App() {
     return [];
   });
 
-  // Fusionar custom -> CATEGORIES global (sincrónico para que la primera render ya las vea)
-  customCats.forEach(c => { A_FD.CATEGORIES[c.key] = c; });
+  // Overrides para categorías built-in: { food: { label, color, icon }, ... }
+  const [categoryOverrides, setCategoryOverrides] = useS(() => {
+    try {
+      const raw = localStorage.getItem('fz:categoryOverrides');
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    return {};
+  });
+
+  // Reconstruir A_FD.CATEGORIES desde el seed inmutable cada vez que cambian
+  // overrides o custom. Sincrónico para que la primera render ya lo vea.
+  function rebuildCategories() {
+    Object.keys(A_FD.CATEGORIES).forEach(k => delete A_FD.CATEGORIES[k]);
+    Object.entries(A_FD.__BUILTIN_SEED).forEach(([k, v]) => {
+      A_FD.CATEGORIES[k] = { ...v, ...(categoryOverrides[k] || {}) };
+    });
+    customCats.forEach(c => { A_FD.CATEGORIES[c.key] = c; });
+  }
+  rebuildCategories();
 
   useE(() => {
-    customCats.forEach(c => { A_FD.CATEGORIES[c.key] = c; });
-    try { localStorage.setItem('fz:categories', JSON.stringify(customCats)); } catch(e) {}
-  }, [customCats]);
+    rebuildCategories();
+    try { localStorage.setItem('fz:categories', JSON.stringify(customCats)); } catch (e) {}
+    try { localStorage.setItem('fz:categoryOverrides', JSON.stringify(categoryOverrides)); } catch (e) {}
+  }, [customCats, categoryOverrides]);
 
   const addCategory = (cat) => setCustomCats(prev => [...prev, cat]);
   const deleteCategory = (key) => {
     setCustomCats(prev => prev.filter(c => c.key !== key));
-    delete A_FD.CATEGORIES[key];
+  };
+  const updateCustomCategory = (key, patch) => {
+    setCustomCats(prev => prev.map(c => c.key === key ? { ...c, ...patch } : c));
+  };
+  const updateCategoryOverride = (key, patch) => {
+    setCategoryOverrides(prev => ({ ...prev, [key]: { ...(prev[key] || {}), ...patch } }));
+  };
+  const resetCategoryOverride = (key) => {
+    setCategoryOverrides(prev => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
   };
 
   useE(() => { try { localStorage.setItem('fz:transactions', JSON.stringify(transactions)); } catch(e) {} }, [transactions]);
@@ -340,8 +377,12 @@ function App() {
         lastDate={lastTxDate}
         onDeleteTx={handleDeleteFromModal}
         customCats={customCats}
+        categoryOverrides={categoryOverrides}
         onAddCategory={addCategory}
-        onDeleteCategory={deleteCategory} />
+        onDeleteCategory={deleteCategory}
+        onUpdateCustomCategory={updateCustomCategory}
+        onUpdateCategoryOverride={updateCategoryOverride}
+        onResetCategoryOverride={resetCategoryOverride} />
 
       <A_QuickAdd.QuickAddModal
         open={quickOpen}

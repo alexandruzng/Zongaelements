@@ -100,7 +100,13 @@ function slugify(s) {
 }
 
 // ── TxModal ─────────────────────────────────────────────────────────────
-function TxModal({ open, onClose, onSave, defaultType='expense', editingTx=null, lastDate=null, onDeleteTx, customCats=[], onAddCategory, onDeleteCategory }) {
+function TxModal({
+  open, onClose, onSave, defaultType='expense',
+  editingTx=null, lastDate=null, onDeleteTx,
+  customCats=[], categoryOverrides={},
+  onAddCategory, onDeleteCategory,
+  onUpdateCustomCategory, onUpdateCategoryOverride, onResetCategoryOverride
+}) {
   const isEdit = !!editingTx;
   const [type, setType]           = useStateM(defaultType);
   const [date, setDate]           = useStateM(() => {
@@ -113,8 +119,9 @@ function TxModal({ open, onClose, onSave, defaultType='expense', editingTx=null,
   const [showCal, setShowCal]     = useStateM(false);
   const [saving, setSaving]       = useStateM(false);
 
-  // Estado del formulario "Nueva categoría"
+  // Estado del formulario "Nueva categoría" / "Editar categoría"
   const [showNewCat, setShowNewCat]   = useStateM(false);
+  const [editingCatKey, setEditingCatKey] = useStateM(null); // null = crear; key = editar
   const [newCatLabel, setNewCatLabel] = useStateM('');
   const [newCatColor, setNewCatColor] = useStateM(CAT_PALETTE[0]);
   const [newCatIcon, setNewCatIcon]   = useStateM(CAT_ICONS[0]);
@@ -123,7 +130,8 @@ function TxModal({ open, onClose, onSave, defaultType='expense', editingTx=null,
   useEffectM(() => {
     if (!open) return;
     setSaving(false); setShowCal(false);
-    setShowNewCat(false); setNewCatLabel(''); setNewCatColor(CAT_PALETTE[0]); setNewCatIcon(CAT_ICONS[0]); setNewCatError('');
+    setShowNewCat(false); setEditingCatKey(null);
+    setNewCatLabel(''); setNewCatColor(CAT_PALETTE[0]); setNewCatIcon(CAT_ICONS[0]); setNewCatError('');
 
     if (editingTx) {
       setType(editingTx.type);
@@ -175,14 +183,58 @@ function TxModal({ open, onClose, onSave, defaultType='expense', editingTx=null,
     // Registrar inmediatamente en el map global para que los pills la vean en este render
     CATS_M[key] = cat;
     setCategory(key);
-    setShowNewCat(false);
-    setNewCatLabel(''); setNewCatColor(CAT_PALETTE[0]); setNewCatIcon(CAT_ICONS[0]);
+    closeCatForm();
   };
 
+  const closeCatForm = () => {
+    setShowNewCat(false);
+    setEditingCatKey(null);
+    setNewCatLabel(''); setNewCatColor(CAT_PALETTE[0]); setNewCatIcon(CAT_ICONS[0]); setNewCatError('');
+  };
+
+  const startEditCat = (k) => {
+    const cat = CATS_M[k];
+    if (!cat) return;
+    setEditingCatKey(k);
+    setNewCatLabel(cat.label);
+    setNewCatColor(cat.color);
+    setNewCatIcon(cat.icon);
+    setNewCatError('');
+    setShowNewCat(true);
+  };
+
+  const saveCategoryEdit = () => {
+    setNewCatError('');
+    const label = newCatLabel.trim();
+    if (label.length < 2) { setNewCatError('Mínimo 2 caracteres'); return; }
+    if (label.length > 24) { setNewCatError('Máximo 24 caracteres'); return; }
+    const k = editingCatKey;
+    const cat = CATS_M[k];
+    if (!cat) { closeCatForm(); return; }
+    const patch = { label, color: newCatColor, icon: newCatIcon };
+    if (cat.custom) {
+      onUpdateCustomCategory?.(k, patch);
+      CATS_M[k] = { ...cat, ...patch };
+    } else {
+      onUpdateCategoryOverride?.(k, patch);
+      CATS_M[k] = { ...cat, ...patch };
+    }
+    closeCatForm();
+  };
+
+  const isOverridden = (k) => !!(categoryOverrides && categoryOverrides[k]);
+
   const removeCustom = (k) => {
-    if (!confirm('¿Eliminar esta categoría? Las transacciones existentes no se borrarán.')) return;
+    if (!confirm('¿Eliminar esta categoría? Las transacciones existentes no se borrarán (mostrarán "Otros" hasta que las reasignes).')) return;
     onDeleteCategory?.(k);
     if (category === k) setCategory(isIncome ? 'salary' : 'food');
+    if (editingCatKey === k) closeCatForm();
+  };
+
+  const resetBuiltin = (k) => {
+    if (!confirm('¿Restablecer el nombre, color e icono originales de esta categoría?')) return;
+    onResetCategoryOverride?.(k);
+    closeCatForm();
   };
 
   // Validation
@@ -309,7 +361,7 @@ function TxModal({ open, onClose, onSave, defaultType='expense', editingTx=null,
                 return (
                   <button key={k} type="button" onClick={()=>setCategory(k)}
                           onContextMenu={(e)=>{ if (isCustom) { e.preventDefault(); removeCustom(k); } }}
-                          title={isCustom ? 'Clic derecho para eliminar' : undefined}
+                          title={active ? 'Pulsa el lápiz para editar' : (isCustom ? 'Clic derecho para eliminar' : undefined)}
                           className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] transition"
                           style={{
                             border: `1px solid ${active ? cat.color : 'var(--border)'}`,
@@ -318,39 +370,54 @@ function TxModal({ open, onClose, onSave, defaultType='expense', editingTx=null,
                             fontWeight: active ? 600 : 400,
                           }}>
                     <Icn size={12}/> {cat.label}
-                    {isCustom && active && (
+                    {active && (
                       <span
                         role="button"
-                        aria-label="Eliminar categoría"
-                        onClick={(e)=>{ e.stopPropagation(); removeCustom(k); }}
+                        aria-label="Editar categoría"
+                        title="Editar categoría"
+                        onClick={(e)=>{ e.stopPropagation(); startEditCat(k); }}
                         style={{
-                          marginLeft: 4, opacity: 0.6, cursor: 'pointer',
+                          marginLeft: 4, opacity: 0.65, cursor: 'pointer',
                           display: 'inline-flex', alignItems: 'center'
                         }}>
-                        <Ic.x size={11}/>
+                        <Ic.edit size={11}/>
                       </span>
                     )}
                   </button>
                 );
               })}
               {/* Botón "+ Nueva" */}
-              <button type="button" onClick={()=>setShowNewCat(s=>!s)}
+              <button type="button" onClick={()=>{
+                        if (showNewCat && !editingCatKey) { closeCatForm(); }
+                        else { closeCatForm(); setShowNewCat(true); }
+                      }}
                       className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] transition"
                       style={{
                         border: `1px dashed var(--border)`,
-                        background: showNewCat ? 'var(--surface)' : 'transparent',
+                        background: showNewCat && !editingCatKey ? 'var(--surface)' : 'transparent',
                         color: 'var(--ink-2)',
                       }}>
                 <Ic.plus size={12}/> Nueva
               </button>
             </div>
 
-            {/* Mini-form: nueva categoría */}
-            {showNewCat && (
+            {/* Mini-form: nueva categoría / editar categoría */}
+            {showNewCat && (() => {
+              const editingCat = editingCatKey ? CATS_M[editingCatKey] : null;
+              const isEditing = !!editingCat;
+              const isEditingCustom = isEditing && !!editingCat.custom;
+              const isEditingBuiltin = isEditing && !editingCat.custom;
+              const canResetBuiltin = isEditingBuiltin && isOverridden(editingCatKey);
+              const headerLabel = isEditing
+                ? `Editar categoría · ${editingCat.label}`
+                : `Nueva categoría · ${isIncome ? 'Ingreso' : 'Gasto'}`;
+              const onPrimary = isEditing ? saveCategoryEdit : createCategory;
+              const primaryLabel = isEditing ? 'Guardar cambios' : 'Crear';
+              return (
               <div className="surface-2 fade-in" style={{borderRadius: 14, padding: 14, marginTop: 10}}>
                 <div className="flex items-center justify-between mb-3">
-                  <div className="text-[12px] font-medium">Nueva categoría · {isIncome ? 'Ingreso' : 'Gasto'}</div>
-                  <button type="button" onClick={()=>setShowNewCat(false)}
+                  <div className="text-[12px] font-medium" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{headerLabel}</div>
+                  <button type="button" onClick={closeCatForm}
                           className="p-1 rounded-md hover:bg-[var(--bg)] transition"
                           aria-label="Cerrar">
                     <Ic.x size={12}/>
@@ -362,7 +429,7 @@ function TxModal({ open, onClose, onSave, defaultType='expense', editingTx=null,
                        value={newCatLabel}
                        maxLength={24}
                        onChange={(e)=>{ setNewCatLabel(e.target.value); setNewCatError(''); }}
-                       onKeyDown={(e)=>{ if (e.key === 'Enter') { e.preventDefault(); createCategory(); } }} />
+                       onKeyDown={(e)=>{ if (e.key === 'Enter') { e.preventDefault(); onPrimary(); } }} />
 
                 {/* Color */}
                 <div className="mt-3">
@@ -409,17 +476,52 @@ function TxModal({ open, onClose, onSave, defaultType='expense', editingTx=null,
                   <div className="text-[11px] mt-2" style={{color: 'var(--neg-ink)'}}>{newCatError}</div>
                 )}
 
-                <div className="flex items-center gap-2 mt-3">
-                  <button type="button" className="btn-ghost flex-1" onClick={()=>setShowNewCat(false)}>Cancelar</button>
-                  <button type="button" className="btn-primary flex-1 flex items-center justify-center gap-1.5"
+                {/* Aviso en edición — afecta a todas las transacciones */}
+                {isEditing && (
+                  <div className="text-[11px] mt-3" style={{ color: 'var(--ink-3)', lineHeight: 1.5 }}>
+                    Los cambios se aplicarán a <b style={{color:'var(--ink-2)'}}>todas las transacciones</b> que tienen esta categoría.
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2 mt-3 flex-wrap">
+                  <button type="button" className="btn-ghost" style={{flex: '1 1 80px'}} onClick={closeCatForm}>Cancelar</button>
+                  {isEditingCustom && (
+                    <button type="button"
+                            onClick={()=>removeCustom(editingCatKey)}
+                            style={{
+                              flex: '1 1 80px',
+                              padding: '10px 12px', borderRadius: 10,
+                              border: '1px solid var(--border)', background: 'var(--bg)',
+                              color: 'var(--neg-ink)', cursor: 'pointer',
+                              fontSize: 13, fontWeight: 500
+                            }}>
+                      Eliminar
+                    </button>
+                  )}
+                  {canResetBuiltin && (
+                    <button type="button"
+                            onClick={()=>resetBuiltin(editingCatKey)}
+                            style={{
+                              flex: '1 1 80px',
+                              padding: '10px 12px', borderRadius: 10,
+                              border: '1px solid var(--border)', background: 'var(--bg)',
+                              color: 'var(--ink-2)', cursor: 'pointer',
+                              fontSize: 13, fontWeight: 500
+                            }}
+                            title="Volver al nombre, color e icono originales">
+                      Restablecer
+                    </button>
+                  )}
+                  <button type="button" className="btn-primary flex items-center justify-center gap-1.5"
+                          style={{flex: '1 1 120px', opacity: newCatLabel.trim().length < 2 ? 0.4 : 1}}
                           disabled={newCatLabel.trim().length < 2}
-                          style={{opacity: newCatLabel.trim().length < 2 ? 0.4 : 1}}
-                          onClick={createCategory}>
-                    <Ic.check size={12}/> Crear
+                          onClick={onPrimary}>
+                    <Ic.check size={12}/> {primaryLabel}
                   </button>
                 </div>
               </div>
-            )}
+              );
+            })()}
           </div>
 
           {/* AMOUNT + CURRENCY */}

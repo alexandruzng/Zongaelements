@@ -3,6 +3,7 @@
 const DS = window.FZ_UI;
 const DI = window.FZ_Icon;
 const DCATS = window.FIANZAS_DATA.CATEGORIES;
+const { useState: useStateD, useMemo: useMemoD } = React;
 
 function Dashboard({ state, actions, derived }) {
   const { transactions, budgets } = state;
@@ -200,6 +201,158 @@ function Dashboard({ state, actions, derived }) {
             </div>
           </div>
         </>
+      )}
+
+      {/* ── Movimientos (filtrable, con selector de mes / todos) ───────── */}
+      <DashTxBrowser transactions={transactions} actions={actions} />
+    </div>
+  );
+}
+
+// ── Movimientos: réplica filtrable del bloque de "Por mes", con selector
+//    de mes (incluye "Todos") como dropdown propio. Se monta al final del
+//    dashboard tanto en modo mes activo como en modo histórico.
+function DashTxBrowser({ transactions, actions }) {
+  const [monthSel, setMonthSel]     = useStateD('all');
+  const [catFilter, setCatFilter]   = useStateD('all');
+  const [query, setQuery]           = useStateD('');
+  const [typeFilter, setTypeFilter] = useStateD('all');
+
+  const monthKeys = useMemoD(() => {
+    const set = new Set(transactions.map(t => DS.monthKey(t.date)));
+    return Array.from(set).sort().reverse();
+  }, [transactions]);
+
+  const scopeTx = useMemoD(() => {
+    if (monthSel === 'all') return transactions;
+    return transactions.filter(t => DS.monthKey(t.date) === monthSel);
+  }, [transactions, monthSel]);
+
+  const filteredTx = useMemoD(() => {
+    const q = query.trim().toLowerCase();
+    return scopeTx
+      .filter(t => {
+        if (catFilter !== 'all' && t.category !== catFilter) return false;
+        if (typeFilter !== 'all' && t.type !== typeFilter) return false;
+        if (q && !(t.concept || '').toLowerCase().includes(q)) return false;
+        return true;
+      })
+      .sort((a, b) => a.date < b.date ? 1 : -1);
+  }, [scopeTx, catFilter, query, typeFilter]);
+
+  const filteredTotals = useMemoD(() => {
+    const income  = filteredTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+    const expense = filteredTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+    return { income, expense, net: income - expense, count: filteredTx.length };
+  }, [filteredTx]);
+
+  const catsInScope = useMemoD(() => Array.from(new Set(scopeTx.map(t => t.category))), [scopeTx]);
+
+  const scopeLabel = monthSel === 'all' ? 'Todos los meses' : DS.labelMonth(monthSel);
+
+  return (
+    <div className="card soft-shadow p-6 mt-5">
+      <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
+        <div>
+          <div className="text-[11px] ink-3 uppercase tracking-wider font-medium">Movimientos</div>
+          <div className="serif text-[20px] font-medium mt-0.5">
+            {filteredTx.length} de {scopeTx.length}
+            <span className="ink-3 text-[13px] font-normal ml-2">· {scopeLabel}</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Selector de mes / todos */}
+          <DS.MonthDropdown
+            value={monthSel}
+            options={monthKeys}
+            onChange={setMonthSel}
+            includeAll={true} />
+          {/* Type segments */}
+          <div className="toggle-track" style={{padding:3}}>
+            <div className="toggle-pill" style={{padding:'6px 11px', fontSize: 12}} data-active={typeFilter==='all'} onClick={()=>setTypeFilter('all')}>Todos</div>
+            <div className="toggle-pill" style={{padding:'6px 11px', fontSize: 12}} data-active={typeFilter==='income'} onClick={()=>setTypeFilter('income')}>Ingresos</div>
+            <div className="toggle-pill" style={{padding:'6px 11px', fontSize: 12}} data-active={typeFilter==='expense'} onClick={()=>setTypeFilter('expense')}>Gastos</div>
+          </div>
+          {/* Search */}
+          <div className="relative">
+            <DI.search size={13} className="ink-3 absolute left-3 top-1/2 -translate-y-1/2"/>
+            <input className="input pl-8" style={{height: 36, fontSize: 13, minWidth: 220}}
+                   placeholder="Buscar concepto…"
+                   value={query} onChange={(e)=>setQuery(e.target.value)}/>
+          </div>
+        </div>
+      </div>
+
+      {/* Category chips */}
+      <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-1" style={{scrollbarWidth:'thin'}}>
+        <button className="seg-btn shrink-0" data-active={catFilter==='all'} onClick={()=>setCatFilter('all')}>
+          Todas las categorías
+        </button>
+        {catsInScope.map(k => {
+          const c = DCATS[k];
+          if (!c) return null;
+          return (
+            <button key={k} className="seg-btn shrink-0 flex items-center gap-1.5"
+                    data-active={catFilter===k} onClick={()=>setCatFilter(catFilter===k?'all':k)}>
+              <span className="swatch" style={{background: c.color}}/> {c.label}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="stagger">
+        {filteredTx.length === 0 && (
+          <div className="ink-3 text-[13px] py-10 text-center">
+            {scopeTx.length === 0 ? 'No hay movimientos en este periodo.' : 'Ningún movimiento coincide con los filtros.'}
+          </div>
+        )}
+        {filteredTx.map(tx => <DS.TxRow key={tx.id} tx={tx} onDelete={actions.deleteTx} onEdit={actions.editTx}/>)}
+      </div>
+
+      {filteredTx.length > 0 && (
+        <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--border)' }}>
+          {filteredTotals.income > 0 && filteredTotals.expense > 0 ? (
+            <>
+              <div className="flex items-center justify-between py-1">
+                <span className="text-[12px] ink-3">Ingresos</span>
+                <span className="num font-medium" style={{ color: 'var(--pos-ink)', fontSize: 13 }}>
+                  +{DS.fmtEUR(filteredTotals.income, {decimals: 2}).replace('−','')}
+                </span>
+              </div>
+              <div className="flex items-center justify-between py-1">
+                <span className="text-[12px] ink-3">Gastos</span>
+                <span className="num font-medium" style={{ color: 'var(--neg-ink)', fontSize: 13 }}>
+                  −{DS.fmtEUR(filteredTotals.expense, {decimals: 2}).replace('−','')}
+                </span>
+              </div>
+              <div className="flex items-center justify-between pt-2 mt-1"
+                   style={{ borderTop: '1px dashed var(--border)' }}>
+                <div className="text-[13px] font-medium">
+                  Balance
+                  <span className="ink-3 text-[11px] num ml-2">({filteredTotals.count} mov.)</span>
+                </div>
+                <span className="num font-semibold"
+                      style={{ fontSize: 16, color: filteredTotals.net >= 0 ? 'var(--pos)' : 'var(--neg)' }}>
+                  {filteredTotals.net < 0 ? '−' : ''}{DS.fmtEUR(Math.abs(filteredTotals.net), {decimals: 2}).replace('−','')}
+                </span>
+              </div>
+            </>
+          ) : (
+            <div className="flex items-center justify-between py-1">
+              <div className="text-[13px] font-medium">
+                Total {filteredTotals.expense > 0 ? 'gastos' : 'ingresos'}
+                <span className="ink-3 text-[11px] num ml-2">({filteredTotals.count} mov.)</span>
+              </div>
+              <span className="num font-semibold"
+                    style={{
+                      fontSize: 16,
+                      color: filteredTotals.expense > 0 ? 'var(--neg-ink)' : 'var(--pos-ink)'
+                    }}>
+                {filteredTotals.expense > 0 ? '−' : '+'}{DS.fmtEUR(filteredTotals.expense || filteredTotals.income, {decimals: 2}).replace('−','')}
+              </span>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

@@ -5,6 +5,7 @@ const A_UI = window.FZ_UI;
 const A_I = window.FZ_Icon;
 const A_FD = window.FIANZAS_DATA;
 const A_Modal = window.FZ_Modal;
+const A_QuickAdd = window.FZ_QuickAdd;
 const { Dashboard } = window.FZ_Dashboard;
 const { MonthView } = window.FZ_Month;
 const { GoalsView } = window.FZ_Goals;
@@ -103,6 +104,7 @@ function App() {
   const [modalOpen, setModalOpen] = useS(false);
   const [modalType, setModalType] = useS('expense');
   const [editingTx, setEditingTx] = useS(null);
+  const [quickOpen, setQuickOpen] = useS(false);
 
   // Última fecha usada al registrar/editar una tx — para que el siguiente movimiento la herede
   const [lastTxDate, setLastTxDate] = useS(() => {
@@ -242,6 +244,13 @@ function App() {
 
   // Actions
   const addTx = (tx) => setTransactions((prev) => [tx, ...prev]);
+  const addManyTx = (arr) => {
+    if (!arr || arr.length === 0) return;
+    setTransactions((prev) => [...arr, ...prev]);
+    // recordar la fecha de la última fila añadida
+    const lastDate = arr[arr.length - 1]?.date;
+    if (lastDate) setLastTxDate(lastDate);
+  };
   const updateTx = (id, patch) => setTransactions((prev) => prev.map((t) => t.id === id ? { ...t, ...patch } : t));
   const deleteTx = (id) => setTransactions((prev) => prev.filter((t) => t.id !== id));
   const editTx = (tx) => { setEditingTx(tx); setModalType(tx.type); setModalOpen(true); };
@@ -307,7 +316,8 @@ function App() {
         monthKeys={monthKeys} currentKey={activeKey}
         includeAll={view === 'dashboard'}
         onMonth={view === 'month' ? setCurrentKey : setDashKey}
-        onAdd={() => openModal('expense')} />
+        onAdd={() => openModal('expense')}
+        onQuickAdd={() => setQuickOpen(true)} />
       
 
       <main className="max-w-[1320px] mx-auto px-6 lg:px-10 pb-32">
@@ -332,6 +342,12 @@ function App() {
         customCats={customCats}
         onAddCategory={addCategory}
         onDeleteCategory={deleteCategory} />
+
+      <A_QuickAdd.QuickAddModal
+        open={quickOpen}
+        onClose={() => setQuickOpen(false)}
+        onCommit={addManyTx}
+        customCats={customCats} />
       
 
       {tweaksVisible && <TweaksPanel tweaks={tweaks} onUpdate={updateTweak} onReset={resetAll} />}
@@ -340,7 +356,7 @@ function App() {
 }
 
 // ── Header ───────────────────────────────────────────────────────────────
-function Header({ view, onView, theme, onTheme, monthKeys, currentKey, onMonth, onAdd, includeAll }) {
+function Header({ view, onView, theme, onTheme, monthKeys, currentKey, onMonth, onAdd, onQuickAdd, includeAll }) {
   const today = new Date();
   const dateLabel = today.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
   const hour = new Date().getHours();
@@ -376,6 +392,11 @@ function Header({ view, onView, theme, onTheme, monthKeys, currentKey, onMonth, 
           <button className="btn-ghost flex items-center gap-1.5" onClick={onTheme}
           style={{ padding: '9px 11px' }} aria-label="Cambiar tema">
             {theme === 'light' ? <A_I.moon size={14} /> : <A_I.sun size={14} />}
+          </button>
+          <button className="btn-ghost flex items-center gap-1.5" onClick={onQuickAdd}
+          style={{ padding: '10px 14px', fontSize: 13 }}
+          title="Añadir varios movimientos en bloque">
+            <A_I.sparkles size={14} /> Rápido
           </button>
           <button className="btn-primary flex items-center gap-1.5" onClick={onAdd}
           style={{ padding: '10px 14px', fontSize: 13 }}>

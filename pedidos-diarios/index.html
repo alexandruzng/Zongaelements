@@ -578,18 +578,21 @@
       cell.addEventListener('click', () => openModal(cell.dataset.key, parseInt(cell.dataset.d, 10)));
     });
 
-    // Total mostrado: si el mes tiene total declarado, ese gana; si no, sumar día a día
-    const showingDeclared = !!monthlyEntry;
-    const totalRevenue = showingDeclared ? monthlyInUSD(monthlyEntry) : totalRevenueFromDays;
+    // Total mostrado: declarado del mes (si existe) + suma de la facturación día a día
+    const declaredUSD = monthlyEntry ? monthlyInUSD(monthlyEntry) : 0;
+    const totalRevenue = declaredUSD + totalRevenueFromDays;
     totalRevenueEl.textContent = fmtUSD(totalRevenue);
     totalOrdersEl.textContent  = String(totalOrders);
 
-    if (showingDeclared) {
+    if (monthlyEntry) {
       const origLabel = monthlyEntry.currency === 'USD'
-        ? `Declarado: ${fmtUSD(monthlyEntry.revenue)}`
-        : `Declarado: ${fmtEUR(monthlyEntry.revenue)} (≈ ${fmtUSD(monthlyInUSD(monthlyEntry))})`;
-      totalRevenueHint.textContent = `Total declarado del mes · 1 € = ${rateInfo.rate.toFixed(4)} $`;
-      totalRevenueHint.title = origLabel;
+        ? `${fmtUSD(monthlyEntry.revenue)} declarado`
+        : `${fmtEUR(monthlyEntry.revenue)} (≈ ${fmtUSD(declaredUSD)}) declarado`;
+      const dailyPart = totalRevenueFromDays > 0
+        ? ` + ${fmtUSD(totalRevenueFromDays)} día a día`
+        : '';
+      totalRevenueHint.textContent = `${origLabel}${dailyPart}`;
+      totalRevenueHint.title = `Tasa 1 € = ${rateInfo.rate.toFixed(4)} $ (${rateInfo.date})`;
       btnEditMonthly.hidden = false;
     } else {
       totalRevenueHint.textContent = daysWithOrders > 0
@@ -709,7 +712,7 @@
           <div class="err" id="revenueErr"></div>
           ${monthly[monthKey(view.y, view.m)] ? `
             <div class="info-banner">
-              Este mes tiene un total mensual declarado. La facturación diaria que metas no se sumará en la tarjeta superior (el total declarado tiene prioridad).
+              Este mes tiene un total mensual declarado (histórico). La facturación que metas aquí se <b>sumará</b> a ese total en la tarjeta superior.
             </div>` : ''}
         </div>
 

@@ -39,11 +39,16 @@ onAuthStateChanged(auth, async (user) => {
   if (user) {
     overlay?.classList.add("hidden");
     document.documentElement.classList.add("auth-ok");
+    // Marca para que en la próxima carga el overlay arranque oculto y no haya "flash"
+    try { localStorage.setItem("__zonga_authed__", "1"); } catch {}
     if (window.__zongaAuth.onAuthEnter) {
       try { await window.__zongaAuth.onAuthEnter(user); } catch (e) { console.warn(e); }
     }
     if (window.ZongaMemory?.onAuthChange) window.ZongaMemory.onAuthChange(user);
   } else {
+    // Limpiar la marca y el pre-hide para que el overlay vuelva a aparecer si toca
+    try { localStorage.removeItem("__zonga_authed__"); } catch {}
+    delete document.documentElement.dataset.authPrehide;
     overlay?.classList.remove("hidden");
     document.documentElement.classList.remove("auth-ok");
     if (window.ZongaMemory?.onAuthChange) window.ZongaMemory.onAuthChange(null);

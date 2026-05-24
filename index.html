@@ -13,7 +13,19 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
   <title>Zonga Elements — Suite para Dropshipping</title>
+  <script>
+    // Pre-ocultar el overlay de login si ya hubo una sesión previa,
+    // para evitar el "flash" mientras Firebase restaura el estado de auth.
+    try {
+      if (localStorage.getItem('__zonga_authed__') === '1') {
+        document.documentElement.dataset.authPrehide = '1';
+      }
+    } catch {}
+  </script>
   <style>
+    /* Mientras Firebase confirma la sesión, ocultar el overlay si ya hubo login previo */
+    html[data-auth-prehide="1"] #authOverlay { display: none !important; }
+
     /* ── Auth overlay ── */
     #authOverlay {
       position: fixed; inset: 0; z-index: 9999;

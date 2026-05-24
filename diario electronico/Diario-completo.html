@@ -50,6 +50,66 @@ const OBJECTIVES_KEY = 'diario_objectives_v2';
 
 function loadData(key, fallback) { try { return JSON.parse(localStorage.getItem(key)) || fallback; } catch { return fallback; } }
 function saveData(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+
+// ── IndexedDB para vídeos (evitar reventar la cuota de localStorage) ──
+const IDB_DB = 'diario_media';
+const IDB_STORE = 'videos';
+const VIDEO_REF_PREFIX = 'idbvid:';
+function idbOpen() {
+  return new Promise((res, rej) => {
+    const req = indexedDB.open(IDB_DB, 1);
+    req.onupgradeneeded = () => { if (!req.result.objectStoreNames.contains(IDB_STORE)) req.result.createObjectStore(IDB_STORE); };
+    req.onsuccess = () => res(req.result);
+    req.onerror = () => rej(req.error);
+  });
+}
+async function idbPut(id, blob) {
+  const db = await idbOpen();
+  return new Promise((res, rej) => {
+    const tx = db.transaction(IDB_STORE, 'readwrite');
+    tx.objectStore(IDB_STORE).put(blob, id);
+    tx.oncomplete = () => res();
+    tx.onerror = () => rej(tx.error);
+    tx.onabort = () => rej(tx.error);
+  });
+}
+async function idbGet(id) {
+  const db = await idbOpen();
+  return new Promise((res, rej) => {
+    const tx = db.transaction(IDB_STORE, 'readonly');
+    const r = tx.objectStore(IDB_STORE).get(id);
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  });
+}
+async function idbDel(id) {
+  const db = await idbOpen();
+  return new Promise((res, rej) => {
+    const tx = db.transaction(IDB_STORE, 'readwrite');
+    tx.objectStore(IDB_STORE).delete(id);
+    tx.oncomplete = () => res();
+    tx.onerror = () => rej(tx.error);
+  });
+}
+function newVideoId() { return 'v_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8); }
+function isVideoSrc(s) { return typeof s === 'string' && (s.startsWith('data:video') || s.startsWith(VIDEO_REF_PREFIX)); }
+
+function VideoMedia({ src, controls, autoPlay, style }) {
+  const [url, setUrl] = React.useState(src.startsWith(VIDEO_REF_PREFIX) ? null : src);
+  React.useEffect(() => {
+    if (!src.startsWith(VIDEO_REF_PREFIX)) { setUrl(src); return; }
+    let blobUrl;
+    let cancelled = false;
+    idbGet(src.slice(VIDEO_REF_PREFIX.length)).then(blob => {
+      if (cancelled || !blob) return;
+      blobUrl = URL.createObjectURL(blob);
+      setUrl(blobUrl);
+    }).catch(() => {});
+    return () => { cancelled = true; if (blobUrl) URL.revokeObjectURL(blobUrl); };
+  }, [src]);
+  if (!url) return <div style={{ ...style, background:'#000', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:11 }}>Cargando vídeo…</div>;
+  return <video src={url} controls={controls} autoPlay={autoPlay} style={style} />;
+}
 function dateKey(y, m, d) { return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
 function parseKey(k) { const [y,m,d] = k.split('-').map(Number); return { y, m: m-1, d }; }
 function todayKey() { const t = new Date(); return dateKey(t.getFullYear(), t.getMonth(), t.getDate()); }
@@ -358,11 +418,22 @@ function MediaEditor({ photos, onPhotosChange, audioBlob, onAudioChange }) {
   const chunks = useRef([]);
 
   const addPhotos = (e) => {
-    Array.from(e.target.files).forEach(file => {
-      const reader = new FileReader();
-      reader.onload = (ev) => onPhotosChange(prev => [...prev, ev.target.result]);
-      reader.readAsDataURL(file);
+    Array.from(e.target.files).forEach(async (file) => {
+      if (file.type.startsWith('video/')) {
+        const id = newVideoId();
+        try {
+          await idbPut(id, file);
+          onPhotosChange(prev => [...prev, VIDEO_REF_PREFIX + id]);
+        } catch (err) {
+          alert('No se pudo guardar el vídeo: ' + (err?.message || err));
+        }
+      } else {
+        const reader = new FileReader();
+        reader.onload = (ev) => onPhotosChange(prev => [...prev, ev.target.result]);
+        reader.readAsDataURL(file);
+      }
     });
+    e.target.value = '';
   };
 
   const startRecording = async () => {
@@ -392,9 +463,12 @@ function MediaEditor({ photos, onPhotosChange, audioBlob, onAudioChange }) {
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(80px, 1fr))', gap:8, marginBottom:12 }}>
           {photos.map((p, i) => (
             <div key={i} style={{ position:'relative', aspectRatio:'1', borderRadius:12, overflow:'hidden', boxShadow:'0 2px 8px rgba(0,0,0,0.08)' }}>
-              {p.startsWith('data:video') ? <video src={p} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+              {isVideoSrc(p) ? <VideoMedia src={p} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
                 : <img src={p} style={{ width:'100%', height:'100%', objectFit:'cover' }} />}
-              <button onClick={() => onPhotosChange(prev => prev.filter((_,j) => j !== i))} style={{
+              <button onClick={() => {
+                if (typeof p === 'string' && p.startsWith(VIDEO_REF_PREFIX)) idbDel(p.slice(VIDEO_REF_PREFIX.length)).catch(()=>{});
+                onPhotosChange(prev => prev.filter((_,j) => j !== i));
+              }} style={{
                 position:'absolute', top:4, right:4, background:'rgba(0,0,0,0.5)', color:'#fff',
                 border:'none', borderRadius:6, width:22, height:22, cursor:'pointer', fontSize:12,
                 display:'flex', alignItems:'center', justifyContent:'center'
@@ -619,7 +693,7 @@ function EntryViewer({ dk, entry, onClose, onEdit }) {
           <div style={{ display:'grid', gridTemplateColumns: entry.photos.length === 1 ? '1fr' : 'repeat(2,1fr)', gap:8, marginBottom:16 }}>
             {entry.photos.map((p, i) => (
               <div key={i} style={{ borderRadius:16, overflow:'hidden', aspectRatio: entry.photos.length === 1 ? '16/9' : '1' }}>
-                {p.startsWith('data:video') ? <video src={p} controls style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+                {isVideoSrc(p) ? <VideoMedia src={p} controls style={{ width:'100%', height:'100%', objectFit:'cover' }} />
                   : <img src={p} style={{ width:'100%', height:'100%', objectFit:'cover' }} />}
               </div>
             ))}
@@ -1318,8 +1392,8 @@ function MultimediaPage({ entries }) {
             onMouseEnter={e => e.currentTarget.style.transform='scale(1.02)'}
             onMouseLeave={e => e.currentTarget.style.transform='scale(1)'}
           >
-            {item.src.startsWith('data:video') ? (
-              <video src={item.src} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+            {isVideoSrc(item.src) ? (
+              <VideoMedia src={item.src} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
             ) : (
               <img src={item.src} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
             )}
@@ -1339,8 +1413,8 @@ function MultimediaPage({ entries }) {
           animation:'dFadeIn .2s ease'
         }}>
           <div style={{ maxWidth:'90vw', maxHeight:'85vh' }}>
-            {selected.src.startsWith('data:video') ? (
-              <video src={selected.src} controls autoPlay style={{ maxWidth:'90vw', maxHeight:'85vh', borderRadius:16 }} />
+            {isVideoSrc(selected.src) ? (
+              <VideoMedia src={selected.src} controls autoPlay style={{ maxWidth:'90vw', maxHeight:'85vh', borderRadius:16 }} />
             ) : (
               <img src={selected.src} style={{ maxWidth:'90vw', maxHeight:'85vh', borderRadius:16 }} />
             )}

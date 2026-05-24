@@ -33,50 +33,65 @@ const UPDATES = [
     overlay.innerHTML = `
       <style>
         #__zonga_update_overlay__ {
-          position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 100000;
+          position: fixed; inset: 0; background: rgba(15, 23, 42, 0.55); z-index: 100000;
           display: flex; align-items: center; justify-content: center; padding: 20px;
           animation: zuFade .25s ease;
-          backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+          backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
         }
         #__zonga_update_overlay__ .zu-card {
-          background: #fff; border-radius: 22px; max-width: 420px; width: 100%;
-          padding: 28px 26px 24px; box-shadow: 0 24px 70px rgba(0,0,0,0.28);
-          font-family: 'DM Sans', system-ui, sans-serif; color: #1a1a1a;
-          animation: zuSlide .35s cubic-bezier(.2,.8,.3,1);
+          background: #FFFFFF; border-radius: 24px; max-width: 440px; width: 100%;
+          padding: 30px 28px 26px;
+          box-shadow: 0 25px 60px -15px rgba(37, 99, 235, 0.35), 0 10px 25px -10px rgba(15, 23, 42, 0.15);
+          font-family: 'Inter', system-ui, -apple-system, sans-serif; color: #0F172A;
+          animation: zuSlide .4s cubic-bezier(.2,.8,.3,1);
+          border: 1px solid #E2E8F0;
+        }
+        #__zonga_update_overlay__ .zu-head {
+          display: flex; align-items: center; gap: 10px; margin-bottom: 18px;
+        }
+        #__zonga_update_overlay__ .zu-dot {
+          width: 10px; height: 10px; border-radius: 50%;
+          background: #2563EB; box-shadow: 0 0 0 4px #DBEAFE;
+          flex-shrink: 0;
         }
         #__zonga_update_overlay__ .zu-badge {
-          display: inline-block; padding: 5px 11px; border-radius: 999px;
-          background: linear-gradient(135deg, #1a1a1a, #444); color: #fff;
-          font-size: 10.5px; font-weight: 700; letter-spacing: 0.6px;
-          text-transform: uppercase; margin-bottom: 14px;
+          font-size: 11px; font-weight: 700; letter-spacing: 0.8px;
+          text-transform: uppercase; color: #2563EB;
         }
         #__zonga_update_overlay__ h2 {
-          font-size: 24px; font-weight: 700; margin: 0 0 18px;
-          font-family: 'DM Serif Display', 'DM Sans', serif; letter-spacing: -0.4px;
+          font-size: 22px; font-weight: 700; margin: 0 0 20px;
+          font-family: 'Inter', system-ui, sans-serif; letter-spacing: -0.5px;
+          color: #0F172A;
         }
-        #__zonga_update_overlay__ ul { list-style: none; padding: 0; margin: 0 0 22px; }
+        #__zonga_update_overlay__ ul { list-style: none; padding: 0; margin: 0 0 24px; }
         #__zonga_update_overlay__ li {
-          font-size: 14px; line-height: 1.55; color: #444;
-          padding: 11px 0 11px 22px; border-bottom: 1px solid #f3f3f3;
+          font-size: 14px; line-height: 1.6; color: #64748B;
+          padding: 12px 0 12px 26px; border-bottom: 1px solid #F1F5F9;
           position: relative;
         }
         #__zonga_update_overlay__ li:last-child { border-bottom: none; }
         #__zonga_update_overlay__ li::before {
-          content: ''; position: absolute; left: 4px; top: 18px;
-          width: 6px; height: 6px; border-radius: 50%; background: #1a1a1a;
+          content: ''; position: absolute; left: 6px; top: 19px;
+          width: 6px; height: 6px; border-radius: 50%; background: #2563EB;
         }
         #__zonga_update_overlay__ button {
-          width: 100%; padding: 13px; border: none; border-radius: 12px;
-          background: #1a1a1a; color: #fff; font-size: 14px; font-weight: 600;
-          font-family: inherit; cursor: pointer; transition: background .2s, transform .1s;
+          width: 100%; padding: 14px; border: none; border-radius: 12px;
+          background: #2563EB; color: #fff; font-size: 14px; font-weight: 600;
+          font-family: inherit; cursor: pointer;
+          transition: background 200ms cubic-bezier(0.4, 0, 0.2, 1), transform 100ms, box-shadow 200ms;
+          box-shadow: 0 10px 25px -10px rgba(37, 99, 235, 0.5);
+          letter-spacing: 0.2px;
         }
-        #__zonga_update_overlay__ button:hover { background: #333; }
+        #__zonga_update_overlay__ button:hover { background: #1E40AF; box-shadow: 0 14px 30px -10px rgba(37, 99, 235, 0.6); }
         #__zonga_update_overlay__ button:active { transform: scale(0.98); }
         @keyframes zuFade { from { opacity: 0 } to { opacity: 1 } }
-        @keyframes zuSlide { from { opacity: 0; transform: translateY(24px) } to { opacity: 1; transform: translateY(0) } }
+        @keyframes zuSlide { from { opacity: 0; transform: translateY(24px) scale(0.97) } to { opacity: 1; transform: translateY(0) scale(1) } }
       </style>
       <div class="zu-card" id="__zonga_update_card__">
-        <div class="zu-badge">Novedad</div>
+        <div class="zu-head">
+          <div class="zu-dot"></div>
+          <div class="zu-badge">Novedad</div>
+        </div>
         <h2>${latest.title || 'Nueva actualización'}</h2>
         <ul>${latest.items.map(i => `<li>${i.replace(/</g, '&lt;')}</li>`).join('')}</ul>
         <button id="__zonga_update_close__">Entendido</button>

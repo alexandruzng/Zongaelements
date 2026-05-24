@@ -109,6 +109,14 @@ const tools = [
     icon: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M9 16l2 2 4-4"/></svg>`
   },
   {
+    id: 'analisis-realismo-ia',
+    name: 'Análisis de realismo IA',
+    description: 'Sube una foto generada con IA y obtén un análisis de qué tan realista parece, con detalles a corregir.',
+    url: 'https://claude.ai/public/artifacts/de1e606d-f1e9-418e-9480-4c0e909bc02f',
+    status: 'available',
+    icon: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="M8 11h6"/><path d="M11 8v6"/></svg>`
+  },
+  {
     id: 'soon-2',
     name: 'Próximamente',
     description: 'Estamos trabajando en más piezas para completar tu flujo de trabajo.',

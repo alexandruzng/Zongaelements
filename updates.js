@@ -5,6 +5,13 @@
 */
 const UPDATES = [
   {
+    id: '2026-05-24-analisis-realismo-ia',
+    title: 'Nueva actualización',
+    items: [
+      'Nueva herramienta: Análisis de realismo IA. Sube una foto generada con IA y obtén un veredicto sobre qué tan realista parece.',
+    ],
+  },
+  {
     id: '2026-05-24-navegacion-backup',
     title: 'Nueva actualización',
     items: [

@@ -5,6 +5,13 @@
 */
 const UPDATES = [
   {
+    id: '2026-05-25-generador-paleta-colores',
+    title: 'Nueva actualización',
+    items: [
+      'Nueva herramienta: Generador de paleta de colores. Crea paletas armónicas para tu marca a partir de un estilo o color base.',
+    ],
+  },
+  {
     id: '2026-05-24-generador-nombres-marca',
     title: 'Nueva actualización',
     items: [

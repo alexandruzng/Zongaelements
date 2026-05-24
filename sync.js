@@ -10,6 +10,7 @@ const SKIP_PREFIXES = ["__zonga", "firebase:"];
 const skipKey = (k) => !k || SKIP_PREFIXES.some(p => k.startsWith(p));
 
 const DEVICE_KEY = "__zonga_device_id__";
+const LOCAL_TS_KEY = "__zonga_local_ts__";
 const PUSH_DEBOUNCE_MS = 800;
 
 // ── Device ID estable por navegador ──
@@ -111,16 +112,19 @@ function showSyncToast(msg) {
 }
 
 // ── Patch de localStorage para detectar escrituras y empujar ──
+function bumpLocalTs() { try { origSet(LOCAL_TS_KEY, String(Date.now())); } catch {} }
+
 localStorage.setItem = function (k, v) {
   origSet(k, v);
-  if (!skipKey(k)) schedulePush();
+  if (!skipKey(k)) { bumpLocalTs(); schedulePush(); }
 };
 localStorage.removeItem = function (k) {
   origRemove(k);
-  if (!skipKey(k)) schedulePush();
+  if (!skipKey(k)) { bumpLocalTs(); schedulePush(); }
 };
 localStorage.clear = function () {
   origClear();
+  bumpLocalTs();
   schedulePush();
 };
 
@@ -145,6 +149,17 @@ onAuthStateChanged(auth, (user) => {
       // Ignorar el snapshot si fue causado por este mismo dispositivo
       // (excepto la primera carga, donde sí queremos aplicar)
       if (initialPullDone && data.lastDevice === deviceId) return;
+
+      // Si lo local es más reciente que lo remoto, NO sobrescribimos: subimos local.
+      // Esto evita perder días recién escritos cuando el push no llegó a completarse
+      // (refresco rápido, push fallido por tamaño de doc, sin conexión, etc.).
+      const remoteTs = Number(data.updatedAt || 0);
+      const localTs = Number(localStorage.getItem(LOCAL_TS_KEY) || 0);
+      if (localTs > remoteTs) {
+        initialPullDone = true;
+        pushNow(user.uid);
+        return;
+      }
 
       const changed = applyRemote(data.localStorage || {});
       const wasInitial = !initialPullDone;

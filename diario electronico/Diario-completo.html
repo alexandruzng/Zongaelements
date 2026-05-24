@@ -49,7 +49,18 @@ const LETTERS_KEY = 'diario_letters_v2';
 const OBJECTIVES_KEY = 'diario_objectives_v2';
 
 function loadData(key, fallback) { try { return JSON.parse(localStorage.getItem(key)) || fallback; } catch { return fallback; } }
-function saveData(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+let __saveWarned = false;
+function saveData(key, val) {
+  try {
+    localStorage.setItem(key, JSON.stringify(val));
+  } catch (err) {
+    console.error('[diario] No se pudo guardar', key, err);
+    if (!__saveWarned) {
+      __saveWarned = true;
+      alert('No se ha podido guardar la entrada porque el almacenamiento local está lleno. Quita alguna foto/vídeo o elimina entradas antiguas para liberar espacio.');
+    }
+  }
+}
 
 // ── IndexedDB para vídeos (evitar reventar la cuota de localStorage) ──
 const IDB_DB = 'diario_media';

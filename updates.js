@@ -5,6 +5,13 @@
 */
 const UPDATES = [
   {
+    id: '2026-05-25-generador-copy-tienda',
+    title: 'Nueva actualización',
+    items: [
+      'Nueva herramienta: Generador de copy para tienda. Crea reseñas, beneficios con emojis, palabras clave y textos persuasivos listos para tu ecommerce.',
+    ],
+  },
+  {
     id: '2026-05-25-generador-paleta-colores',
     title: 'Nueva actualización',
     items: [

@@ -31,8 +31,8 @@ const tools = [
   {
     id: 'tiktok-dl',
     name: 'Descargador TikTok sin WM',
-    description: 'Descarga videos de TikTok sin marca de agua en HD, SD o solo audio MP3. Requiere servidor local activo.',
-    url: 'http://localhost:5000/',
+    description: 'Descarga videos de TikTok sin marca de agua en HD, SD o solo audio MP3.',
+    url: 'descargador-video/index.html',
     status: 'available',
     icon: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`
   },

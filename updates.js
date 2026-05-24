@@ -5,6 +5,15 @@
 */
 const UPDATES = [
   {
+    id: '2026-05-24-navegacion-backup',
+    title: 'Nueva actualización',
+    items: [
+      'Cada herramienta tiene ahora un botón "Volver al menú" arriba a la izquierda.',
+      'Nuevo bloque "Guarda tu información" en la home con el botón de descargar copia de seguridad.',
+      'El botón flotante de guardado ya no aparece encima del contenido en las herramientas.',
+    ],
+  },
+  {
     id: '2026-05-24-descargador-online',
     title: 'Nueva actualización',
     items: [

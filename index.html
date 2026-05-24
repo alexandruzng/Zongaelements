@@ -308,7 +308,7 @@
     .pm-btn-ghost:hover { border-color: #cbd5e1; }
   </style>
 </head>
-<body>
+<body data-zonga-page="home">
 <!-- ======= AUTH OVERLAY ======= -->
 <div id="authOverlay" aria-modal="true" role="dialog">
   <div class="auth-card">
@@ -558,6 +558,48 @@
       </div>
     </section>
 
+    <!-- ======= GUARDA TU INFORMACIÓN ======= -->
+    <section class="section" id="guarda-info">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="eyebrow">Tus datos</span>
+          <h2>Guarda tu información</h2>
+          <p>Todo lo que escribes en las herramientas se guarda en este navegador. Descarga una copia de seguridad para no perder nada si limpias el caché, cambias de dispositivo o quieres llevarte tus datos.</p>
+        </div>
+
+        <div class="save-card reveal">
+          <ul class="save-list">
+            <li>
+              <span class="save-bullet"></span>
+              <div>
+                <strong>Un solo archivo con todo</strong>
+                <p>Incluye diario, finanzas, pedidos diarios, objetivos y el resto de herramientas en un único <code>.json</code>.</p>
+              </div>
+            </li>
+            <li>
+              <span class="save-bullet"></span>
+              <div>
+                <strong>Restaurable en otro navegador</strong>
+                <p>Súbelo en cualquier momento para recuperar exactamente el estado en el que estabas.</p>
+              </div>
+            </li>
+            <li>
+              <span class="save-bullet"></span>
+              <div>
+                <strong>Recomendado cada 2 semanas</strong>
+                <p>Una descarga ocasional es la mejor protección frente a borrados accidentales o limpieza de caché.</p>
+              </div>
+            </li>
+          </ul>
+
+          <div class="save-actions">
+            <button id="zmExportHome" class="btn btn-primary btn-lg">Descargar mi información</button>
+            <button id="zmImportHome" class="btn btn-ghost btn-lg">Restaurar desde backup</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- ======= POR QUÉ ======= -->
     <section class="section" id="sobre">
       <div class="container">
@@ -636,5 +678,14 @@
   <script src="script.js"></script>
   <script src="/zonga-memory.js"></script>
   <script src="/updates.js"></script>
+  <script>
+    // Conectar botones de la sección "Guarda tu información" con ZongaMemory.
+    (function wireSaveBlock() {
+      const exp = document.getElementById('zmExportHome');
+      const imp = document.getElementById('zmImportHome');
+      if (exp) exp.addEventListener('click', () => window.ZongaMemory?.export());
+      if (imp) imp.addEventListener('click', () => window.ZongaMemory?.import());
+    })();
+  </script>
 </body>
 </html>

@@ -5,6 +5,14 @@
 */
 const UPDATES = [
   {
+    id: '2026-05-24-descargador-online',
+    title: 'Nueva actualización',
+    items: [
+      'Descargador de vídeos sin marca de agua: ya funciona online, sin necesidad de tener el servidor local abierto.',
+      'Soporta HD, SD y extracción de audio MP3.',
+    ],
+  },
+  {
     id: '2026-05-24-fotos-cloud',
     title: 'Nueva actualización',
     items: [

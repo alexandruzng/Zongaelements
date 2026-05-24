@@ -355,9 +355,24 @@
   </div>
 
   <script>
-    const API = (location.protocol === 'http:' || location.protocol === 'https:')
-      ? location.origin
-      : 'http://localhost:5000';
+    // Llamada directa a tikwm desde el navegador (soporta CORS), sin servidor Python.
+    const TIKWM_API = 'https://www.tikwm.com/api/';
+
+    async function tikwmFetch(url) {
+      const fd = new FormData();
+      fd.append('url', url);
+      fd.append('hd', '1');
+      const r = await fetch(TIKWM_API, { method: 'POST', body: fd });
+      if (!r.ok) throw new Error('Respuesta inesperada de tikwm (HTTP ' + r.status + ')');
+      const json = await r.json();
+      if (json.code !== 0 || !json.data) throw new Error(json.msg || 'No se pudo obtener info del video');
+      return json.data;
+    }
+
+    function safeName(s) {
+      return (s || 'tiktok').toString().replace(/[^\w\s\-_.]/g, '').replace(/\s+/g, '_').slice(0, 80) || 'tiktok';
+    }
+
     const $ = (id) => document.getElementById(id);
 
     const urlInput    = $('urlInput');
@@ -417,26 +432,33 @@
       downloadBtn.disabled = true;
 
       try {
-        const r = await fetch(API + '/api/info', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url }),
-        });
-        const data = await r.json();
-        if (!data.ok) throw new Error(data.error || 'Error');
+        const data = await tikwmFetch(url);
+        const author = (data.author || {}).unique_id || (data.author || {}).nickname || 'tiktok';
+        const nickname = (data.author || {}).nickname || (data.author || {}).unique_id || 'desconocido';
 
-        currentInfo = data;
-        pvCover.src = data.cover || '';
-        pvAuthor.textContent = '@' + (data.author || 'desconocido');
-        pvTitle.textContent = data.title || '(sin título)';
-        pvViews.textContent = formatViews(data.play_count);
-        pvDuration.textContent = formatDuration(data.duration);
+        currentInfo = {
+          id: data.id,
+          author,
+          nickname,
+          title: data.title,
+          cover: data.cover || data.origin_cover,
+          duration: data.duration,
+          play_count: data.play_count,
+          hdplay: data.hdplay,
+          play: data.play,
+          music: data.music || (data.music_info || {}).play,
+        };
+        pvCover.src = currentInfo.cover || '';
+        pvAuthor.textContent = '@' + nickname;
+        pvTitle.textContent = currentInfo.title || '(sin título)';
+        pvViews.textContent = formatViews(currentInfo.play_count);
+        pvDuration.textContent = formatDuration(currentInfo.duration);
         preview.classList.add('show');
         downloadBtn.disabled = false;
         setStatus('Listo para descargar', 'ok');
       } catch (e) {
         const msg = /failed to fetch|networkerror/i.test(e.message)
-          ? 'El servidor local no responde. Abre start-server.bat y abre esta pagina desde http://localhost:5000/'
+          ? 'No hay conexión con tikwm. Comprueba tu red o vuelve a intentarlo en unos segundos.'
           : e.message;
         setStatus('Error: ' + msg, 'err');
       } finally {
@@ -458,17 +480,41 @@
       setStatus('Descargando...', 'info');
 
       try {
-        const r = await fetch(API + '/api/download', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url, quality: currentQuality }),
-        });
-
-        if (!r.ok) {
-          let errMsg = 'Error de descarga';
-          try { const j = await r.json(); errMsg = j.error || errMsg; } catch (_) {}
-          throw new Error(errMsg);
+        // Si no tenemos info aún, la pedimos ahora
+        if (!currentInfo) {
+          setStatus('Obteniendo info...', 'info');
+          const data = await tikwmFetch(url);
+          currentInfo = {
+            id: data.id,
+            author: (data.author || {}).unique_id || (data.author || {}).nickname || 'tiktok',
+            hdplay: data.hdplay,
+            play: data.play,
+            music: data.music || (data.music_info || {}).play,
+          };
         }
+
+        let mediaUrl, ext;
+        if (currentQuality === 'hd') { mediaUrl = currentInfo.hdplay || currentInfo.play; ext = 'mp4'; }
+        else if (currentQuality === 'sd') { mediaUrl = currentInfo.play; ext = 'mp4'; }
+        else { mediaUrl = currentInfo.music; ext = 'mp3'; }
+
+        if (!mediaUrl) throw new Error('No se encontró el recurso solicitado');
+
+        setStatus('Descargando...', 'info');
+
+        let r;
+        try {
+          r = await fetch(mediaUrl);
+        } catch (corsErr) {
+          // CORS bloqueado → abrir directamente para que el navegador lo descargue/abra
+          window.open(mediaUrl, '_blank');
+          setStatus('Se ha abierto el video en una pestaña nueva. Mantén pulsado o click derecho para guardarlo.', 'ok');
+          progress.classList.remove('show');
+          downloadBtn.disabled = false; infoBtn.disabled = false;
+          return;
+        }
+
+        if (!r.ok) throw new Error('No se pudo descargar el archivo (HTTP ' + r.status + ')');
 
         const total = parseInt(r.headers.get('Content-Length') || '0', 10);
         const reader = r.body.getReader();
@@ -496,10 +542,7 @@
           progressPct.textContent = '100%';
         }
 
-        // Extract filename from Content-Disposition
-        const disp = r.headers.get('Content-Disposition') || '';
-        const match = disp.match(/filename\*?=(?:UTF-8'')?["']?([^"';]+)/i);
-        const filename = match ? decodeURIComponent(match[1]) : `tiktok_${Date.now()}.${currentQuality === 'audio' ? 'mp3' : 'mp4'}`;
+        const filename = `${safeName(currentInfo.author)}_${safeName(currentInfo.id || Date.now())}_${currentQuality}.${ext}`;
 
         const blob = new Blob(chunks, {
           type: currentQuality === 'audio' ? 'audio/mpeg' : 'video/mp4',

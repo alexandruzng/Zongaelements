@@ -5,6 +5,13 @@
 */
 const UPDATES = [
   {
+    id: '2026-05-24-reviews-ig',
+    title: 'Nueva actualización',
+    items: [
+      'Nueva herramienta: Generador de reviews Instagram. Crea capturas de conversaciones de clientes elogiando tu producto (ES/EN), con fotos de perfil y fotos de reseña personalizadas, y descarga todo en ZIP.',
+    ],
+  },
+  {
     id: '2026-05-24-analisis-realismo-ia',
     title: 'Nueva actualización',
     items: [

@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Generador de Reviews Instagram — Zonga Elements</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: #08080f; color: #e2e8f0; min-height: 100vh; -webkit-font-smoothing: antialiased; font-size: 14px; }
+    .app { display: grid; grid-template-columns: 380px 1fr; min-height: 100vh; }
+
+    .sidebar { background: #0b0b14; border-right: 1px solid rgba(255,255,255,.07); overflow-y: auto; display: flex; flex-direction: column; }
+    .sidebar-inner { padding: 20px; display: flex; flex-direction: column; gap: 18px; flex: 1; }
+    .sidebar-header { display: flex; align-items: center; gap: 10px; padding: 18px 20px 0; }
+    .tool-brand { font-size: 13px; font-weight: 800; background: linear-gradient(135deg, #E1306C, #A45FFF); -webkit-background-clip: text; background-clip: text; color: transparent; margin-left: auto; }
+
+    .section-label { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; font-weight: 700; color: #475569; margin-bottom: 10px; }
+    label { display: block; font-size: 12px; font-weight: 600; color: #64748b; margin-bottom: 5px; }
+    .field { margin-bottom: 12px; }
+    input[type="text"], input[type="number"] { width: 100%; background: #0f172a; border: 1px solid rgba(255,255,255,.08); color: #e2e8f0; border-radius: 10px; padding: 10px 12px; font-family: inherit; font-size: 14px; outline: 0; transition: border-color .15s; }
+    input:focus { border-color: #7c3aed; }
+    input::placeholder { color: #334155; }
+
+    .upload-zone { border: 2px dashed rgba(255,255,255,.08); border-radius: 12px; padding: 20px 16px; text-align: center; cursor: pointer; transition: border-color .2s, background .2s; position: relative; }
+    .upload-zone:hover, .upload-zone.drag-over { border-color: rgba(164,95,255,.5); background: rgba(164,95,255,.04); }
+    .upload-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+    .upload-zone .uz-icon { font-size: 24px; margin-bottom: 6px; }
+    .upload-zone .uz-label { font-size: 13px; font-weight: 600; color: #64748b; }
+    .upload-zone .uz-sub { font-size: 11px; color: #334155; margin-top: 3px; }
+
+    .photo-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 10px; }
+    .photo-thumb { aspect-ratio: 1; border-radius: 8px; overflow: hidden; position: relative; border: 1px solid rgba(255,255,255,.06); }
+    .photo-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .photo-thumb .del { position: absolute; top: 3px; right: 3px; width: 18px; height: 18px; background: rgba(0,0,0,.7); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 9px; color: white; border: none; }
+
+    .lang-toggle { display: flex; background: #0f172a; border: 1px solid rgba(255,255,255,.08); border-radius: 10px; padding: 3px; gap: 3px; }
+    .lang-btn { flex: 1; padding: 8px; border-radius: 7px; border: 0; font-family: inherit; font-weight: 700; font-size: 13px; cursor: pointer; transition: all .15s; background: transparent; color: #475569; }
+    .lang-btn.active { background: linear-gradient(135deg, #7c3aed, #a855f7); color: white; }
+
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; border: 0; border-radius: 10px; padding: 11px 16px; font-family: inherit; font-weight: 700; font-size: 13px; cursor: pointer; transition: filter .15s, opacity .15s; }
+    .btn-block { width: 100%; }
+    .btn-primary { background: linear-gradient(135deg, #7c3aed, #a855f7); color: white; }
+    .btn-primary:hover:not(:disabled) { filter: brightness(1.1); }
+    .btn-primary:disabled { opacity: .45; cursor: not-allowed; filter: none; }
+    .btn-secondary { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); color: #64748b; }
+    .btn-secondary:hover:not(:disabled) { background: rgba(255,255,255,.08); color: #94a3b8; }
+    .btn-secondary:disabled { opacity: .45; cursor: not-allowed; }
+
+    .progress-wrap { display: none; }
+    .progress-wrap.visible { display: block; }
+    .progress-bar-bg { height: 4px; background: rgba(255,255,255,.06); border-radius: 4px; margin-bottom: 6px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #7c3aed, #E1306C); border-radius: 4px; transition: width .3s; }
+    .progress-text { font-size: 11px; color: #475569; text-align: center; }
+
+    .sticky-bottom { margin-top: auto; padding: 16px 20px; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid rgba(255,255,255,.04); }
+
+    .main { background: #08080f; padding: 40px 32px; overflow-y: auto; }
+    .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; text-align: center; }
+    .empty-state .es-icon { font-size: 48px; margin-bottom: 16px; }
+    .empty-state .es-title { font-size: 18px; font-weight: 700; color: #334155; margin-bottom: 6px; }
+    .empty-state .es-sub { font-size: 13px; color: #1e293b; line-height: 1.6; }
+
+    .preview-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 10px; }
+    .preview-title { font-size: 16px; font-weight: 800; color: #e2e8f0; }
+    .preview-sub { font-size: 12px; color: #475569; margin-top: 2px; }
+    .preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+    .preview-item { border-radius: 16px; overflow: hidden; background: #0f172a; border: 1px solid rgba(255,255,255,.06); transition: transform .2s, box-shadow .2s; }
+    .preview-item:hover { transform: translateY(-3px); box-shadow: 0 16px 40px rgba(0,0,0,.4); }
+    .preview-img { width: 100%; display: block; }
+    .preview-footer { padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .preview-name { font-size: 12px; font-weight: 600; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .preview-dl { background: rgba(124,58,237,.12); border: 1px solid rgba(124,58,237,.2); color: #a78bfa; border-radius: 7px; padding: 5px 10px; font-size: 11px; font-weight: 700; cursor: pointer; font-family: inherit; white-space: nowrap; flex-shrink: 0; }
+    .preview-dl:hover { background: rgba(124,58,237,.25); }
+
+    #renderArea { position: fixed; left: -9999px; top: 0; pointer-events: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 900px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar { border-right: 0; border-bottom: 1px solid rgba(255,255,255,.07); }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <span class="tool-brand">Review Generator IG</span>
+    </div>
+    <div class="sidebar-inner">
+
+      <div>
+        <p class="section-label">Fotos de perfil (pool)</p>
+        <div class="upload-zone" id="avatarUploadZone">
+          <input type="file" id="avatarInput" multiple accept="image/*" />
+          <div class="uz-icon">👤</div>
+          <div class="uz-label">Sube fotos de perfil</div>
+          <div class="uz-sub">Se asignan aleatoriamente entre las capturas.<br>Sin fotos → iniciales de color.</div>
+        </div>
+        <div class="photo-grid" id="avatarGrid"></div>
+      </div>
+
+      <div>
+        <p class="section-label">Fotos de reseña (opcional)</p>
+        <div class="upload-zone" id="uploadZone">
+          <input type="file" id="photoInput" multiple accept="image/*" />
+          <div class="uz-icon">📸</div>
+          <div class="uz-label">Arrastra fotos o haz clic</div>
+          <div class="uz-sub">Opcional — cada foto se asigna a una captura distinta.<br>Las restantes serán solo texto.</div>
+        </div>
+        <div class="photo-grid" id="photoGrid"></div>
+      </div>
+
+      <div class="field">
+        <p class="section-label">Capturas a generar</p>
+        <input type="number" id="countInput" value="5" min="1" max="20" />
+      </div>
+
+      <div>
+        <p class="section-label">Idioma de los mensajes</p>
+        <div class="lang-toggle">
+          <button class="lang-btn active" id="btnEs" onclick="setLang('es')">🇪🇸 Español</button>
+          <button class="lang-btn" id="btnEn" onclick="setLang('en')">🇺🇸 English</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <p class="section-label">Tu usuario de tienda (respuesta)</p>
+        <input type="text" id="storeUser" value="tu.tienda" placeholder="tu.tienda" />
+      </div>
+
+      <div class="progress-wrap" id="progressWrap">
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill" style="width:0%"></div></div>
+        <div class="progress-text" id="progressText">Cargando perfiles…</div>
+      </div>
+
+    </div>
+    <div class="sticky-bottom">
+      <button class="btn btn-primary btn-block" id="generateBtn" onclick="generate()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Generar capturas
+      </button>
+      <button class="btn btn-secondary btn-block" id="downloadAllBtn" style="display:none" onclick="downloadAll()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></svg>
+        Descargar todo (ZIP)
+      </button>
+    </div>
+  </aside>
+
+  <main class="main" id="mainArea">
+    <div class="empty-state" id="emptyState">
+      <div class="es-icon">📱</div>
+      <div class="es-title">Listo para generar</div>
+      <div class="es-sub">Elige cuántas capturas quieres, el idioma<br>y pulsa "Generar capturas".<br><br>Las fotos son opcionales.</div>
+    </div>
+    <div id="previewSection" style="display:none">
+      <div class="preview-header">
+        <div>
+          <div class="preview-title" id="previewTitle">Capturas generadas</div>
+          <div class="preview-sub" id="previewSub"></div>
+        </div>
+      </div>
+      <div class="preview-grid" id="previewGrid"></div>
+    </div>
+  </main>
+</div>
+
+<div id="renderArea"></div>
+
+<script>
+// ─────────────────────────────────────────────────────────
+// MENSAJES — muchas variantes, con y sin emojis
+// ─────────────────────────────────────────────────────────
+const MSGS = {
+  es: {
+    greeting_f: [
+      'Hola!! Me acaba de llegar el pedido y estoy súper contenta 😍🛍',
+      'Buenas! Solo quería decirte que me llegó el paquete hoy y está increíble 🔥',
+      'Hola! Me llegó el pedido esta mañana, es exactamente como en las fotos ✨',
+      'Qué rápido!! Ya me llegó y viene perfecto, sin ningún daño 🥰',
+      'Hola!! Acabo de abrir el paquete y es una pasada, lo amo 😍',
+      'Buenas!! Llegó hoy el pedido y estoy encantada, todo perfecto',
+      'Hola! No podía no escribiros, estoy encantada con mi compra 🥹',
+      'Llegó antes de lo esperado!! Y está aún mejor de lo que pensaba 🤩',
+      'Hola! Recibí mi pedido hoy. Calidad increíble para el precio 💯',
+      'Buenas tardes! El paquete llegó perfectamente embalado y en perfecto estado',
+      'Hola!! Quería agradeceros, el pedido llegó hoy y es precioso',
+      'Me acaba de llegar el pedido y estoy muy satisfecha con la compra 😊',
+      'Hola! El envío fue rapidísimo y el producto está genial. Muy contenta',
+      'Buenas!! Solo deciros que llegó todo perfecto, gracias por todo ❤️',
+      'Hola! Recibí mi pedido y la verdad es que supera todas mis expectativas',
+      'Me llegó el paquete hoy y está exactamente como lo esperaba. Muy feliz 😍',
+      'Hola!! Llegó el pedido y la calidad es impresionante para ese precio',
+      'Buenas! Solo quería dar feedback positivo, todo llegó perfecto y en tiempo',
+      'Hola, me llegó hoy el paquete y estoy muy contenta con todo',
+      'El pedido llegó hoy. Todo perfecto y bien empaquetado. Gracias!',
+    ],
+    greeting_m: [
+      'Hola!! Me acaba de llegar el pedido, estoy muy contento con todo 😊',
+      'Buenas! Solo quería comentarte que llegó el paquete hoy, está genial 🔥',
+      'Hola! Me llegó esta mañana, es exactamente lo que esperaba ✨',
+      'Qué rápido!! Ya llegó y viene perfecto, sin nada roto',
+      'Hola!! Acabo de abrir el paquete y es una pasada, muy buena calidad',
+      'Buenas!! Llegó hoy y todo perfecto, muy contento con la compra',
+      'Hola! Me llegó el pedido y la calidad es brutal para el precio 💯',
+      'Llegó antes de lo esperado!! Muy contento, supera expectativas 🤩',
+      'Hola! Recibí el pedido hoy. Todo correcto y bien embalado',
+      'Buenas tardes! El paquete llegó en perfecto estado, gracias',
+      'Hola!! Quería agradeceros, el pedido llegó hoy y es justo lo que buscaba',
+      'Me acaba de llegar el pedido y estoy muy satisfecho con la compra 😊',
+      'Hola! El envío fue muy rápido y el producto está genial. Muy contento',
+      'Buenas!! Todo llegó perfecto, gracias por todo ❤️',
+      'Hola! Recibí mi pedido y la verdad es que supera mis expectativas',
+      'Me llegó el paquete hoy y está exactamente como lo esperaba',
+      'Hola!! Llegó y la calidad es impresionante para ese precio 🔥',
+      'Buenas! Todo llegó perfecto y en el tiempo estimado. Muy bien',
+      'Hola, me llegó hoy el paquete y estoy muy contento',
+      'El pedido llegó hoy. Todo correcto y bien empaquetado',
+    ],
+    followup: [
+      'La verdad es que está muy bien hecho 🔥',
+      'Mejor de lo que esperaba!!',
+      'Super recomendable ✨',
+      'Muy contenta con la compra 🥰',
+      'La calidad es brutal para el precio 💯',
+      'Os voy a recomendar a todos mis amigos',
+      'Ya quiero pedir más cosas 😍',
+      'El packaging también era precioso',
+      'La calidad es muy buena la verdad',
+      'Estoy muy satisfecha con todo',
+      'El embalaje llegó perfecto, sin nada dañado',
+      'Sin duda volvería a comprar',
+      'Exactamente lo que esperaba y más',
+      'El envío también fue muy rápido',
+      'Muy buena atención al cliente también',
+      '', '', '', '', '', '',
+    ],
+    reply: [
+      '¡Muchas gracias por tu confianza! Nos alegra mucho que hayas recibido tu pedido perfectamente 😍❤️',
+      '¡Qué alegría! Gracias por compartirlo con nosotros 🎉 ¡Esperamos que lo disfrutes mucho!',
+      '¡Gracias por escribirnos! Es un placer saber que todo llegó bien. ¡Hasta pronto!',
+      '¡Nos hace muy felices leer esto! Gracias por tu confianza 🥰 Cualquier cosa, aquí estamos',
+      '¡Muchísimas gracias! Siempre es un placer ayudarte ❤️ ¡Hasta la próxima!',
+      '¡Qué bonito ver esto! Muchas gracias por compartirlo 😊 ¡Te esperamos pronto de nuevo!',
+      '¡Gracias por la confianza! Nos encanta saber que todo llegó bien. ¡Hasta pronto!',
+      '¡Muchas gracias! Nos alegra saber que estás satisfecha con tu compra 🥰',
+      '¡Gracias por escribirnos! Nos alegra que todo haya llegado en perfectas condiciones',
+      '¡Muchísimas gracias por compartirlo! Esperamos verte de nuevo pronto 💕',
+      '¡Gracias! Es un placer saber que estás contenta. ¡Cualquier cosa no dudes en escribirnos!',
+      'Muchas gracias por tomarte el tiempo de escribirnos. ¡Nos alegra que todo fuera perfecto!',
+    ],
+    noFollowText: 'No se siguen mutuamente en Instagram',
+  },
+  en: {
+    greeting_f: [
+      'Hey!! I just received my order and I absolutely love it 😍🛍',
+      'Hi! Just wanted to let you know my package arrived today and it\'s amazing 🔥',
+      'Hello!! Got my order this morning, it looks exactly like the photos ✨',
+      'So fast!! Already here and everything is in perfect condition 🥰',
+      'Hey!! Just opened my package and I\'m obsessed, love it so much 😍',
+      'Hi! My order arrived today and I\'m so happy with everything',
+      'Hey!! I couldn\'t not message you, I\'m so happy with my purchase 🥹',
+      'It arrived earlier than expected!! And it\'s even better than I thought 🤩',
+      'Hi! I received my order today. Incredible quality for the price 💯',
+      'Good afternoon! The package arrived perfectly packaged and in perfect condition',
+      'Hey!! I wanted to thank you, the order arrived today and it\'s beautiful',
+      'My order just arrived and I\'m very satisfied with the purchase 😊',
+      'Hi! The shipping was super fast and the product is great. Very happy',
+      'Hey!! Everything arrived perfect, thank you for everything ❤️',
+      'Hi! I received my order and it honestly exceeds all my expectations',
+      'My package arrived today and it\'s exactly what I hoped for. Very happy 😍',
+      'Hey!! The order arrived and the quality is impressive for that price',
+      'Hi! Just wanted to leave some positive feedback, everything arrived perfect',
+      'Hi, my package arrived today and I\'m very happy with everything',
+      'Order arrived today. Everything perfect and well packaged. Thanks!',
+    ],
+    greeting_m: [
+      'Hey!! I just received my order and I\'m really happy with it 😊',
+      'Hi! Just wanted to let you know my package arrived today, it\'s great 🔥',
+      'Hello!! Got my order this morning, it\'s exactly what I expected ✨',
+      'So fast!! Already here and everything looks perfect',
+      'Hey!! Just opened the package and it\'s awesome, great quality',
+      'Hi! My order arrived today and everything is perfect',
+      'Hey!! The quality is insane for the price 💯',
+      'It arrived earlier than expected!! Very happy, exceeds expectations 🤩',
+      'Hi! I received my order today. Everything correct and well packaged',
+      'Good afternoon! Package arrived in perfect condition, thanks',
+      'Hey!! Wanted to thank you, the order arrived and it\'s exactly what I was looking for',
+      'My order just arrived and I\'m very satisfied 😊',
+      'Hi! Shipping was very fast and the product is great. Very happy',
+      'Hey!! Everything arrived perfect, thanks for everything ❤️',
+      'Hi! Received my order and it honestly exceeds my expectations',
+      'My package arrived today and it\'s exactly what I expected',
+      'Hey!! The quality is impressive for that price 🔥',
+      'Hi! Everything arrived perfect and within the estimated time',
+      'Hi, my package arrived today and I\'m very happy',
+      'Order arrived today. Everything correct and well packaged',
+    ],
+    followup: [
+      'The quality is really amazing 🔥',
+      'Even better than I expected!!',
+      'Highly recommend ✨',
+      'So happy with this purchase 🥰',
+      'The quality is insane for the price 💯',
+      'Going to recommend you to all my friends',
+      'Already want to order more 😍',
+      'The packaging was also beautiful',
+      'The quality is really good honestly',
+      'I\'m very satisfied with everything',
+      'The packaging arrived perfect, nothing damaged',
+      'Would definitely buy again without hesitation',
+      'Exactly what I expected and more',
+      'The shipping was also super fast',
+      'Great customer service too',
+      '', '', '', '', '', '',
+    ],
+    reply: [
+      'Thank you so much for your trust! We\'re so glad your order arrived perfectly 😍❤️',
+      'How wonderful! Thanks for sharing this with us 🎉 Hope you enjoy it so much!',
+      'Thank you for reaching out! So glad everything arrived well. See you soon!',
+      'This makes us so happy! Thank you for your trust 🥰 Don\'t hesitate to reach out anytime',
+      'Thank you so much! It\'s always a pleasure to help you ❤️ Until next time!',
+      'How lovely to see this! Thank you so much for sharing 😊 Hope to see you again soon!',
+      'Thank you for your trust! We\'re so happy to know everything arrived well. See you soon!',
+      'Thank you so much! We\'re glad you\'re happy with your purchase 🥰',
+      'Thank you for reaching out! So glad everything arrived in perfect condition',
+      'Thank you so much for sharing! Hope to see you back soon 💕',
+      'Thanks! It\'s a pleasure to know you\'re happy. Don\'t hesitate to message us anytime!',
+      'Thank you so much for taking the time to message us. So glad everything was perfect!',
+    ],
+    noFollowText: 'You don\'t follow each other on Instagram',
+  }
+};
+
+// ─────────────────────────────────────────────────────────
+// SHUFFLED POOL — anti-repetición
+// ─────────────────────────────────────────────────────────
+class ShuffledPool {
+  constructor(items) {
+    this.items = items.filter(x => x !== undefined);
+    this.pool = [];
+    this.idx = 0;
+    this._refill();
+  }
+  _refill() {
+    this.pool = [...this.items].sort(() => Math.random() - 0.5);
+    this.idx = 0;
+  }
+  next() {
+    if (this.idx >= this.pool.length) this._refill();
+    return this.pool[this.idx++];
+  }
+}
+
+class FollowupPool {
+  constructor(items) {
+    this.nonEmpty = new ShuffledPool(items.filter(x => x !== ''));
+    this.empty = '';
+    this.emptyRate = 0.40;
+  }
+  next() {
+    if (Math.random() < this.emptyRate) return '';
+    return this.nonEmpty.next();
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+// ESTADO
+// ─────────────────────────────────────────────────────────
+let reviewPhotos = [];
+let generatedItems = [];
+let currentLang = 'es';
+let isGenerating = false;
+
+let poolGreetingF, poolGreetingM, poolFollowup, poolReply;
+
+function initPools(lang) {
+  const m = MSGS[lang];
+  poolGreetingF = new ShuffledPool(m.greeting_f);
+  poolGreetingM = new ShuffledPool(m.greeting_m);
+  poolFollowup  = new FollowupPool(m.followup);
+  poolReply     = new ShuffledPool(m.reply);
+}
+
+// ─────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────
+const randInt = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
+
+function randFollowers() {
+  const r = Math.random();
+  if (r < 0.55) return randInt(80, 900);
+  if (r < 0.85) return randInt(900, 2500);
+  if (r < 0.97) return randInt(2500, 4500);
+  return randInt(4500, 9000);
+}
+function randPosts() {
+  const r = Math.random();
+  if (r < 0.25) return randInt(0, 8);
+  if (r < 0.65) return randInt(8, 35);
+  if (r < 0.90) return randInt(35, 90);
+  return randInt(90, 220);
+}
+function randFollowing() {
+  return randInt(80, 650);
+}
+
+function fmtNum(n) {
+  if (n >= 1000000) return (n/1e6).toFixed(1).replace('.0','') + 'M';
+  if (n >= 1000) return (n/1000).toFixed(1).replace('.0','') + 'K';
+  return String(n);
+}
+
+function normalizeStr(s) {
+  return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,'');
+}
+
+function generateUsername(first, last) {
+  const f = normalizeStr(first);
+  const l = normalizeStr(last);
+  const opts = [
+    `${f}${l}${randInt(1,99)}`,
+    `${f}.${l}`,
+    `${f}_${l}`,
+    `${f}${randInt(100,9999)}`,
+    `${f}${l}`,
+    `${f}.${l.slice(0,4)}`,
+    `${f}_${l.slice(0,3)}${randInt(1,9)}`,
+    `${f}${randInt(10,99)}_`,
+  ];
+  const choice = opts[Math.floor(Math.random() * opts.length)];
+  return choice.replace(/_+$/, '').slice(0, 28);
+}
+
+function makeInitialsAvatar(letter, gender) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 150; canvas.height = 150;
+  const ctx = canvas.getContext('2d');
+  const palettes = {
+    f: ['#EC4899','#8B5CF6','#F43F5E','#A855F7','#DB2777','#E11D48','#9333EA'],
+    m: ['#3B82F6','#06B6D4','#10B981','#6366F1','#0EA5E9','#14B8A6','#8B5CF6'],
+  };
+  const colors = palettes[gender] || palettes.m;
+  ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
+  ctx.beginPath(); ctx.arc(75, 75, 75, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 60px -apple-system, Arial, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(letter.toUpperCase(), 75, 80);
+  return canvas.toDataURL();
+}
+
+// ─────────────────────────────────────────────────────────
+// NOMBRES CURADOS POR IDIOMA
+// ─────────────────────────────────────────────────────────
+const NAMES = {
+  es: {
+    f: [
+      'Laura','María','Sara','Lucía','Alba','Paula','Marta','Andrea','Elena','Sofía',
+      'Claudia','Irene','Noa','Carla','Martina','Ana','Carmen','Natalia','Raquel','Silvia',
+      'Valeria','Daniela','Alicia','Beatriz','Isabel','Rocío','Sonia','Miriam','Leire','Cristina',
+      'Lorena','Verónica','Celia','Pilar','Rebeca','Ángela','Nuria','Amaia','Yolanda','Susana',
+    ],
+    m: [
+      'Carlos','Pablo','Javier','Miguel','David','Sergio','Daniel','Adrián','Marcos','Rubén',
+      'Iván','Diego','Alejandro','Víctor','Luis','Manuel','Fernando','Alberto','Pedro','Óscar',
+      'Gonzalo','Rodrigo','Tomás','Enrique','Rafael','Antonio','Francisco','Jorge','Eduardo','Juan',
+      'Mario','Raúl','Álvaro','Cristian','Héctor','Félix','Jesús','Andrés','Jaime','Roberto',
+    ],
+    s: [
+      'García','Martínez','López','Sánchez','Pérez','González','Rodríguez','Fernández','Torres','Ramírez',
+      'Navarro','Moreno','Jiménez','Ruiz','Díaz','Herrera','Castro','Ramos','Vargas','Ortiz',
+      'Molina','Serrano','Blanco','Suárez','Ibáñez','Iglesias','Vidal','Cano','Campos','Medina',
+      'Reyes','Fuentes','Aguilar','Cortés','Guerrero','Mendoza','Delgado','Castillo','Romero','Flores',
+    ],
+  },
+  en: {
+    f: [
+      'Emma','Olivia','Sophia','Isabella','Mia','Charlotte','Amelia','Harper','Emily','Abigail',
+      'Lily','Grace','Zoey','Chloe','Scarlett','Hannah','Aria','Ellie','Nora','Luna',
+      'Madison','Layla','Ella','Avery','Camila','Penelope','Riley','Hazel','Violet','Victoria',
+      'Zoe','Stella','Aurora','Savannah','Audrey','Brooklyn','Bella','Claire','Skylar','Leah',
+    ],
+    m: [
+      'Liam','Noah','William','James','Oliver','Benjamin','Elijah','Lucas','Mason','Logan',
+      'Alexander','Ethan','Daniel','Henry','Jackson','Sebastian','Aiden','Owen','Carter','Luke',
+      'Jack','Ryan','Dylan','Nathan','Hunter','Tyler','Caleb','Adam','Connor','Jordan',
+      'Brandon','Justin','Aaron','Kevin','Evan','Ian','Kyle','Cole','Wyatt','Zachary',
+    ],
+    s: [
+      'Smith','Johnson','Williams','Brown','Jones','Garcia','Miller','Davis','Wilson','Taylor',
+      'Anderson','Thomas','Harris','Martin','White','Clark','Lewis','Walker','Hall','Young',
+      'Allen','King','Wright','Scott','Green','Baker','Adams','Nelson','Hill','Ramirez',
+      'Campbell','Mitchell','Roberts','Carter','Phillips','Evans','Turner','Torres','Parker','Collins',
+    ],
+  },
+};
+
+// ─────────────────────────────────────────────────────────
+// POOL DE FOTOS DE PERFIL
+// ─────────────────────────────────────────────────────────
+let avatarPool = [];
+let _avatarIdx = 0;
+
+function getNextAvatar() {
+  if (avatarPool.length === 0 || _avatarIdx >= avatarPool.length) return null;
+  return avatarPool[_avatarIdx++];
+}
+
+// ─────────────────────────────────────────────────────────
+// GENERACIÓN DE PERSONAS
+// ─────────────────────────────────────────────────────────
+async function fetchPeople(count, lang) {
+  const names = NAMES[lang] || NAMES.es;
+  const people = [];
+  const usedUsernames = new Set();
+
+  const fPool = [...names.f].sort(() => Math.random() - 0.5);
+  const mPool = [...names.m].sort(() => Math.random() - 0.5);
+  let fIdx = 0, mIdx = 0;
+
+  _avatarIdx = 0;
+
+  for (let i = 0; i < count; i++) {
+    const gender = Math.random() < 0.6 ? 'f' : 'm';
+    const pool   = gender === 'f' ? fPool : mPool;
+    const idx    = gender === 'f' ? fIdx++ : mIdx++;
+    const first  = pool[idx % pool.length];
+    const last   = names.s[Math.floor(Math.random() * names.s.length)];
+
+    const avatarDataUrl = getNextAvatar() || makeInitialsAvatar(first[0], gender);
+
+    let username = generateUsername(first, last);
+    let attempts = 0;
+    while (usedUsernames.has(username) && attempts < 12) {
+      username = generateUsername(first, last);
+      attempts++;
+    }
+    usedUsernames.add(username);
+
+    people.push({
+      first, last,
+      displayName: `${first} ${last}`,
+      username,
+      gender,
+      followers: randFollowers(),
+      following: randFollowing(),
+      posts: randPosts(),
+      avatarDataUrl,
+    });
+  }
+  return people;
+}
+
+// ─────────────────────────────────────────────────────────
+// CONSTRUCCIÓN DEL TELÉFONO
+// ─────────────────────────────────────────────────────────
+function buildPhoneHtml(person, reviewPhotoDataUrl, lang, showOnline) {
+  const msgs = MSGS[lang];
+  const greeting = person.gender === 'f' ? poolGreetingF.next() : poolGreetingM.next();
+  const followup = poolFollowup.next();
+  const reply    = poolReply.next();
+  const noFollowText = msgs.noFollowText;
+
+  const h = randInt(9, 22);
+  const m = randInt(0, 59);
+  const time = `${h}:${String(m).padStart(2,'0')}`;
+  const battPct = randInt(15, 100);
+  const battW   = Math.round(battPct / 100 * 16);
+  const sig     = randInt(2, 4);
+
+  const onlineDot = showOnline
+    ? `<div style="position:absolute;right:0;bottom:0;width:10px;height:10px;background:#44D62C;border:2px solid #fff;border-radius:50%;z-index:2"></div>`
+    : '';
+
+  const avatarHdr = `
+    <div style="position:relative;width:34px;height:34px;flex-shrink:0">
+      <div style="width:32px;height:32px;border-radius:50%;overflow:hidden;background:#E6E6E6">
+        <img src="${person.avatarDataUrl}" style="width:100%;height:100%;object-fit:cover;display:block" />
+      </div>
+      ${onlineDot}
+    </div>`;
+
+  const avatarSm = `
+    <div style="width:22px;height:22px;border-radius:50%;overflow:hidden;flex-shrink:0;background:#E6E6E6">
+      <img src="${person.avatarDataUrl}" style="width:100%;height:100%;object-fit:cover;display:block" />
+    </div>`;
+
+  const avatarLg = `
+    <div style="width:76px;height:76px;border-radius:50%;overflow:hidden;margin-bottom:8px;background:#E6E6E6">
+      <img src="${person.avatarDataUrl}" style="width:100%;height:100%;object-fit:cover;display:block" />
+    </div>`;
+
+  const followupHtml = followup
+    ? `<div style="display:flex;align-items:flex-end;gap:6px;max-width:85%">
+         <div style="width:22px;flex-shrink:0"></div>
+         <div style="background:#EFEFEF;color:#000;padding:8px 13px;border-radius:20px;font-size:14px;line-height:1.4;word-wrap:break-word">${followup}</div>
+       </div>`
+    : '';
+
+  const photoHtml = reviewPhotoDataUrl
+    ? `<div style="display:flex;align-items:flex-end;gap:6px;max-width:85%">
+         <div style="width:22px;flex-shrink:0"></div>
+         <div style="border-radius:16px;overflow:hidden;max-width:180px">
+           <img src="${reviewPhotoDataUrl}" style="width:180px;max-height:200px;object-fit:cover;display:block;border-radius:16px" />
+         </div>
+       </div>`
+    : '';
+
+  return `
+<div style="width:360px;background:#fff;color:#000;border-radius:36px;overflow:hidden;font-family:-apple-system,'SF Pro Text','Helvetica Neue',Arial,sans-serif;position:relative;display:flex;flex-direction:column;height:720px;box-shadow:0 30px 80px -20px rgba(0,0,0,.5)">
+
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 22px 6px;font-size:15px;font-weight:600;color:#000;flex-shrink:0">
+    <span>${time}</span>
+    <span style="display:flex;align-items:center;gap:6px">
+      <svg width="16" height="11" viewBox="0 0 16 11" fill="#000">
+        <rect x="0"  y="7" width="2.5" height="4"  opacity="${sig>=1?1:.22}"/>
+        <rect x="4"  y="5" width="2.5" height="6"  opacity="${sig>=2?1:.22}"/>
+        <rect x="8"  y="3" width="2.5" height="8"  opacity="${sig>=3?1:.22}"/>
+        <rect x="12" y="0" width="2.5" height="11" opacity="${sig>=4?1:.22}"/>
+      </svg>
+      <span style="font-size:13px">4G</span>
+      <div style="width:22px;height:11px;border:1.5px solid #000;border-radius:3px;position:relative;display:inline-flex;align-items:center">
+        <div style="position:absolute;right:-3px;top:2px;width:2px;height:5px;background:#000;border-radius:0 2px 2px 0"></div>
+        <div style="position:absolute;left:1px;top:1px;bottom:1px;width:${battW}px;background:#000;border-radius:1px"></div>
+      </div>
+    </span>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:10px;padding:8px 16px 10px;border-bottom:1px solid #EEE;flex-shrink:0">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    ${avatarHdr}
+    <span style="font-weight:700;font-size:15px;color:#000;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${person.username}
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-left:2px"><polyline points="9 18 15 12 9 6"/></svg>
+    </span>
+    <span style="display:flex;gap:14px;flex-shrink:0">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+    </span>
+  </div>
+
+  <div style="flex:1;overflow:hidden;padding:14px 14px 8px;display:flex;flex-direction:column;gap:7px;background:#FFF">
+
+    <div style="display:flex;flex-direction:column;align-items:center;padding:4px 0 14px;text-align:center;flex-shrink:0">
+      ${avatarLg}
+      <div style="font-weight:700;font-size:15px;color:#000">${person.displayName}</div>
+      <div style="font-size:13px;color:#8E8E8E;margin-top:1px">${person.username}</div>
+      <div style="font-size:12px;color:#8E8E8E;margin-top:2px">${fmtNum(person.followers)} followers · ${person.posts} posts</div>
+      <div style="font-size:12px;color:#8E8E8E;margin-top:2px">${noFollowText}</div>
+      <button style="background:#EFEFEF;border:0;color:#000;padding:7px 16px;border-radius:8px;font-weight:700;font-size:13px;margin-top:10px;font-family:-apple-system,Arial,sans-serif">View profile</button>
+    </div>
+
+    <div style="display:flex;align-items:flex-end;gap:6px;max-width:85%">
+      ${avatarSm}
+      <div style="background:#EFEFEF;color:#000;padding:8px 13px;border-radius:20px;font-size:14px;line-height:1.4;word-wrap:break-word;max-width:100%">${greeting}</div>
+    </div>
+
+    ${photoHtml}
+
+    ${followupHtml}
+
+    <div style="display:flex;justify-content:flex-end;max-width:85%;align-self:flex-end">
+      <div style="background:linear-gradient(135deg,#A45FFF,#7B2CFF);color:#FFF;padding:8px 13px;border-radius:20px;font-size:14px;line-height:1.4;word-wrap:break-word;max-width:100%">${reply}</div>
+    </div>
+
+  </div>
+
+  <div style="display:flex;align-items:center;gap:10px;padding:10px 12px 14px;border-top:1px solid #EEE;flex-shrink:0;background:#fff">
+    <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#A45FFF,#7B2CFF);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+    </div>
+    <div style="flex:1;background:#EFEFEF;border-radius:20px;padding:8px 14px;color:#8E8E8E;font-size:14px;display:flex;align-items:center;gap:10px">
+      <span style="flex:1">Message...</span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5-11 11"/></svg>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+    </div>
+  </div>
+
+</div>`;
+}
+
+// ─────────────────────────────────────────────────────────
+// CAPTURA CON html2canvas
+// ─────────────────────────────────────────────────────────
+async function capturePhone(phoneHtml) {
+  const area = document.getElementById('renderArea');
+  area.innerHTML = phoneHtml;
+
+  const imgs = area.querySelectorAll('img');
+  await Promise.all([...imgs].map(img => new Promise(resolve => {
+    if (img.complete && img.naturalWidth > 0) return resolve();
+    img.onload  = resolve;
+    img.onerror = resolve;
+    setTimeout(resolve, 5000);
+  })));
+
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+  const phoneEl = area.firstElementChild;
+  const canvas = await html2canvas(phoneEl, {
+    backgroundColor: '#ffffff',
+    scale: 2,
+    useCORS: false,
+    allowTaint: true,
+    logging: false,
+  });
+
+  area.innerHTML = '';
+  return canvas;
+}
+
+// ─────────────────────────────────────────────────────────
+// GENERACIÓN PRINCIPAL
+// ─────────────────────────────────────────────────────────
+async function generate() {
+  if (isGenerating) return;
+  isGenerating = true;
+
+  const count = Math.max(1, Math.min(20, parseInt(document.getElementById('countInput').value) || 1));
+  const btn = document.getElementById('generateBtn');
+  btn.disabled = true;
+  btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin .7s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Generando…`;
+
+  document.getElementById('downloadAllBtn').style.display = 'none';
+  document.getElementById('previewGrid').innerHTML = '';
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('previewSection').style.display = 'block';
+  document.getElementById('progressWrap').classList.add('visible');
+
+  generatedItems = [];
+  initPools(currentLang);
+
+  const photoCount = Math.min(reviewPhotos.length, count);
+  const positions  = Array.from({ length: count }, (_, i) => i).sort(() => Math.random() - 0.5);
+  const screenshotPhotos = new Array(count).fill(null);
+  for (let pi = 0; pi < photoCount; pi++) {
+    screenshotPhotos[positions[pi]] = reviewPhotos[pi].dataUrl;
+  }
+
+  setProgress(0, count, 'Generando personas…');
+  const people = await fetchPeople(count, currentLang);
+
+  for (let i = 0; i < count; i++) {
+    setProgress(i, count, `Generando ${i + 1} / ${count}…`);
+    const person      = people[i];
+    const reviewPhoto = screenshotPhotos[i];
+    const showOnline  = Math.random() < 0.45;
+
+    const phoneHtml = buildPhoneHtml(person, reviewPhoto, currentLang, showOnline);
+    const canvas    = await capturePhone(phoneHtml);
+    const blob      = await new Promise(r => canvas.toBlob(r, 'image/png'));
+
+    generatedItems.push({ blob, username: person.username });
+    addPreviewItem(canvas, blob, person, i);
+    setProgress(i + 1, count, `Generando ${i + 1} / ${count}…`);
+  }
+
+  document.getElementById('previewTitle').textContent =
+    `${count} captura${count > 1 ? 's' : ''} generada${count > 1 ? 's' : ''}`;
+  document.getElementById('previewSub').textContent =
+    `${currentLang === 'es' ? '🇪🇸 Español' : '🇺🇸 English'} · ${photoCount > 0 ? `${photoCount} con foto, ${count - photoCount} solo texto` : 'Solo texto (sin fotos)'}`;
+
+  document.getElementById('progressWrap').classList.remove('visible');
+  btn.disabled = false;
+  btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg> Generar capturas`;
+  isGenerating = false;
+
+  if (generatedItems.length > 1) {
+    document.getElementById('downloadAllBtn').style.display = 'flex';
+  }
+}
+
+function setProgress(done, total, label) {
+  const pct = total > 0 ? Math.round(done / total * 100) : 0;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = label || `${done} / ${total}`;
+}
+
+function addPreviewItem(canvas, blob, person, index) {
+  const grid = document.getElementById('previewGrid');
+  const item = document.createElement('div');
+  item.className = 'preview-item';
+  const img = document.createElement('img');
+  img.className = 'preview-img';
+  img.src = canvas.toDataURL('image/png');
+  item.appendChild(img);
+  const footer = document.createElement('div');
+  footer.className = 'preview-footer';
+  footer.innerHTML = `
+    <span class="preview-name">@${person.username}</span>
+    <button class="preview-dl" onclick="downloadSingle(${index})">↓ Guardar</button>`;
+  item.appendChild(footer);
+  grid.appendChild(item);
+}
+
+function downloadSingle(index) {
+  const item = generatedItems[index];
+  if (!item) return;
+  const link = document.createElement('a');
+  link.download = `review-${item.username}-${Date.now()}.png`;
+  link.href = URL.createObjectURL(item.blob);
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(link.href), 5000);
+}
+
+async function downloadAll() {
+  if (!generatedItems.length) return;
+  const btn = document.getElementById('downloadAllBtn');
+  btn.disabled = true;
+  btn.textContent = 'Comprimiendo…';
+  const zip = new JSZip();
+  generatedItems.forEach((item, i) =>
+    zip.file(`review-${String(i+1).padStart(2,'0')}-${item.username}.png`, item.blob)
+  );
+  const zipBlob = await zip.generateAsync({ type: 'blob' });
+  const link = document.createElement('a');
+  link.download = `reviews-ig-${Date.now()}.zip`;
+  link.href = URL.createObjectURL(zipBlob);
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(link.href), 8000);
+  btn.disabled = false;
+  btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></svg> Descargar todo (ZIP)`;
+}
+
+// ─────────────────────────────────────────────────────────
+// UPLOAD — fotos de reseña
+// ─────────────────────────────────────────────────────────
+document.getElementById('photoInput').addEventListener('change', e => handleReviewFiles(e.target.files));
+
+const uploadZone = document.getElementById('uploadZone');
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadZone.classList.remove('drag-over');
+  handleReviewFiles(e.dataTransfer.files);
+});
+
+function handleReviewFiles(files) {
+  [...files].filter(f => f.type.startsWith('image/')).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      reviewPhotos.push({ dataUrl: ev.target.result, name: file.name });
+      renderPhotoGrid();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderPhotoGrid() {
+  const grid = document.getElementById('photoGrid');
+  grid.innerHTML = '';
+  reviewPhotos.forEach((photo, i) => {
+    const div = document.createElement('div');
+    div.className = 'photo-thumb';
+    div.innerHTML = `<img src="${photo.dataUrl}" alt="" /><button class="del" onclick="removeReviewPhoto(${i})">✕</button>`;
+    grid.appendChild(div);
+  });
+}
+
+function removeReviewPhoto(index) {
+  reviewPhotos.splice(index, 1);
+  renderPhotoGrid();
+}
+
+// ─────────────────────────────────────────────────────────
+// UPLOAD — fotos de perfil
+// ─────────────────────────────────────────────────────────
+document.getElementById('avatarInput').addEventListener('change', e => handleAvatarFiles(e.target.files));
+
+const avatarUploadZone = document.getElementById('avatarUploadZone');
+avatarUploadZone.addEventListener('dragover', e => { e.preventDefault(); avatarUploadZone.classList.add('drag-over'); });
+avatarUploadZone.addEventListener('dragleave', () => avatarUploadZone.classList.remove('drag-over'));
+avatarUploadZone.addEventListener('drop', e => {
+  e.preventDefault();
+  avatarUploadZone.classList.remove('drag-over');
+  handleAvatarFiles(e.dataTransfer.files);
+});
+
+function handleAvatarFiles(files) {
+  [...files].filter(f => f.type.startsWith('image/')).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      avatarPool.push(ev.target.result);
+      renderAvatarGrid();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderAvatarGrid() {
+  const grid = document.getElementById('avatarGrid');
+  grid.innerHTML = '';
+  avatarPool.forEach((dataUrl, i) => {
+    const div = document.createElement('div');
+    div.className = 'photo-thumb';
+    div.innerHTML = `<img src="${dataUrl}" alt="" /><button class="del" onclick="removeAvatarPhoto(${i})">✕</button>`;
+    grid.appendChild(div);
+  });
+  const sub = avatarUploadZone.querySelector('.uz-sub');
+  if (sub) sub.innerHTML = avatarPool.length > 0
+    ? `${avatarPool.length} foto${avatarPool.length > 1 ? 's' : ''} en el pool — se asignan aleatoriamente.`
+    : 'Se asignan aleatoriamente entre las capturas.<br>Sin fotos → iniciales de color.';
+}
+
+function removeAvatarPhoto(index) {
+  avatarPool.splice(index, 1);
+  renderAvatarGrid();
+}
+
+// ─────────────────────────────────────────────────────────
+// IDIOMA
+// ─────────────────────────────────────────────────────────
+function setLang(lang) {
+  currentLang = lang;
+  document.getElementById('btnEs').classList.toggle('active', lang === 'es');
+  document.getElementById('btnEn').classList.toggle('active', lang === 'en');
+}
+</script>
+<script src="/zonga-memory.js"></script>
+<script type="module" src="/firebase.js"></script>
+<script type="module" src="/sync.js"></script>
+</body>
+</html>

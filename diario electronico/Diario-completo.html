@@ -109,34 +109,126 @@ async function idbDel(id) {
 function isVideoSrc(s) { return typeof s === 'string' && (s.startsWith('data:video') || s.startsWith(VIDEO_REF_PREFIX)); }
 function isImgRef(s) { return typeof s === 'string' && s.startsWith(IMG_REF_PREFIX); }
 
+// ── Cloud sync de media (Firebase Storage) ──
+const MEDIA_PATHS_KEY = 'diario_media_paths_v1'; // { id: { path, url, pending? } }
+
+function getMediaPaths() { return loadData(MEDIA_PATHS_KEY, {}); }
+function setMediaPaths(m) { saveData(MEDIA_PATHS_KEY, m); }
+
+async function waitStorage() {
+  if (window.__zongaStorage) return window.__zongaStorage;
+  await new Promise(r => window.addEventListener('zonga:storageReady', r, { once: true }));
+  return window.__zongaStorage;
+}
+
+function blobExt(blob) {
+  const t = (blob && blob.type) || '';
+  if (t.startsWith('video/')) return t.split('/')[1] || 'mp4';
+  if (t.startsWith('image/')) return t.split('/')[1] || 'jpg';
+  return 'bin';
+}
+
+async function uploadMediaToCloud(id, blob) {
+  const stor = await waitStorage();
+  if (!stor) throw new Error('storage no disponible');
+  const uid = await stor.uid();
+  const path = `users/${uid}/diario/${id}.${blobExt(blob)}`;
+  const url = await stor.upload(path, blob);
+  return { path, url };
+}
+
+async function trackUpload(id, blob) {
+  // Marcar como pendiente para reintentar tras recarga si falla
+  const m = getMediaPaths();
+  if (!m[id]) { m[id] = { pending: true }; setMediaPaths(m); }
+  try {
+    const { path, url } = await uploadMediaToCloud(id, blob);
+    const m2 = getMediaPaths();
+    m2[id] = { path, url };
+    setMediaPaths(m2);
+  } catch (err) {
+    console.warn('[diario] upload pendiente', id, err?.message || err);
+    // Queda como pending; se reintenta en retryPendingUploads()
+  }
+}
+
+async function retryPendingUploads() {
+  const m = getMediaPaths();
+  for (const [id, entry] of Object.entries(m)) {
+    if (!entry?.pending) continue;
+    const blob = await idbGet(id).catch(() => null);
+    if (!blob) { delete m[id]; setMediaPaths(m); continue; }
+    trackUpload(id, blob);
+  }
+}
+
+async function deleteMediaRef(refStr) {
+  if (!isIdbRef(refStr)) return;
+  const id = idbRefId(refStr);
+  idbDel(id).catch(() => {});
+  const m = getMediaPaths();
+  const entry = m[id];
+  if (entry?.path) {
+    const stor = await waitStorage().catch(() => null);
+    if (stor) stor.del(entry.path).catch(() => {});
+  }
+  delete m[id];
+  setMediaPaths(m);
+}
+
+// Reintentar uploads pendientes al iniciar y al volver el foco
+window.addEventListener('load', () => { setTimeout(retryPendingUploads, 1500); });
+window.addEventListener('focus', () => { retryPendingUploads(); });
+window.addEventListener('online', () => { retryPendingUploads(); });
+
 function ImageMedia({ src, style }) {
   const [url, setUrl] = React.useState(isImgRef(src) ? null : src);
   React.useEffect(() => {
     if (!isImgRef(src)) { setUrl(src); return; }
-    let blobUrl;
-    let cancelled = false;
-    idbGet(idbRefId(src)).then(blob => {
-      if (cancelled || !blob) return;
-      blobUrl = URL.createObjectURL(blob);
-      setUrl(blobUrl);
-    }).catch(() => {});
+    let blobUrl; let cancelled = false;
+    resolveMediaUrl(src).then(res => {
+      if (cancelled || !res) return;
+      if (res.isBlob) blobUrl = res.url;
+      setUrl(res.url);
+    });
     return () => { cancelled = true; if (blobUrl) URL.revokeObjectURL(blobUrl); };
   }, [src]);
   if (!url) return <div style={{ ...style, background:'#f0f0f0' }} />;
   return <img src={url} style={style} />;
 }
 
+async function resolveMediaUrl(refStr) {
+  // 1. IDB local
+  const id = idbRefId(refStr);
+  const blob = await idbGet(id).catch(() => null);
+  if (blob) return { url: URL.createObjectURL(blob), isBlob: true };
+  // 2. Cloud
+  const paths = getMediaPaths();
+  let entry = paths[id];
+  if (!entry || !entry.path) return null;
+  try {
+    let url = entry.url;
+    if (!url) {
+      const stor = await waitStorage();
+      url = await stor.getUrl(entry.path);
+      const m = getMediaPaths(); if (m[id]) { m[id].url = url; setMediaPaths(m); }
+    }
+    // Cachear en IDB en segundo plano para próximas cargas
+    fetch(url).then(r => r.blob()).then(b => idbPut(id, b)).catch(() => {});
+    return { url, isBlob: false };
+  } catch { return null; }
+}
+
 function VideoMedia({ src, controls, autoPlay, style }) {
   const [url, setUrl] = React.useState(src.startsWith(VIDEO_REF_PREFIX) ? null : src);
   React.useEffect(() => {
     if (!src.startsWith(VIDEO_REF_PREFIX)) { setUrl(src); return; }
-    let blobUrl;
-    let cancelled = false;
-    idbGet(idbRefId(src)).then(blob => {
-      if (cancelled || !blob) return;
-      blobUrl = URL.createObjectURL(blob);
-      setUrl(blobUrl);
-    }).catch(() => {});
+    let blobUrl; let cancelled = false;
+    resolveMediaUrl(src).then(res => {
+      if (cancelled || !res) return;
+      if (res.isBlob) blobUrl = res.url;
+      setUrl(res.url);
+    });
     return () => { cancelled = true; if (blobUrl) URL.revokeObjectURL(blobUrl); };
   }, [src]);
   if (!url) return <div style={{ ...style, background:'#000', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:11 }}>Cargando vídeo…</div>;
@@ -457,6 +549,8 @@ function MediaEditor({ photos, onPhotosChange, audioBlob, onAudioChange }) {
         await idbPut(id, file);
         const ref = (isVideo ? VIDEO_REF_PREFIX : IMG_REF_PREFIX) + id;
         onPhotosChange(prev => [...prev, ref]);
+        // Subida en segundo plano (no bloquea la UI). Si falla, se reintenta en window load/focus/online.
+        trackUpload(id, file);
       } catch (err) {
         alert('No se pudo guardar el archivo: ' + (err?.message || err));
       }
@@ -494,7 +588,7 @@ function MediaEditor({ photos, onPhotosChange, audioBlob, onAudioChange }) {
               {isVideoSrc(p) ? <VideoMedia src={p} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
                 : <ImageMedia src={p} style={{ width:'100%', height:'100%', objectFit:'cover' }} />}
               <button onClick={() => {
-                if (isIdbRef(p)) idbDel(idbRefId(p)).catch(()=>{});
+                if (isIdbRef(p)) deleteMediaRef(p);
                 onPhotosChange(prev => prev.filter((_,j) => j !== i));
               }} style={{
                 position:'absolute', top:4, right:4, background:'rgba(0,0,0,0.5)', color:'#fff',

@@ -125,6 +125,14 @@ const tools = [
     icon: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="M8 11h6"/><path d="M11 8v6"/></svg>`
   },
   {
+    id: 'generador-nombres-marca',
+    name: 'Generador de nombres de marca',
+    description: 'Genera ideas de nombres de marca originales a partir de tu sector, estilo y palabras clave.',
+    url: 'https://claude.ai/public/artifacts/dbffd737-f536-40c4-85b3-aa3a6e245518',
+    status: 'available',
+    icon: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>`
+  },
+  {
     id: 'soon-2',
     name: 'Próximamente',
     description: 'Estamos trabajando en más piezas para completar tu flujo de trabajo.',

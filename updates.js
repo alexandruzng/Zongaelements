@@ -5,6 +5,13 @@
 */
 const UPDATES = [
   {
+    id: '2026-05-24-generador-nombres-marca',
+    title: 'Nueva actualización',
+    items: [
+      'Nueva herramienta: Generador de nombres de marca. Genera ideas de nombres originales para tu marca a partir de sector, estilo y palabras clave.',
+    ],
+  },
+  {
     id: '2026-05-24-reviews-ig',
     title: 'Nueva actualización',
     items: [

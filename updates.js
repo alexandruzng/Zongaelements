@@ -5,6 +5,13 @@
 */
 const UPDATES = [
   {
+    id: '2026-05-25-analisis-cliente',
+    title: 'Nueva actualización',
+    items: [
+      'Nueva herramienta: Generador de análisis de cliente. Crea un perfil detallado de tu cliente ideal con demografía, motivaciones, objeciones y canales.',
+    ],
+  },
+  {
     id: '2026-05-25-generador-copy-tienda',
     title: 'Nueva actualización',
     items: [

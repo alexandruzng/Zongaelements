@@ -5,6 +5,13 @@
 */
 const UPDATES = [
   {
+    id: '2026-05-26-categorias-herramientas',
+    title: 'Nueva actualización',
+    items: [
+      'Ahora puedes filtrar las herramientas por categorías (Contenido & Redes, IA & Creación Visual, Tienda & Producto, Finanzas & Operaciones, Productividad Personal) y buscarlas por nombre desde el grid.',
+    ],
+  },
+  {
     id: '2026-05-25-analisis-cliente',
     title: 'Nueva actualización',
     items: [

@@ -535,9 +535,32 @@
           <p>Cada herramienta resuelve una parte concreta del flujo de trabajo. La suite crece con nuevas piezas sin romper lo que ya funciona.</p>
         </div>
 
+        <div class="tools-toolbar reveal">
+          <div class="tools-search">
+            <svg class="tools-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="m21 21-4.3-4.3"/>
+            </svg>
+            <input id="toolsSearch" type="search" placeholder="Buscar herramienta…" aria-label="Buscar herramienta">
+            <button type="button" id="toolsSearchClear" class="tools-search-clear" aria-label="Limpiar búsqueda" hidden>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+          <div class="tools-chips" id="toolsFilters" role="tablist" aria-label="Filtrar por categoría">
+            <!-- Chips renderizadas desde script.js -->
+          </div>
+        </div>
+
         <div class="tools-grid" id="toolsGrid" aria-live="polite">
           <!-- Tarjetas renderizadas desde script.js -->
         </div>
+
+        <p class="tools-empty" id="toolsEmpty" hidden>
+          No hay herramientas que coincidan con tu búsqueda.
+        </p>
       </div>
     </section>
 

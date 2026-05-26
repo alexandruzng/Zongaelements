@@ -213,17 +213,28 @@ ul { margin: 0; padding: 0; list-style: none; }
   position: relative;
   overflow: hidden;
   padding: 80px 0 100px;
-  background:
-    radial-gradient(1200px 600px at 50% -200px, var(--c-primary-soft) 0%, transparent 60%),
-    var(--c-bg);
+  background: var(--c-bg);
 }
+/* Halo radial — fundido suave al fondo en la parte inferior */
+.hero::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: radial-gradient(1200px 600px at 50% -200px, var(--c-primary-soft) 0%, transparent 60%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent 100%);
+          mask-image: linear-gradient(to bottom, #000 55%, transparent 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+/* Patrón de puntos */
 .hero::before {
   content: "";
   position: absolute; inset: 0;
   background-image: radial-gradient(rgba(37, 99, 235, 0.08) 1px, transparent 1px);
   background-size: 24px 24px;
-  mask-image: linear-gradient(to bottom, black 40%, transparent 90%);
+  -webkit-mask-image: linear-gradient(to bottom, black 40%, transparent 90%);
+          mask-image: linear-gradient(to bottom, black 40%, transparent 90%);
   pointer-events: none;
+  z-index: 0;
 }
 
 .hero-inner {
@@ -317,6 +328,9 @@ ul { margin: 0; padding: 0; list-style: none; }
   opacity: 0.45;
   pointer-events: none;
   animation: float 14s ease-in-out infinite;
+  /* Fundido inferior para que no se corte contra la siguiente sección */
+  -webkit-mask-image: linear-gradient(to bottom, #000 30%, transparent 92%);
+          mask-image: linear-gradient(to bottom, #000 30%, transparent 92%);
 }
 .blob-1 {
   width: 380px; height: 380px;
@@ -326,7 +340,7 @@ ul { margin: 0; padding: 0; list-style: none; }
 .blob-2 {
   width: 440px; height: 440px;
   background: var(--c-primary-100);
-  bottom: -180px; right: -100px;
+  bottom: -220px; right: -100px;
   animation-delay: -7s;
 }
 @keyframes float {

@@ -5,6 +5,13 @@
 */
 const UPDATES = [
   {
+    id: '2026-05-28-fix-sincronizacion-nube',
+    title: 'Sincronización arreglada',
+    items: [
+      'Corregido el problema por el que los datos de los últimos días no se guardaban en el diario, pedidos diarios y finanzas. La sincronización con la nube ahora se reparte en varios bloques para no toparse con el límite de tamaño de Firestore, avisa en pantalla si algún guardado falla y nunca borra cambios locales que aún no han llegado a la nube.',
+    ],
+  },
+  {
     id: '2026-05-26-categorias-herramientas',
     title: 'Nueva actualización',
     items: [

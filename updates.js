@@ -5,6 +5,13 @@
 */
 const UPDATES = [
   {
+    id: '2026-05-28-tracker-habitos',
+    title: 'Nueva herramienta: Tracker de hábitos',
+    items: [
+      'Sigue hasta 9 hábitos cada mes en una rueda visual: cada anillo es un hábito y cada cuña un día. Marca los días como cumplido o no hecho, mira tu porcentaje y tu racha en el centro, y deja notas del mes. Los hábitos son independientes por mes (un mes nuevo hereda los del anterior como punto de partida) y puedes imprimir la rueda en blanco y negro.',
+    ],
+  },
+  {
     id: '2026-05-28-fix-sincronizacion-nube',
     title: 'Sincronización arreglada',
     items: [

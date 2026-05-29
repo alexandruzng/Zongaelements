@@ -423,6 +423,7 @@ function emptySVG() {
    RENDER + animaciones de entrada
    ============================================================ */
 function render() {
+  saveDB();
   const app = document.getElementById("app");
   if (state.view === "list") {
     app.innerHTML = topbarHTML() + listHTML();

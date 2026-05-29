@@ -298,6 +298,30 @@ DB.products.forEach((p) => {
   });
 });
 
+/* ---------- Persistencia local (compatible con sync.js de Zonga) ----------
+   Guardamos DB.products en localStorage. sync.js lo replica a Firestore
+   entre dispositivos. En el primer arranque se conservan los productos demo;
+   en cuanto el usuario edite/borre algo, su estado sustituye al demo para
+   siempre. */
+const PH_STORAGE_KEY = "ph_db_v1";
+
+function saveDB() {
+  try {
+    localStorage.setItem(PH_STORAGE_KEY, JSON.stringify({ products: DB.products }));
+  } catch (e) { console.warn("[product-hub] save failed", e); }
+}
+
+(function loadDB() {
+  try {
+    const raw = localStorage.getItem(PH_STORAGE_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    if (parsed && Array.isArray(parsed.products)) {
+      DB.products = parsed.products;
+    }
+  } catch (e) { console.warn("[product-hub] load failed", e); }
+})();
+
 /* opciones de emoji para el formulario de nuevo producto */
 const EMOJI_OPTIONS = ["🌙","🌌","💧","💆","💇","😴","🔥","⭐","🎧","👟","🧴","🕶️","🪞","🐾","🍳","💡","🧸","⌚","🧦","🪥","🎒","🧢","🔌","🪴"];
 

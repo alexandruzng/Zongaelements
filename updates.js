@@ -5,6 +5,13 @@
 */
 const UPDATES = [
   {
+    id: '2026-05-30-product-hub-persistencia',
+    title: 'Product Hub: tus datos se guardan',
+    items: [
+      'Product Hub ya guarda tus productos, ventas diarias, cuentas y vídeos en este dispositivo y los sincroniza con la nube como el resto de herramientas. Lo que añadas o edites deja de perderse al recargar la página.',
+    ],
+  },
+  {
     id: '2026-05-30-product-hub',
     title: 'Nueva herramienta: Product Hub',
     items: [

@@ -775,11 +775,20 @@ function productToCockpitView(p) {
   // cuentas activas
   const cuentas = Array.isArray(p.accounts) ? p.accounts.length : 0;
 
-  // vistas acumuladas — suma de account.views (number) o length de account.videos
+  // Vistas acumuladas:
+  // En Product Hub real, cada cuenta tiene videos: [{ views, ... }] y NO
+  // hay un campo "views" en la cuenta. En los datos seed/demo sí existe
+  // un campo agregado account.views. Soportamos ambos casos.
   let vistas = 0;
   if (Array.isArray(p.accounts)) {
     for (const a of p.accounts) {
-      if (typeof a.views === 'number') vistas += a.views;
+      if (Array.isArray(a.videos)) {
+        for (const v of a.videos) {
+          if (typeof v.views === 'number') vistas += v.views;
+        }
+      } else if (typeof a.views === 'number') {
+        vistas += a.views;
+      }
     }
   }
 

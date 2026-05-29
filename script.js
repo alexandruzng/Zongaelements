@@ -439,6 +439,35 @@ const cockpitData = {
   ]
 };
 
+/* ----- Nombre del usuario logueado -----
+   Fuentes (en orden):
+   1. El nombre ya pintado en #profileMenuName (auth.js lo rellena con
+      currentProfile.name || user.displayName || email.split('@')[0])
+   2. window.__zongaAuth.user.displayName / email
+   3. Fallback genérico
+*/
+function getUserFirstName() {
+  // 1. DOM ya renderizado por auth.js
+  const menuName = document.getElementById('profileMenuName')?.textContent?.trim();
+  if (menuName && menuName !== 'Usuario' && menuName !== '—') {
+    return firstNameOf(menuName);
+  }
+  // 2. usuario de Firebase si ya está disponible
+  const user = window.__zongaAuth?.user;
+  if (user) {
+    if (user.displayName) return firstNameOf(user.displayName);
+    if (user.email)       return firstNameOf(user.email.split('@')[0]);
+  }
+  // 3. fallback
+  return null;
+}
+function firstNameOf(str) {
+  if (!str) return '';
+  // primer "trozo" antes de espacio o punto, capitalizado
+  const piece = str.split(/[\s.]+/)[0] || str;
+  return piece.charAt(0).toUpperCase() + piece.slice(1);
+}
+
 /* ----- Saludo dinámico + fecha + contexto ----- */
 function renderWelcome() {
   const greetEl   = document.getElementById('ckGreet');
@@ -454,7 +483,8 @@ function renderWelcome() {
   else if (h >= 13 && h < 21) greet = 'Buenas tardes';
   else                        { greet = 'Buenas noches'; isNight = true; }
 
-  greetEl.textContent = `${greet}, Zonga`;
+  const name = getUserFirstName();
+  greetEl.textContent = name ? `${greet}, ${name}` : greet;
 
   iconEl.classList.add(isNight ? 'is-night' : 'is-day');
   iconEl.innerHTML = isNight
@@ -667,11 +697,40 @@ function renderObjetivo() {
   }
 }
 
+/* ----- Mantener el saludo sincronizado con el nombre del usuario -----
+   auth.js actualiza #profileMenuName cuando llega el usuario y cuando
+   edita su nombre. Observamos ese elemento y re-aplicamos el saludo. */
+function watchUserName() {
+  const target = document.getElementById('profileMenuName');
+  const greetEl = document.getElementById('ckGreet');
+  if (!target || !greetEl) return;
+
+  const apply = () => {
+    const now = new Date();
+    const h = now.getHours();
+    let greet;
+    if (h >= 6 && h < 13)       greet = 'Buenos días';
+    else if (h >= 13 && h < 21) greet = 'Buenas tardes';
+    else                        greet = 'Buenas noches';
+    const name = getUserFirstName();
+    greetEl.textContent = name ? `${greet}, ${name}` : greet;
+  };
+
+  const observer = new MutationObserver(apply);
+  observer.observe(target, { childList: true, characterData: true, subtree: true });
+
+  // Si el usuario llega después (Firebase tarda en restaurar), también
+  // reaplicar al detectar la clase auth-ok en <html>.
+  const htmlObserver = new MutationObserver(apply);
+  htmlObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+}
+
 function renderCockpit() {
   renderWelcome();
   renderStats();
   renderProducto();
   renderObjetivo();
+  watchUserName();
 }
 
 /* ----- Contador de herramientas activas (compat con cualquier otro contador) ----- */

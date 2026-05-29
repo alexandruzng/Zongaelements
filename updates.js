@@ -5,6 +5,13 @@
 */
 const UPDATES = [
   {
+    id: '2026-05-30-cockpit-switcher',
+    title: 'Cockpit: producto activo conectado a Product Hub',
+    items: [
+      'La card de "Producto activo en testeo" del cockpit ya lee tus productos reales de Product Hub (los que tienen estado "Testeando"). Si tienes varios en marcha aparece un switcher con flechas ‹ › para alternarlos (también funcionan las teclas izquierda/derecha) y la elección se recuerda entre visitas. El anillo de "Próximo objetivo" también se calcula con el revenue real del producto y su break-even. El link "Abrir Product Hub" te lleva directo al producto que estés viendo. Las 4 stats de arriba siguen siendo de ejemplo por ahora — se conectarán en una siguiente tanda.',
+    ],
+  },
+  {
     id: '2026-05-30-cockpit-home',
     title: 'Nueva home: tu cockpit personal',
     items: [

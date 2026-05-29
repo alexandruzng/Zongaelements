@@ -378,8 +378,27 @@ function initToolsSearch() {
    COCKPIT — saludo, stats, producto activo, objetivo
    ============================================ */
 
-/* Datos mock (después se conectarán a Firestore / ZongaMemory).
-   Si en el futuro hay datos reales, sustituir aquí. */
+/* Producto + Objetivo: se leen de Product Hub (localStorage.ph_db_v1).
+   Si no hay datos, se usa el mock de cockpitData.productoActivo. */
+const PH_STORAGE_KEY = 'ph_db_v1';
+const COCKPIT_ACTIVE_KEY = '__zonga_cockpit_active_product__';
+
+function loadProductHubProducts() {
+  try {
+    const raw = localStorage.getItem(PH_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed?.products) ? parsed.products : [];
+  } catch { return []; }
+}
+
+/* Productos activos = los que están en "testeando" (los que se están
+   probando ahora mismo en el reto de 14 días). */
+function getActiveProducts() {
+  return loadProductHubProducts().filter(p => p?.status === 'testeando');
+}
+
+/* Stats por las 4 cards (siguen siendo mock por ahora). */
 const cockpitData = {
   productoActivo: {
     nombre: 'LumiPet Toy',
@@ -628,14 +647,45 @@ function renderStats() {
   });
 }
 
+/* ----- Mapeo de un producto de Product Hub al formato del cockpit ----- */
+function productToCockpitView(p) {
+  if (!p) return null;
+
+  const revenue = (p.series || []).reduce((a, d) => a + (d.ingresos || 0), 0);
+  const totalDias = 14;
+  const diaActual = Math.max(1, Math.min(totalDias, p.day || 1));
+
+  // cuentas activas
+  const cuentas = Array.isArray(p.accounts) ? p.accounts.length : 0;
+
+  // vistas acumuladas — suma de account.views (number) o length de account.videos
+  let vistas = 0;
+  if (Array.isArray(p.accounts)) {
+    for (const a of p.accounts) {
+      if (typeof a.views === 'number') vistas += a.views;
+    }
+  }
+
+  return {
+    nombre: p.name || 'Sin nombre',
+    emoji: p.emoji || '📦',
+    diaActual,
+    diasTotal: totalDias,
+    cuentas,
+    vistas,
+    breakEven: p.breakEven || 0,
+    revenue
+  };
+}
+
 /* ----- Producto activo + barra 14 días ----- */
-function renderProducto() {
-  const p = cockpitData.productoActivo;
+function renderProducto(view) {
+  const p = view || cockpitData.productoActivo;
   const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
   setText('ckProductName', p.nombre);
   setText('ckProductEmoji', p.emoji);
   setText('ckProductSub', `Test de ${p.diasTotal} días en curso`);
-  setText('ckPDaysLeft', p.diasTotal - p.diaActual);
+  setText('ckPDaysLeft', Math.max(0, p.diasTotal - p.diaActual));
   setText('ckPCuentas', p.cuentas);
   setText('ckPViews', formatCompact(p.vistas));
 
@@ -653,9 +703,22 @@ function renderProducto() {
 }
 
 /* ----- Anillo de objetivo ----- */
-function renderObjetivo() {
-  const o = cockpitData.objetivo;
-  const pct = Math.max(0, Math.min(1, o.actual / o.meta));
+function renderObjetivo(view) {
+  // Si tenemos un producto real, calculamos break-even desde sus datos
+  let label, sub, pct;
+  if (view && view.breakEven > 0) {
+    pct = Math.max(0, Math.min(1, view.revenue / view.breakEven));
+    const restante = Math.max(0, view.breakEven - view.revenue);
+    label = pct >= 1 ? 'Break-even alcanzado 🎉' : 'Break-even del producto';
+    sub = pct >= 1
+      ? `Ya cubres todos los gastos del test (+${formatNumber(view.revenue - view.breakEven)} €).`
+      : `Faltan ${formatNumber(restante)} € para cubrir los gastos del test.`;
+  } else {
+    const o = cockpitData.objetivo;
+    label = o.label;
+    sub = o.sub;
+    pct = Math.max(0, Math.min(1, o.actual / o.meta));
+  }
   const pctStr = Math.round(pct * 100) + '%';
 
   const titleEl = document.getElementById('ckGoalTitle');
@@ -663,31 +726,34 @@ function renderObjetivo() {
   const pctEl   = document.getElementById('ckGoalPct');
   const fillEl  = document.getElementById('ckGoalFill');
 
-  if (titleEl) titleEl.textContent = o.label;
-  if (subEl)   subEl.textContent   = o.sub;
+  if (titleEl) titleEl.textContent = label;
+  if (subEl)   subEl.textContent   = sub;
 
-  // Animar el % de 0 a target
   if (pctEl) {
+    // cancelar animación previa si existía
+    if (pctEl._raf) cancelAnimationFrame(pctEl._raf);
     const start = performance.now();
-    const dur = 1400;
+    const dur = 1100;
     function tick(now) {
       const t = Math.min(1, (now - start) / dur);
       const eased = 1 - Math.pow(2, -10 * t);
       pctEl.textContent = Math.round(pct * 100 * eased) + '%';
-      if (t < 1) requestAnimationFrame(tick);
+      if (t < 1) pctEl._raf = requestAnimationFrame(tick);
       else pctEl.textContent = pctStr;
     }
-    setTimeout(() => requestAnimationFrame(tick), 800);
+    pctEl._raf = requestAnimationFrame(tick);
   }
 
   if (fillEl) {
-    const circumference = 2 * Math.PI * 52; // r=52
+    const circumference = 2 * Math.PI * 52;
     const offset = circumference * (1 - pct);
-    // forzar reflow para que la transición se aplique
-    setTimeout(() => { fillEl.style.strokeDashoffset = offset; }, 50);
+    // forzar reflow para que la transición se aplique al cambiar de producto
+    fillEl.style.transition = 'none';
+    fillEl.getBoundingClientRect();
+    fillEl.style.transition = '';
+    fillEl.style.strokeDashoffset = offset;
   }
 
-  // Color según cercanía
   const goalCard = document.querySelector('.ck-goal');
   if (goalCard) {
     goalCard.classList.remove('is-near', 'is-mid', 'is-far');
@@ -695,6 +761,106 @@ function renderObjetivo() {
     else if (pct >= 0.4)  goalCard.classList.add('is-mid');
     else                  goalCard.classList.add('is-far');
   }
+}
+
+/* ============================================
+   Switcher de productos activos
+   ============================================ */
+const cockpitState = {
+  activeProducts: [],
+  activeIdx: 0
+};
+
+function loadActiveIdx() {
+  try {
+    const raw = localStorage.getItem(COCKPIT_ACTIVE_KEY);
+    return raw ? parseInt(raw, 10) || 0 : 0;
+  } catch { return 0; }
+}
+function saveActiveIdx(idx) {
+  try { localStorage.setItem(COCKPIT_ACTIVE_KEY, String(idx)); } catch {}
+}
+
+function renderActiveProduct(animate = true) {
+  const products = cockpitState.activeProducts;
+  const switcher = document.getElementById('ckSwitcher');
+  const idxLabel = document.getElementById('ckProductIdx');
+  const prevBtn  = document.getElementById('ckProductPrev');
+  const nextBtn  = document.getElementById('ckProductNext');
+  const productLink = document.querySelector('.ck-product-link');
+
+  // Sin productos reales → fallback al mock
+  if (!products.length) {
+    if (switcher) switcher.hidden = true;
+    renderProducto(cockpitData.productoActivo);
+    renderObjetivo(null);
+    return;
+  }
+
+  // Normalizar el índice activo
+  if (cockpitState.activeIdx < 0) cockpitState.activeIdx = products.length - 1;
+  if (cockpitState.activeIdx >= products.length) cockpitState.activeIdx = 0;
+  const p = products[cockpitState.activeIdx];
+  const view = productToCockpitView(p);
+
+  // Mostrar switcher solo si hay 2 o más productos
+  if (switcher) switcher.hidden = products.length < 2;
+  if (idxLabel) idxLabel.textContent = `${cockpitState.activeIdx + 1} / ${products.length}`;
+  if (prevBtn) prevBtn.disabled = products.length < 2;
+  if (nextBtn) nextBtn.disabled = products.length < 2;
+
+  // El link "Abrir Product Hub" lleva ahora al producto concreto
+  if (productLink && p.id) {
+    productLink.href = `Product Hub/Product Hub.html#product-${encodeURIComponent(p.id)}`;
+  }
+
+  // Pequeña animación al cambiar de producto
+  const card = document.getElementById('ckProductCard');
+  const goalCard = document.querySelector('.ck-goal');
+  if (animate && card) {
+    card.classList.remove('is-swap'); void card.offsetWidth;
+    card.classList.add('is-swap');
+  }
+
+  renderProducto(view);
+  renderObjetivo(view);
+
+  saveActiveIdx(cockpitState.activeIdx);
+}
+
+function initProductSwitcher() {
+  cockpitState.activeProducts = getActiveProducts();
+  cockpitState.activeIdx = loadActiveIdx();
+
+  const prevBtn = document.getElementById('ckProductPrev');
+  const nextBtn = document.getElementById('ckProductNext');
+  prevBtn?.addEventListener('click', () => {
+    cockpitState.activeIdx--;
+    renderActiveProduct(true);
+  });
+  nextBtn?.addEventListener('click', () => {
+    cockpitState.activeIdx++;
+    renderActiveProduct(true);
+  });
+
+  // Atajos de teclado ← / → cuando el foco está fuera de inputs
+  document.addEventListener('keydown', (e) => {
+    const tag = document.activeElement?.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || document.activeElement?.isContentEditable) return;
+    if (!cockpitState.activeProducts.length || cockpitState.activeProducts.length < 2) return;
+    if (e.key === 'ArrowLeft')  { cockpitState.activeIdx--; renderActiveProduct(true); }
+    if (e.key === 'ArrowRight') { cockpitState.activeIdx++; renderActiveProduct(true); }
+  });
+
+  // Si Product Hub modifica los datos en otra pestaña, refrescamos
+  window.addEventListener('storage', (e) => {
+    if (e.key === PH_STORAGE_KEY) {
+      cockpitState.activeProducts = getActiveProducts();
+      renderActiveProduct(false);
+    }
+  });
+
+  renderActiveProduct(false);
 }
 
 /* ----- Mantener el saludo sincronizado con el nombre del usuario -----
@@ -728,8 +894,7 @@ function watchUserName() {
 function renderCockpit() {
   renderWelcome();
   renderStats();
-  renderProducto();
-  renderObjetivo();
+  initProductSwitcher();
   watchUserName();
 }
 

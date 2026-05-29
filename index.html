@@ -523,7 +523,16 @@
           <article class="ck-card ck-product cockpit-enter" style="--delay:500ms" id="ckProductCard">
             <div class="ck-card-head">
               <span class="ck-eyebrow">Producto activo en testeo</span>
-              <span class="ck-status-pill"><span class="ck-status-dot"></span> En curso</span>
+              <div class="ck-switcher" id="ckSwitcher" hidden>
+                <button class="ck-sw-btn" id="ckProductPrev" aria-label="Producto anterior" type="button">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+                <span class="ck-sw-idx" id="ckProductIdx">1 / 1</span>
+                <button class="ck-sw-btn" id="ckProductNext" aria-label="Siguiente producto" type="button">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+              </div>
+              <span class="ck-status-pill" id="ckStatusPill"><span class="ck-status-dot"></span> En curso</span>
             </div>
 
             <div class="ck-product-main">

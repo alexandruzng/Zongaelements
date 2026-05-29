@@ -1088,6 +1088,43 @@ button:focus-visible {
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+/* Switcher de productos activos */
+.ck-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px;
+  background: #F4F8FF;
+  border: 1px solid #E6EEFB;
+  border-radius: 999px;
+}
+.ck-sw-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid transparent;
+  color: var(--c-primary);
+  cursor: pointer;
+  transition: background 150ms var(--ease), transform 120ms var(--ease), box-shadow 150ms var(--ease);
+}
+.ck-sw-btn:hover { background: var(--c-primary); color: #fff; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25); }
+.ck-sw-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; background: #fff; color: var(--c-primary); }
+.ck-sw-btn svg { width: 14px; height: 14px; }
+.ck-sw-idx {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--c-text-soft);
+  padding: 0 8px;
+  min-width: 38px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
 }
 .ck-status-pill {
   display: inline-flex;
@@ -1297,6 +1334,17 @@ button:focus-visible {
 .ck-goal.is-near   { --ck-goal-color: #16A34A; }
 .ck-goal.is-mid    { --ck-goal-color: #F59E0B; }
 .ck-goal.is-far    { --ck-goal-color: #EF4444; }
+
+/* Animacion al cambiar de producto en el switcher */
+.ck-product.is-swap .ck-product-main,
+.ck-product.is-swap .ck-days,
+.ck-product.is-swap .ck-product-stats {
+  animation: ckSwap 380ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes ckSwap {
+  0%   { opacity: 0; transform: translateY(6px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
 
 /* ----- Entrance cascade ----- */
 .cockpit-enter {

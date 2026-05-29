@@ -138,7 +138,7 @@ const tools = [
     description: 'Centro de control para dropshipping orgánico. Trata cada producto como un proyecto: ventas día a día, cuentas de redes y diagnóstico por fases y pilares.',
     url: 'Product Hub/Product Hub.html',
     status: 'available',
-    category: 'tienda',
+    category: 'personal',
     icon: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-6 9 6v11a2 2 0 0 1-2 2h-4v-7H10v7H6a2 2 0 0 1-2-2V9z"/><path d="M8 13h8"/></svg>`
   },
   {

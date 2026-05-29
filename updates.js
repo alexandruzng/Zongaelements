@@ -5,6 +5,13 @@
 */
 const UPDATES = [
   {
+    id: '2026-05-30-product-hub',
+    title: 'Nueva herramienta: Product Hub',
+    items: [
+      'Centro de control para dropshipping orgánico. Cada producto es un proyecto independiente con sus ventas día a día, sus cuentas de TikTok / Instagram / YouTube y un diagnóstico por fases y pilares para entender por qué un vídeo no despega.',
+    ],
+  },
+  {
     id: '2026-05-28-tracker-habitos',
     title: 'Nueva herramienta: Tracker de hábitos',
     items: [

@@ -935,14 +935,47 @@ button:focus-visible {
 .ck-stat-icon.is-amber  { background: #FEF3C7; color: #D97706; }
 .ck-stat-icon.is-rose   { background: #FFE4E6; color: #E11D48; }
 .ck-stat-icon.is-violet { background: #EDE9FE; color: #7C3AED; }
-.ck-stat-label {
+.ck-stat-label,
+.ck-stat-label-link {
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--c-text-soft);
   line-height: 1.3;
+  /* truncar nombres largos de racha/meta */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
 }
+.ck-stat-label-link {
+  text-decoration: none;
+  transition: color 150ms var(--ease);
+}
+.ck-stat-label-link:hover { color: var(--c-primary); }
+
+.ck-stat-value.is-empty {
+  color: var(--c-text-soft);
+  opacity: 0.7;
+}
+.ck-stat.is-empty-state::before { opacity: 0.35; }
+
+.ck-stat-empty-text,
+.ck-stat-empty-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--c-text-soft);
+  text-decoration: none;
+  margin-top: 2px;
+  transition: color 150ms var(--ease), gap 150ms var(--ease);
+}
+.ck-stat-empty-link { color: var(--c-primary); }
+.ck-stat-empty-link:hover { gap: 8px; }
 .ck-stat-value-row {
   display: flex;
   align-items: baseline;
@@ -1331,9 +1364,12 @@ button:focus-visible {
 }
 
 /* Goal color states */
-.ck-goal.is-near   { --ck-goal-color: #16A34A; }
-.ck-goal.is-mid    { --ck-goal-color: #F59E0B; }
-.ck-goal.is-far    { --ck-goal-color: #EF4444; }
+.ck-goal.is-near  { --ck-goal-color: #16A34A; }
+.ck-goal.is-mid   { --ck-goal-color: #F59E0B; }
+.ck-goal.is-far   { --ck-goal-color: #EF4444; }
+.ck-goal.is-empty { --ck-goal-color: #CBD5E1; }
+.ck-goal.is-empty .ck-goal-pct { color: var(--c-text-soft); }
+.ck-goal.is-empty .ck-goal-fill { filter: none; }
 
 /* Animacion al cambiar de producto en el switcher */
 .ck-product.is-swap .ck-product-main,

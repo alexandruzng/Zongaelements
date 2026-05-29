@@ -5,6 +5,13 @@
 */
 const UPDATES = [
   {
+    id: '2026-05-30-cockpit-conexiones',
+    title: 'Cockpit: 4 stats y objetivo conectados a tus datos',
+    items: [
+      'Las 4 stats de arriba del cockpit ahora muestran los datos reales del producto activo en testeo que ves debajo (revenue del test, pedidos del test y vistas acumuladas). Al alternar productos con las flechas, las stats se recalculan en directo. La cuarta stat ahora es "Racha [nombre]" — coge tu mejor racha del Diario Electrónico (la que más días lleva) y muestra los días reales; si la has marcado hoy, la llama 🔥 pulsa, si no, queda apagada. El anillo de "Próximo objetivo" se conecta al Gestor de ingresos y gastos: muestra tu primera meta activa (ej. "Comprar nuevo móvil") con el % completado y lo que falta. Si todavía no tienes producto, racha o meta, cada card muestra un atajo para crearla.',
+    ],
+  },
+  {
     id: '2026-05-30-cockpit-switcher',
     title: 'Cockpit: producto activo conectado a Product Hub',
     items: [

@@ -499,6 +499,20 @@
       <div class="cockpit-bg" aria-hidden="true"></div>
       <div class="cockpit-grain" aria-hidden="true"></div>
 
+      <!-- Gradientes globales para sparklines -->
+      <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+        <defs>
+          <linearGradient id="ckSparkFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#2563EB" stop-opacity="0.6"/>
+            <stop offset="100%" stop-color="#2563EB" stop-opacity="0"/>
+          </linearGradient>
+          <linearGradient id="ckSparkFillDown" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#EF4444" stop-opacity="0.5"/>
+            <stop offset="100%" stop-color="#EF4444" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+      </svg>
+
       <div class="container cockpit-inner">
 
         <!-- 1. Saludo personal -->

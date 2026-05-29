@@ -398,65 +398,164 @@ function getActiveProducts() {
   return loadProductHubProducts().filter(p => p?.status === 'testeando');
 }
 
-/* Stats por las 4 cards (siguen siendo mock por ahora). */
+/* ----- Rachas del Diario Electrónico ----- */
+const DIARIO_ENTRIES_KEY = 'diario_entries_v2';
+const DIARIO_STREAKS_KEY = 'diario_streaks_v2';
+
+function loadDiaryStreaks() {
+  try {
+    const streaks = JSON.parse(localStorage.getItem(DIARIO_STREAKS_KEY) || '[]');
+    const entries = JSON.parse(localStorage.getItem(DIARIO_ENTRIES_KEY) || '{}');
+    if (!Array.isArray(streaks) || !streaks.length) return [];
+    const todayKey = new Date().toISOString().slice(0, 10);
+    return streaks.map(s => {
+      let days = 0;
+      Object.keys(entries).sort().forEach(k => {
+        if (k >= s.startDate && entries[k]?.streaks?.[s.id]) days++;
+      });
+      const activeToday = !!entries[todayKey]?.streaks?.[s.id];
+      return { id: s.id, name: s.name, startDate: s.startDate, days, activeToday };
+    }).sort((a, b) => b.days - a.days);
+  } catch { return []; }
+}
+function getTopDiaryStreak() {
+  return loadDiaryStreaks()[0] || null;
+}
+
+/* ----- Metas del Gestor de Ingresos y Gastos ----- */
+const FZ_GOALS_KEY = 'fz:goals';
+
+function loadFinanceGoals() {
+  try {
+    const raw = localStorage.getItem(FZ_GOALS_KEY);
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr : [];
+  } catch { return []; }
+}
+function getTopFinanceGoal() {
+  const all = loadFinanceGoals();
+  if (!all.length) return null;
+  const open = all.find(g => (g.current || 0) < (g.target || 0));
+  return open || all[0];
+}
+
+/* ----- pctChange: variación de la segunda mitad vs la primera ----- */
+function pctChange(arr) {
+  if (!Array.isArray(arr) || arr.length < 4) return null;
+  const mid = Math.floor(arr.length / 2);
+  const prev = arr.slice(0, mid).reduce((a, b) => a + b, 0);
+  const recent = arr.slice(mid).reduce((a, b) => a + b, 0);
+  if (!prev) return null;
+  return Math.round(((recent - prev) / prev) * 100);
+}
+
+/* Iconos SVG reutilizables para las stats */
+const ICONS = {
+  wallet:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20"/><path d="M14 15h4"/></svg>`,
+  package: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>`,
+  eye:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`,
+  flame:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>`
+};
+
+/* Fallback para cuando no hay producto activo en Product Hub */
 const cockpitData = {
   productoActivo: {
-    nombre: 'LumiPet Toy',
-    emoji: '🐾',
-    diaActual: 4,
+    nombre: 'Sin producto activo',
+    emoji: '📦',
+    diaActual: 1,
     diasTotal: 14,
-    cuentas: 3,
-    vistas: 142500
-  },
-  objetivo: {
-    label: 'Break-even del producto',
-    sub: 'Faltan 153 € para cubrir todos los gastos del test.',
-    actual: 347,
-    meta: 500
-  },
-  stats: [
-    {
-      id: 'revenue',
-      label: 'Revenue del mes',
-      value: 2847,
-      prefix: '€',
-      change: 18,
-      trend: [820, 1120, 1340, 1620, 1980, 2410, 2847],
-      icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20"/><path d="M14 15h4"/></svg>`,
-      iconClass: ''
-    },
-    {
-      id: 'pedidos',
-      label: 'Pedidos del mes',
-      value: 84,
-      change: 12,
-      trend: [12, 18, 24, 31, 47, 63, 84],
-      icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>`,
-      iconClass: 'is-violet'
-    },
-    {
-      id: 'videos',
-      label: 'Vídeos esta semana',
-      value: 23,
-      change: -5,
-      trend: [6, 4, 5, 3, 4, 1, 0],
-      icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>`,
-      iconClass: 'is-rose'
-    },
-    {
-      id: 'racha',
-      label: 'Racha publicando',
-      value: 12,
-      suffix: '',
-      change: 0,
-      trend: [3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-      icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>`,
-      iconClass: 'is-amber',
-      flame: true,
-      flameLabel: '12 días seguidos'
-    }
-  ]
+    cuentas: 0,
+    vistas: 0,
+    breakEven: 0,
+    revenue: 0
+  }
 };
+
+/* ----- Construir las 4 stats del cockpit a partir del producto activo
+   y de los datos del Diario.
+   Las 3 primeras van con el producto; la última con la racha del diario. */
+function buildStatsForProduct(view, product) {
+  const stats = [];
+
+  // 1. Revenue del test
+  if (product?.series?.length) {
+    const ingresos = product.series.map(d => d.ingresos || 0);
+    stats.push({
+      label: 'Revenue del test',
+      value: ingresos.reduce((a, b) => a + b, 0),
+      prefix: '€',
+      change: pctChange(ingresos),
+      trend: ingresos.length >= 2 ? ingresos : null,
+      icon: ICONS.wallet,
+      iconClass: ''
+    });
+  } else {
+    stats.push({
+      label: 'Revenue del test',
+      value: 0, prefix: '€',
+      icon: ICONS.wallet, iconClass: '',
+      empty: 'Sin producto en testeo',
+      emptyHref: 'Product Hub/Product Hub.html'
+    });
+  }
+
+  // 2. Pedidos del test
+  if (product?.series?.length) {
+    const pedidos = product.series.map(d => d.pedidos || 0);
+    stats.push({
+      label: 'Pedidos del test',
+      value: pedidos.reduce((a, b) => a + b, 0),
+      change: pctChange(pedidos),
+      trend: pedidos.length >= 2 ? pedidos : null,
+      icon: ICONS.package,
+      iconClass: 'is-violet'
+    });
+  } else {
+    stats.push({
+      label: 'Pedidos del test',
+      value: 0,
+      icon: ICONS.package, iconClass: 'is-violet',
+      empty: '—'
+    });
+  }
+
+  // 3. Vistas acumuladas del producto
+  stats.push({
+    label: 'Vistas acumuladas',
+    value: view?.vistas || 0,
+    compact: true,
+    icon: ICONS.eye,
+    iconClass: 'is-rose',
+    empty: !view || !view.vistas ? '—' : null
+  });
+
+  // 4. Racha del Diario electrónico
+  const streak = getTopDiaryStreak();
+  if (streak) {
+    const labelName = streak.name || 'tu racha';
+    stats.push({
+      label: `Racha ${labelName}`,
+      value: streak.days,
+      suffix: streak.days === 1 ? ' día' : ' días',
+      icon: ICONS.flame,
+      iconClass: 'is-amber',
+      flame: streak.activeToday,
+      flameLabel: streak.activeToday ? 'Activa hoy' : 'Sin marcar hoy',
+      href: 'diario electronico/Diario-completo.html'
+    });
+  } else {
+    stats.push({
+      label: 'Rachas',
+      value: 0,
+      icon: ICONS.flame, iconClass: 'is-amber',
+      empty: 'Crea una en el Diario',
+      emptyHref: 'diario electronico/Diario-completo.html'
+    });
+  }
+
+  return stats;
+}
 
 /* ----- Nombre del usuario logueado -----
    Fuentes (en orden):
@@ -547,16 +646,6 @@ function buildSparkline(values, width = 120, height = 36) {
   }
   return `
     <svg class="ck-spark" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" aria-hidden="true">
-      <defs>
-        <linearGradient id="ckSparkFill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#2563EB" stop-opacity="0.6"/>
-          <stop offset="100%" stop-color="#2563EB" stop-opacity="0"/>
-        </linearGradient>
-        <linearGradient id="ckSparkFillDown" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#EF4444" stop-opacity="0.5"/>
-          <stop offset="100%" stop-color="#EF4444" stop-opacity="0"/>
-        </linearGradient>
-      </defs>
       <path class="fill" d="${fillD}"/>
       <path class="line" d="${d}" style="--len:${len.toFixed(0)}"/>
       <circle class="ck-spark-dot-pulse" cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="3"/>
@@ -579,71 +668,99 @@ function formatCompact(n) {
 }
 
 /* ----- Count-up con easing easeOutExpo ----- */
-function countUp(el, target, { duration = 1400, prefix = '', suffix = '', decimals = 0 } = {}) {
+function countUp(el, target, { duration = 1400, decimals = 0, compact = false } = {}) {
   const startTime = performance.now();
-  const valueEl  = el.querySelector('.ck-stat-num');
+  const valueEl = el.querySelector('.ck-stat-num');
   if (!valueEl) return;
+  const fmt = (v) => compact ? formatCompact(v) : formatNumber(v, decimals);
+  // cancelar animación previa si la había
+  if (valueEl._raf) cancelAnimationFrame(valueEl._raf);
   function tick(now) {
     const t = Math.min(1, (now - startTime) / duration);
     const eased = 1 - Math.pow(2, -10 * t);
     const current = target * eased;
-    valueEl.textContent = formatNumber(current, decimals);
-    if (t < 1) requestAnimationFrame(tick);
-    else valueEl.textContent = formatNumber(target, decimals);
+    valueEl.textContent = fmt(current);
+    if (t < 1) valueEl._raf = requestAnimationFrame(tick);
+    else valueEl.textContent = fmt(target);
   }
-  requestAnimationFrame(tick);
+  valueEl._raf = requestAnimationFrame(tick);
+}
+
+/* Escapa texto antes de inyectarlo como HTML (los nombres de rachas y
+   metas vienen del usuario) */
+function escapeHTML(str) {
+  return String(str ?? '').replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
 }
 
 /* ----- Render de las 4 stats ----- */
-function renderStats() {
+function renderStats(statsArr, { animate = true } = {}) {
   const wrap = document.getElementById('ckStats');
   if (!wrap) return;
+  const stats = statsArr || [];
 
-  wrap.innerHTML = cockpitData.stats.map((s, idx) => {
-    const isDown = s.change < 0;
-    const changeAbs = Math.abs(s.change);
-    const changeHTML = s.change !== 0 ? `
+  wrap.innerHTML = stats.map((s, idx) => {
+    const isEmpty = s.empty != null;
+    const isDown  = !isEmpty && typeof s.change === 'number' && s.change < 0;
+    const showChange = !isEmpty && typeof s.change === 'number' && s.change !== 0;
+    const changeHTML = showChange ? `
       <span class="ck-stat-change ${isDown ? 'down' : 'up'}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-          ${isDown
-            ? '<polyline points="6 9 12 15 18 9"/>'
-            : '<polyline points="6 15 12 9 18 15"/>'}
+          ${isDown ? '<polyline points="6 9 12 15 18 9"/>' : '<polyline points="6 15 12 9 18 15"/>'}
         </svg>
-        ${changeAbs}%
+        ${Math.abs(s.change)}%
       </span>
     ` : '';
 
+    const valueRow = isEmpty ? `
+      <div class="ck-stat-value is-empty">
+        <span class="ck-stat-num">—</span>
+        ${s.flame ? `<span class="ck-stat-flame">🔥</span>` : ''}
+      </div>
+    ` : `
+      <div class="ck-stat-value" data-target="${s.value}" data-compact="${s.compact ? '1' : '0'}">
+        ${s.prefix ? `<span class="ck-stat-prefix">${s.prefix}</span>` : ''}
+        <span class="ck-stat-num">0</span>
+        ${s.suffix ? `<span class="ck-stat-suffix">${escapeHTML(s.suffix)}</span>` : ''}
+        ${s.flame ? `<span class="ck-stat-flame" title="${escapeHTML(s.flameLabel || '')}">🔥</span>` : ''}
+      </div>
+    `;
+
+    const emptyLink = isEmpty && s.emptyHref ? `
+      <a class="ck-stat-empty-link" href="${s.emptyHref}">${escapeHTML(s.empty)} <span aria-hidden="true">→</span></a>
+    ` : (isEmpty ? `<span class="ck-stat-empty-text">${escapeHTML(s.empty)}</span>` : '');
+
+    const labelHTML = s.href
+      ? `<a class="ck-stat-label-link" href="${s.href}">${escapeHTML(s.label)}</a>`
+      : `<span class="ck-stat-label">${escapeHTML(s.label)}</span>`;
+
+    const enterCls = animate ? 'cockpit-enter' : '';
+    const sparkHTML = !isEmpty && s.trend && s.trend.length > 1 ? buildSparkline(s.trend) : '';
+
     return `
-      <div class="ck-stat cockpit-enter ${isDown ? 'is-down' : ''}" style="--delay:${100 + idx * 100}ms; --spark-delay:${500 + idx * 100}ms">
+      <div class="ck-stat ${enterCls} ${isDown ? 'is-down' : ''} ${isEmpty ? 'is-empty-state' : ''}" style="--delay:${100 + idx * 100}ms; --spark-delay:${500 + idx * 100}ms">
         <div class="ck-stat-head">
           <span class="ck-stat-icon ${s.iconClass || ''}" aria-hidden="true">${s.icon}</span>
-          <span class="ck-stat-label">${s.label}</span>
+          ${labelHTML}
         </div>
         <div class="ck-stat-value-row">
-          <div class="ck-stat-value" data-target="${s.value}">
-            ${s.prefix ? `<span class="ck-stat-prefix">${s.prefix}</span>` : ''}
-            <span class="ck-stat-num">0</span>
-            ${s.suffix ? `<span class="ck-stat-suffix">${s.suffix}</span>` : ''}
-            ${s.flame ? `<span class="ck-stat-flame" title="${s.flameLabel || ''}">🔥</span>` : ''}
-          </div>
+          ${valueRow}
           ${changeHTML}
         </div>
-        ${buildSparkline(s.trend)}
+        ${sparkHTML || emptyLink}
       </div>
     `;
   }).join('');
 
-  // Count-up con delay coordinado con la entrada
-  cockpitData.stats.forEach((s, idx) => {
+  // Count-up por stat
+  stats.forEach((s, idx) => {
+    if (s.empty != null) return;
     const card = wrap.children[idx];
     if (!card) return;
-    const target = s.value;
     setTimeout(() => {
-      countUp(card, target, {
-        duration: 1500,
-        decimals: 0
-      });
-    }, 400 + idx * 100);
+      countUp(card, s.value, { duration: 1300, decimals: 0, compact: !!s.compact });
+    }, animate ? (400 + idx * 100) : 0);
   });
 }
 
@@ -702,35 +819,43 @@ function renderProducto(view) {
   daysEl.innerHTML = html;
 }
 
-/* ----- Anillo de objetivo ----- */
-function renderObjetivo(view) {
-  // Si tenemos un producto real, calculamos break-even desde sus datos
-  let label, sub, pct;
-  if (view && view.breakEven > 0) {
-    pct = Math.max(0, Math.min(1, view.revenue / view.breakEven));
-    const restante = Math.max(0, view.breakEven - view.revenue);
-    label = pct >= 1 ? 'Break-even alcanzado 🎉' : 'Break-even del producto';
-    sub = pct >= 1
-      ? `Ya cubres todos los gastos del test (+${formatNumber(view.revenue - view.breakEven)} €).`
-      : `Faltan ${formatNumber(restante)} € para cubrir los gastos del test.`;
-  } else {
-    const o = cockpitData.objetivo;
-    label = o.label;
-    sub = o.sub;
-    pct = Math.max(0, Math.min(1, o.actual / o.meta));
-  }
-  const pctStr = Math.round(pct * 100) + '%';
-
+/* ----- Anillo de objetivo: conectado a Finanzas (fz:goals) ----- */
+function renderObjetivo() {
   const titleEl = document.getElementById('ckGoalTitle');
   const subEl   = document.getElementById('ckGoalSub');
   const pctEl   = document.getElementById('ckGoalPct');
   const fillEl  = document.getElementById('ckGoalFill');
+  const goalCard = document.querySelector('.ck-goal');
+  const eyebrowEl = goalCard?.querySelector('.ck-eyebrow');
 
-  if (titleEl) titleEl.textContent = label;
-  if (subEl)   subEl.textContent   = sub;
+  const goal = getTopFinanceGoal();
 
+  let label, sub, pct, eyebrowText = 'Próximo objetivo';
+
+  if (goal) {
+    const target = Number(goal.target) || 0;
+    const current = Math.max(0, Number(goal.current) || 0);
+    pct = target > 0 ? Math.max(0, Math.min(1, current / target)) : 0;
+    label = goal.name || 'Mi objetivo';
+    const restante = Math.max(0, target - current);
+    if (pct >= 1) {
+      sub = `🎉 ¡Meta conseguida! ${formatNumber(current)} € de ${formatNumber(target)} €.`;
+    } else {
+      sub = `Faltan ${formatNumber(restante)} € de ${formatNumber(target)} € en total.`;
+    }
+  } else {
+    // Sin metas en Finanzas → empty state
+    pct = 0;
+    label = 'Sin metas activas';
+    sub = 'Crea tu primera meta desde el Gestor de ingresos y gastos.';
+  }
+
+  if (eyebrowEl) eyebrowEl.textContent = eyebrowText;
+  if (titleEl)   titleEl.textContent = label;
+  if (subEl)     subEl.textContent = sub;
+
+  const pctStr = Math.round(pct * 100) + '%';
   if (pctEl) {
-    // cancelar animación previa si existía
     if (pctEl._raf) cancelAnimationFrame(pctEl._raf);
     const start = performance.now();
     const dur = 1100;
@@ -747,20 +872,22 @@ function renderObjetivo(view) {
   if (fillEl) {
     const circumference = 2 * Math.PI * 52;
     const offset = circumference * (1 - pct);
-    // forzar reflow para que la transición se aplique al cambiar de producto
     fillEl.style.transition = 'none';
     fillEl.getBoundingClientRect();
     fillEl.style.transition = '';
     fillEl.style.strokeDashoffset = offset;
   }
 
-  const goalCard = document.querySelector('.ck-goal');
   if (goalCard) {
-    goalCard.classList.remove('is-near', 'is-mid', 'is-far');
-    if (pct >= 0.75)      goalCard.classList.add('is-near');
+    goalCard.classList.remove('is-near', 'is-mid', 'is-far', 'is-empty');
+    if (!goal)            goalCard.classList.add('is-empty');
+    else if (pct >= 0.75) goalCard.classList.add('is-near');
     else if (pct >= 0.4)  goalCard.classList.add('is-mid');
     else                  goalCard.classList.add('is-far');
   }
+
+  // Si no hay meta, el link "abrir Product Hub" no aplica para el objetivo;
+  // pero podemos transformar la sub en clickable. Lo dejamos como texto.
 }
 
 /* ============================================
@@ -789,43 +916,41 @@ function renderActiveProduct(animate = true) {
   const nextBtn  = document.getElementById('ckProductNext');
   const productLink = document.querySelector('.ck-product-link');
 
-  // Sin productos reales → fallback al mock
+  let view = null;
+  let product = null;
+
   if (!products.length) {
     if (switcher) switcher.hidden = true;
-    renderProducto(cockpitData.productoActivo);
-    renderObjetivo(null);
-    return;
+    view = cockpitData.productoActivo;
+  } else {
+    if (cockpitState.activeIdx < 0) cockpitState.activeIdx = products.length - 1;
+    if (cockpitState.activeIdx >= products.length) cockpitState.activeIdx = 0;
+    product = products[cockpitState.activeIdx];
+    view = productToCockpitView(product);
+
+    if (switcher) switcher.hidden = products.length < 2;
+    if (idxLabel) idxLabel.textContent = `${cockpitState.activeIdx + 1} / ${products.length}`;
+    if (prevBtn) prevBtn.disabled = products.length < 2;
+    if (nextBtn) nextBtn.disabled = products.length < 2;
+    if (productLink && product.id) {
+      productLink.href = `Product Hub/Product Hub.html#product-${encodeURIComponent(product.id)}`;
+    }
   }
 
-  // Normalizar el índice activo
-  if (cockpitState.activeIdx < 0) cockpitState.activeIdx = products.length - 1;
-  if (cockpitState.activeIdx >= products.length) cockpitState.activeIdx = 0;
-  const p = products[cockpitState.activeIdx];
-  const view = productToCockpitView(p);
-
-  // Mostrar switcher solo si hay 2 o más productos
-  if (switcher) switcher.hidden = products.length < 2;
-  if (idxLabel) idxLabel.textContent = `${cockpitState.activeIdx + 1} / ${products.length}`;
-  if (prevBtn) prevBtn.disabled = products.length < 2;
-  if (nextBtn) nextBtn.disabled = products.length < 2;
-
-  // El link "Abrir Product Hub" lleva ahora al producto concreto
-  if (productLink && p.id) {
-    productLink.href = `Product Hub/Product Hub.html#product-${encodeURIComponent(p.id)}`;
-  }
-
-  // Pequeña animación al cambiar de producto
+  // Animación al cambiar de producto
   const card = document.getElementById('ckProductCard');
-  const goalCard = document.querySelector('.ck-goal');
   if (animate && card) {
     card.classList.remove('is-swap'); void card.offsetWidth;
     card.classList.add('is-swap');
   }
 
   renderProducto(view);
-  renderObjetivo(view);
+  // Las 3 primeras stats se recalculan con cada producto; la 4ª (racha) es global
+  renderStats(buildStatsForProduct(view, product), { animate });
+  // El objetivo viene de Finanzas — no depende del producto, pero lo refrescamos
+  renderObjetivo();
 
-  saveActiveIdx(cockpitState.activeIdx);
+  if (products.length) saveActiveIdx(cockpitState.activeIdx);
 }
 
 function initProductSwitcher() {
@@ -852,10 +977,14 @@ function initProductSwitcher() {
     if (e.key === 'ArrowRight') { cockpitState.activeIdx++; renderActiveProduct(true); }
   });
 
-  // Si Product Hub modifica los datos en otra pestaña, refrescamos
+  // Si cualquiera de las fuentes (Product Hub, Diario, Finanzas) cambia en
+  // otra pestaña, refrescamos el cockpit.
   window.addEventListener('storage', (e) => {
     if (e.key === PH_STORAGE_KEY) {
       cockpitState.activeProducts = getActiveProducts();
+      renderActiveProduct(false);
+    } else if (e.key === DIARIO_ENTRIES_KEY || e.key === DIARIO_STREAKS_KEY ||
+               e.key === FZ_GOALS_KEY) {
       renderActiveProduct(false);
     }
   });
@@ -893,7 +1022,6 @@ function watchUserName() {
 
 function renderCockpit() {
   renderWelcome();
-  renderStats();
   initProductSwitcher();
   watchUserName();
 }

@@ -622,34 +622,62 @@ function renderWelcome() {
   contextEl.textContent = `Día ${p.diaActual} de ${p.diasTotal} del test de ${p.nombre}`;
 }
 
-/* ----- Sparkline SVG ----- */
-function buildSparkline(values, width = 120, height = 36) {
+/* ----- Sparkline SVG (curvas suaves, stroke no escalable, crisp) ----- */
+function smoothPath(points, tension = 0.5) {
+  if (points.length < 2) return '';
+  const n = points.length;
+  let d = `M${points[0][0].toFixed(2)},${points[0][1].toFixed(2)}`;
+  for (let i = 0; i < n - 1; i++) {
+    const p0 = points[i - 1] || points[i];
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    const p3 = points[i + 2] || p2;
+    const cp1x = p1[0] + ((p2[0] - p0[0]) * tension) / 3;
+    const cp1y = p1[1] + ((p2[1] - p0[1]) * tension) / 3;
+    const cp2x = p2[0] - ((p3[0] - p1[0]) * tension) / 3;
+    const cp2y = p2[1] - ((p3[1] - p1[1]) * tension) / 3;
+    d += ` C${cp1x.toFixed(2)},${cp1y.toFixed(2)} ${cp2x.toFixed(2)},${cp2y.toFixed(2)} ${p2[0].toFixed(2)},${p2[1].toFixed(2)}`;
+  }
+  return d;
+}
+
+function buildSparkline(values) {
   if (!values || values.length < 2) return '';
+
+  // Resolución alta del viewBox para no perder precisión
+  const W = 300, H = 80;
+  const padX = 4;            // margen para que el punto final no salga
+  const padTop = 8;
+  const padBottom = 6;
+
   const min = Math.min(...values);
   const max = Math.max(...values);
   const range = max - min || 1;
-  const stepX = width / (values.length - 1);
-  const pts = values.map((v, i) => {
-    const x = i * stepX;
-    const y = height - ((v - min) / range) * (height - 6) - 3;
-    return [x, y];
-  });
-  const d = pts.map((p, i) => (i === 0 ? `M${p[0].toFixed(1)},${p[1].toFixed(1)}` : `L${p[0].toFixed(1)},${p[1].toFixed(1)}`)).join(' ');
-  const fillD = `${d} L${width},${height} L0,${height} Z`;
+  const usableW = W - padX * 2;
+  const usableH = H - padTop - padBottom;
+  const stepX = usableW / (values.length - 1);
+
+  const pts = values.map((v, i) => [
+    padX + i * stepX,
+    padTop + (1 - (v - min) / range) * usableH
+  ]);
+
+  const linePath = smoothPath(pts, 0.5);
+  const fillPath = `${linePath} L${(W - padX).toFixed(2)},${H} L${padX.toFixed(2)},${H} Z`;
   const last = pts[pts.length - 1];
-  // longitud aproximada para stroke-dasharray
-  let len = 0;
-  for (let i = 1; i < pts.length; i++) {
-    const dx = pts[i][0] - pts[i-1][0];
-    const dy = pts[i][1] - pts[i-1][1];
-    len += Math.sqrt(dx*dx + dy*dy);
-  }
+
   return `
-    <svg class="ck-spark" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" aria-hidden="true">
-      <path class="fill" d="${fillD}"/>
-      <path class="line" d="${d}" style="--len:${len.toFixed(0)}"/>
-      <circle class="ck-spark-dot-pulse" cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="3"/>
-      <circle class="ck-spark-dot" cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="3"/>
+    <svg class="ck-spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"
+         shape-rendering="geometricPrecision" aria-hidden="true">
+      <path class="fill" d="${fillPath}"/>
+      <path class="line" d="${linePath}" pathLength="1"
+            vector-effect="non-scaling-stroke"/>
+      <circle class="ck-spark-dot-pulse" cx="${last[0].toFixed(2)}" cy="${last[1].toFixed(2)}" r="5"
+              vector-effect="non-scaling-stroke"/>
+      <circle class="ck-spark-dot-halo" cx="${last[0].toFixed(2)}" cy="${last[1].toFixed(2)}" r="4.5"
+              vector-effect="non-scaling-stroke"/>
+      <circle class="ck-spark-dot" cx="${last[0].toFixed(2)}" cy="${last[1].toFixed(2)}" r="2.6"
+              vector-effect="non-scaling-stroke"/>
     </svg>
   `;
 }

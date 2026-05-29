@@ -1028,54 +1028,70 @@ button:focus-visible {
 .ck-spark {
   display: block;
   width: 100%;
-  height: 36px;
+  height: 44px;
   overflow: visible;
+  margin-top: 4px;
 }
 .ck-spark path.line {
   fill: none;
-  stroke: var(--c-primary);
-  stroke-width: 2;
+  stroke: url(#ckSparkStroke);
+  stroke-width: 2.4;
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-dasharray: var(--len, 200);
-  stroke-dashoffset: var(--len, 200);
-  animation: ckDraw 1100ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  filter: drop-shadow(0 2px 4px rgba(37, 99, 235, 0.22));
+  animation: ckDraw 1200ms cubic-bezier(0.65, 0, 0.35, 1) forwards;
   animation-delay: var(--spark-delay, 600ms);
 }
 .ck-spark path.fill {
   fill: url(#ckSparkFill);
   opacity: 0;
   animation: ckFade 800ms ease-out forwards;
-  animation-delay: calc(var(--spark-delay, 600ms) + 400ms);
+  animation-delay: calc(var(--spark-delay, 600ms) + 500ms);
+}
+/* Dot final: halo blanco fino + relleno azul */
+.ck-spark .ck-spark-dot-halo {
+  fill: #fff;
+  stroke: none;
+  opacity: 0;
+  animation: ckDotPop 500ms cubic-bezier(0.2, 0.8, 0.3, 1.3) forwards;
+  animation-delay: calc(var(--spark-delay, 600ms) + 1000ms);
+  transform-origin: center;
 }
 .ck-spark .ck-spark-dot {
   fill: var(--c-primary);
+  stroke: none;
   opacity: 0;
-  animation: ckDotPop 600ms cubic-bezier(0.2, 0.8, 0.3, 1.4) forwards;
-  animation-delay: calc(var(--spark-delay, 600ms) + 900ms);
+  animation: ckDotPop 500ms cubic-bezier(0.2, 0.8, 0.3, 1.3) forwards;
+  animation-delay: calc(var(--spark-delay, 600ms) + 1050ms);
   transform-origin: center;
 }
 .ck-spark .ck-spark-dot-pulse {
-  fill: var(--c-primary);
-  opacity: 0.35;
-  animation: ckDotPulse 1.8s ease-in-out infinite;
-  animation-delay: calc(var(--spark-delay, 600ms) + 1100ms);
-  transform-origin: center;
+  fill: none;
+  stroke: var(--c-primary);
+  stroke-width: 1.5;
+  opacity: 0;
+  animation: ckDotRing 1.9s ease-out infinite;
+  animation-delay: calc(var(--spark-delay, 600ms) + 1200ms);
 }
-.ck-stat.is-down .ck-spark path.line { stroke: #EF4444; }
-.ck-stat.is-down .ck-spark .ck-spark-dot,
-.ck-stat.is-down .ck-spark .ck-spark-dot-pulse { fill: #EF4444; }
+.ck-stat.is-down .ck-spark path.line {
+  stroke: url(#ckSparkStrokeDown);
+  filter: drop-shadow(0 2px 4px rgba(239, 68, 68, 0.22));
+}
+.ck-stat.is-down .ck-spark .ck-spark-dot { fill: #EF4444; }
+.ck-stat.is-down .ck-spark .ck-spark-dot-pulse { stroke: #EF4444; }
 .ck-stat.is-down .ck-spark path.fill { fill: url(#ckSparkFillDown); }
 
 @keyframes ckDraw { to { stroke-dashoffset: 0; } }
-@keyframes ckFade { to { opacity: 0.18; } }
+@keyframes ckFade { to { opacity: 1; } }
 @keyframes ckDotPop {
-  0%   { opacity: 0; transform: translate(0,0) scale(0); }
-  100% { opacity: 1; transform: translate(0,0) scale(1); }
+  0%   { opacity: 0; transform: scale(0); }
+  100% { opacity: 1; transform: scale(1); }
 }
-@keyframes ckDotPulse {
-  0%, 100% { transform: scale(1); opacity: 0.35; }
-  50%      { transform: scale(2.4); opacity: 0; }
+@keyframes ckDotRing {
+  0%   { opacity: 0.65; r: 3.5; stroke-width: 1.8; }
+  90%, 100% { opacity: 0; r: 10; stroke-width: 0.4; }
 }
 
 /* ----- Board (producto + objetivo) ----- */

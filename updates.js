@@ -5,6 +5,13 @@
 */
 const UPDATES = [
   {
+    id: '2026-05-30-cockpit-home',
+    title: 'Nueva home: tu cockpit personal',
+    items: [
+      'La página de inicio se ha rediseñado como un panel de control: saludo según la hora del día, fecha, stats vivas del mes (revenue, pedidos, vídeos, racha) con mini-gráficas, el producto activo en testeo con su barra de 14 días y un anillo con el próximo objetivo. Las herramientas siguen abajo, ahora con un indicador de cuándo fue la última vez que las abriste. Los datos del cockpit son de ejemplo por ahora — en próximas versiones se conectarán al Product Hub, Pedidos diarios y Finanzas.',
+    ],
+  },
+  {
     id: '2026-05-30-product-hub-persistencia',
     title: 'Product Hub: tus datos se guardan',
     items: [

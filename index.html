@@ -479,12 +479,12 @@
       </a>
 
       <nav class="nav-links" aria-label="Navegación principal">
+        <a href="#cockpit">Cockpit</a>
         <a href="#herramientas">Herramientas</a>
-        <a href="#como-funciona">Cómo funciona</a>
-        <a href="#sobre">Sobre</a>
+        <a href="#guarda-info">Backup</a>
       </nav>
 
-      <a href="#herramientas" class="btn btn-primary btn-sm">Empezar</a>
+      <a href="#herramientas" class="btn btn-primary btn-sm">Herramientas</a>
 
       <button class="nav-toggle" id="navToggle" aria-label="Abrir menú" aria-expanded="false">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
@@ -494,45 +494,93 @@
 
   <main>
 
-    <!-- ======= HERO ======= -->
-    <section class="hero">
-      <div class="hero-blob blob-1" aria-hidden="true"></div>
-      <div class="hero-blob blob-2" aria-hidden="true"></div>
+    <!-- ======= COCKPIT ======= -->
+    <section class="cockpit" id="cockpit" aria-label="Tu panel de control">
+      <div class="cockpit-bg" aria-hidden="true"></div>
+      <div class="cockpit-grain" aria-hidden="true"></div>
 
-      <div class="container hero-inner reveal">
-        <span class="badge">
-          <span class="badge-dot"></span>
-          v1.0 · En desarrollo activo
-        </span>
+      <div class="container cockpit-inner">
 
-        <h1 class="hero-title">
-          Tu suite completa para <span class="gradient-text">dropshipping orgánico</span>
-        </h1>
+        <!-- 1. Saludo personal -->
+        <header class="ck-welcome cockpit-enter" style="--delay:0ms">
+          <div class="ck-welcome-text">
+            <div class="ck-greet-row">
+              <h1 class="ck-greet" id="ckGreet">Buenos días, Zonga</h1>
+              <span class="ck-time-icon" id="ckTimeIcon" aria-hidden="true"></span>
+            </div>
+            <p class="ck-date" id="ckDate">—</p>
+            <p class="ck-context" id="ckContext">—</p>
+          </div>
+        </header>
 
-        <p class="hero-subtitle">
-          Herramientas rápidas, locales y enfocadas: desde generar reseñas hasta medir tu rendimiento diario. Todo en un solo lugar, sin fricción.
-        </p>
-
-        <div class="hero-ctas">
-          <a href="#herramientas" class="btn btn-primary btn-lg">Explorar herramientas</a>
-          <a href="#como-funciona" class="btn btn-ghost btn-lg">Cómo funciona →</a>
+        <!-- 2. Stats vivas -->
+        <div class="ck-stats" id="ckStats" aria-label="Indicadores clave">
+          <!-- renderizadas en JS -->
         </div>
 
-        <div class="hero-stats">
-          <div><strong id="toolsCount">—</strong><span>Herramientas activas</span></div>
-          <div><strong>RON · EUR</strong><span>Moneda local</span></div>
-          <div><strong>0 ms</strong><span>Sin build step</span></div>
+        <!-- 3 + 4. Producto activo + Objetivo -->
+        <div class="ck-board">
+          <article class="ck-card ck-product cockpit-enter" style="--delay:500ms" id="ckProductCard">
+            <div class="ck-card-head">
+              <span class="ck-eyebrow">Producto activo en testeo</span>
+              <span class="ck-status-pill"><span class="ck-status-dot"></span> En curso</span>
+            </div>
+
+            <div class="ck-product-main">
+              <div class="ck-product-emoji" id="ckProductEmoji">🐾</div>
+              <div class="ck-product-meta">
+                <h2 class="ck-product-name" id="ckProductName">—</h2>
+                <p class="ck-product-sub" id="ckProductSub">—</p>
+              </div>
+            </div>
+
+            <div class="ck-days" id="ckDays" aria-label="Progreso del test de 14 días">
+              <!-- renderizado en JS -->
+            </div>
+
+            <div class="ck-product-stats">
+              <div><strong id="ckPDaysLeft">—</strong><span>días restantes</span></div>
+              <div><strong id="ckPCuentas">—</strong><span>cuentas activas</span></div>
+              <div><strong id="ckPViews">—</strong><span>vistas acumuladas</span></div>
+            </div>
+
+            <a class="ck-product-link" href="Product Hub/Product Hub.html">
+              Abrir Product Hub
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </a>
+          </article>
+
+          <article class="ck-card ck-goal cockpit-enter" style="--delay:700ms">
+            <span class="ck-eyebrow">Próximo objetivo</span>
+
+            <div class="ck-goal-ring-wrap">
+              <svg class="ck-goal-ring" viewBox="0 0 120 120" aria-hidden="true">
+                <circle class="ck-goal-track" cx="60" cy="60" r="52"></circle>
+                <circle class="ck-goal-fill" id="ckGoalFill" cx="60" cy="60" r="52"></circle>
+              </svg>
+              <div class="ck-goal-center">
+                <span class="ck-goal-pct" id="ckGoalPct">0%</span>
+                <span class="ck-goal-mini">completado</span>
+              </div>
+            </div>
+
+            <div class="ck-goal-body">
+              <p class="ck-goal-title" id="ckGoalTitle">—</p>
+              <p class="ck-goal-sub" id="ckGoalSub">—</p>
+            </div>
+          </article>
         </div>
+
       </div>
     </section>
 
     <!-- ======= HERRAMIENTAS ======= -->
-    <section class="section" id="herramientas">
+    <section class="section section-tools" id="herramientas">
       <div class="container">
-        <div class="section-head reveal">
+        <div class="section-head section-head-left reveal">
           <span class="eyebrow">Herramientas</span>
-          <h2>Todo lo que necesitas, modular</h2>
-          <p>Cada herramienta resuelve una parte concreta del flujo de trabajo. La suite crece con nuevas piezas sin romper lo que ya funciona.</p>
+          <h2>Tu arsenal</h2>
+          <p>Cada pieza resuelve una parte del flujo. Abre la que necesites, haz el trabajo y sigue.</p>
         </div>
 
         <div class="tools-toolbar reveal">
@@ -561,35 +609,6 @@
         <p class="tools-empty" id="toolsEmpty" hidden>
           No hay herramientas que coincidan con tu búsqueda.
         </p>
-      </div>
-    </section>
-
-    <!-- ======= CÓMO FUNCIONA ======= -->
-    <section class="section section-alt" id="como-funciona">
-      <div class="container">
-        <div class="section-head reveal">
-          <span class="eyebrow">Proceso</span>
-          <h2>Cómo funciona</h2>
-          <p>Tres pasos simples para integrar la suite en tu rutina diaria.</p>
-        </div>
-
-        <div class="steps">
-          <article class="step reveal">
-            <span class="step-num">01</span>
-            <h3>Elige la herramienta</h3>
-            <p>Abre la que necesites desde el grid. Cada una vive en su propia pantalla sin distracciones.</p>
-          </article>
-          <article class="step reveal">
-            <span class="step-num">02</span>
-            <h3>Trabaja sin fricción</h3>
-            <p>Interfaces minimalistas, atajos directos y resultados inmediatos. Sin cuentas, sin esperas.</p>
-          </article>
-          <article class="step reveal">
-            <span class="step-num">03</span>
-            <h3>Exporta o guarda</h3>
-            <p>Descarga CSVs, guarda estadísticas o conserva tu progreso local. Tú decides qué llevarte.</p>
-          </article>
-        </div>
       </div>
     </section>
 
@@ -630,56 +649,6 @@
           <div class="save-actions">
             <button id="zmExportHome" class="btn btn-primary btn-lg">Descargar mi información</button>
             <button id="zmImportHome" class="btn btn-ghost btn-lg">Restaurar desde backup</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ======= CTA FINAL ======= -->
-    <section class="cta-final">
-      <div class="container cta-inner reveal">
-        <h2>Listo para acelerar tu flujo de trabajo</h2>
-        <p>Abre tu primera herramienta ahora. Sin cuentas, sin fricción, sin esperas.</p>
-        <a href="#herramientas" class="btn btn-primary btn-lg">Empezar ahora</a>
-      </div>
-    </section>
-
-    <!-- ======= POR QUÉ ======= -->
-    <section class="section" id="sobre">
-      <div class="container">
-        <div class="section-head reveal">
-          <span class="eyebrow">Ventajas</span>
-          <h2>Por qué esta suite</h2>
-        </div>
-
-        <div class="features-grid">
-          <div class="feature reveal">
-            <div class="feature-icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-            </div>
-            <h3>Velocidad</h3>
-            <p>Sin login, sin cargas pesadas. Abres y usas.</p>
-          </div>
-          <div class="feature reveal">
-            <div class="feature-icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-            </div>
-            <h3>Enfoque</h3>
-            <p>Cada herramienta hace una sola cosa, bien hecha.</p>
-          </div>
-          <div class="feature reveal">
-            <div class="feature-icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4"/><path d="M12 18v4"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="M4.93 19.07l2.83-2.83"/><path d="M16.24 7.76l2.83-2.83"/></svg>
-            </div>
-            <h3>Escalable</h3>
-            <p>La suite crece con nuevas herramientas sin romper lo existente.</p>
-          </div>
-          <div class="feature reveal">
-            <div class="feature-icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-            </div>
-            <h3>Todo en uno</h3>
-            <p>Reseñas, finanzas y rendimiento en un único hub.</p>
           </div>
         </div>
       </div>

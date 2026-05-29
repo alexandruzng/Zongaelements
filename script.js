@@ -260,6 +260,35 @@ function renderCategoryChips() {
   });
 }
 
+/* ----- "Última vez usado" por herramienta ----- */
+const LAST_USED_KEY = '__zonga_tool_last_used__';
+function readLastUsed() {
+  try { return JSON.parse(localStorage.getItem(LAST_USED_KEY) || '{}'); }
+  catch { return {}; }
+}
+function writeLastUsed(map) {
+  try { localStorage.setItem(LAST_USED_KEY, JSON.stringify(map)); } catch {}
+}
+function markToolUsed(id) {
+  const map = readLastUsed();
+  map[id] = Date.now();
+  writeLastUsed(map);
+}
+function formatLastUsed(ts) {
+  if (!ts) return null;
+  const diff = Date.now() - ts;
+  const mins  = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days  = Math.floor(diff / 86400000);
+  if (mins < 1)   return 'Hace un momento';
+  if (mins < 60)  return `Hace ${mins} min`;
+  if (hours < 24) return `Hace ${hours} h`;
+  if (days === 1) return 'Ayer';
+  if (days < 7)   return `Hace ${days} días`;
+  if (days < 30)  return `Hace ${Math.floor(days/7)} sem`;
+  return `Hace ${Math.floor(days/30)} meses`;
+}
+
 /* ----- Render de tarjetas (aplica filtro y búsqueda) ----- */
 function renderTools() {
   const grid = document.getElementById('toolsGrid');
@@ -267,9 +296,9 @@ function renderTools() {
   if (!grid) return;
 
   const q = norm(searchQuery.trim());
+  const lastUsed = readLastUsed();
 
   const filtered = tools.filter(t => {
-    // Coming-soon solo visible cuando estamos en "Todas" y sin búsqueda
     if (t.status === 'coming-soon') {
       return activeCategory === 'all' && !q;
     }
@@ -278,24 +307,43 @@ function renderTools() {
     return true;
   });
 
-  grid.innerHTML = filtered.map(t => {
+  grid.innerHTML = filtered.map((t, idx) => {
     const isSoon = t.status === 'coming-soon';
     const isExternal = !isSoon && /^https?:\/\//.test(t.url);
     const linkText = isSoon ? 'Próximamente' : 'Abrir';
     const linkAttrs = isSoon
       ? 'aria-disabled="true"'
       : (isExternal ? 'target="_blank" rel="noopener noreferrer"' : '');
+
+    let metaHTML = '';
+    if (!isSoon) {
+      const used = formatLastUsed(lastUsed[t.id]);
+      metaHTML = used
+        ? `<span class="tool-meta">${used}</span>`
+        : `<span class="tool-meta is-pending">Sin abrir aún</span>`;
+    }
+
+    const delay = Math.min(idx * 50, 600);
     return `
-      <article class="tool-card reveal is-visible ${isSoon ? 'is-soon' : ''}">
+      <article class="tool-card cockpit-enter ${isSoon ? 'is-soon' : ''}" style="--delay:${delay}ms" data-tool-id="${t.id}">
         <div class="tool-icon" aria-hidden="true">${t.icon}</div>
         <h3>${t.name}</h3>
         <p>${t.description}</p>
-        <a class="tool-link" href="${t.url}" ${linkAttrs}>
+        ${metaHTML}
+        <a class="tool-link" href="${t.url}" ${linkAttrs} data-tool-link="${t.id}">
           ${linkText} <span aria-hidden="true">→</span>
         </a>
       </article>
     `;
   }).join('');
+
+  // Marcar la herramienta como usada al hacer clic en su link
+  grid.querySelectorAll('a[data-tool-link]').forEach(a => {
+    a.addEventListener('click', () => {
+      const id = a.getAttribute('data-tool-link');
+      if (id) markToolUsed(id);
+    });
+  });
 
   if (empty) {
     empty.hidden = filtered.length > 0;
@@ -326,7 +374,307 @@ function initToolsSearch() {
   }
 }
 
-/* ----- Contador de herramientas activas en el hero ----- */
+/* ============================================
+   COCKPIT — saludo, stats, producto activo, objetivo
+   ============================================ */
+
+/* Datos mock (después se conectarán a Firestore / ZongaMemory).
+   Si en el futuro hay datos reales, sustituir aquí. */
+const cockpitData = {
+  productoActivo: {
+    nombre: 'LumiPet Toy',
+    emoji: '🐾',
+    diaActual: 4,
+    diasTotal: 14,
+    cuentas: 3,
+    vistas: 142500
+  },
+  objetivo: {
+    label: 'Break-even del producto',
+    sub: 'Faltan 153 € para cubrir todos los gastos del test.',
+    actual: 347,
+    meta: 500
+  },
+  stats: [
+    {
+      id: 'revenue',
+      label: 'Revenue del mes',
+      value: 2847,
+      prefix: '€',
+      change: 18,
+      trend: [820, 1120, 1340, 1620, 1980, 2410, 2847],
+      icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20"/><path d="M14 15h4"/></svg>`,
+      iconClass: ''
+    },
+    {
+      id: 'pedidos',
+      label: 'Pedidos del mes',
+      value: 84,
+      change: 12,
+      trend: [12, 18, 24, 31, 47, 63, 84],
+      icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>`,
+      iconClass: 'is-violet'
+    },
+    {
+      id: 'videos',
+      label: 'Vídeos esta semana',
+      value: 23,
+      change: -5,
+      trend: [6, 4, 5, 3, 4, 1, 0],
+      icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>`,
+      iconClass: 'is-rose'
+    },
+    {
+      id: 'racha',
+      label: 'Racha publicando',
+      value: 12,
+      suffix: '',
+      change: 0,
+      trend: [3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>`,
+      iconClass: 'is-amber',
+      flame: true,
+      flameLabel: '12 días seguidos'
+    }
+  ]
+};
+
+/* ----- Saludo dinámico + fecha + contexto ----- */
+function renderWelcome() {
+  const greetEl   = document.getElementById('ckGreet');
+  const iconEl    = document.getElementById('ckTimeIcon');
+  const dateEl    = document.getElementById('ckDate');
+  const contextEl = document.getElementById('ckContext');
+  if (!greetEl) return;
+
+  const now = new Date();
+  const h = now.getHours();
+  let greet, isNight = false;
+  if (h >= 6 && h < 13)       greet = 'Buenos días';
+  else if (h >= 13 && h < 21) greet = 'Buenas tardes';
+  else                        { greet = 'Buenas noches'; isNight = true; }
+
+  greetEl.textContent = `${greet}, Zonga`;
+
+  iconEl.classList.add(isNight ? 'is-night' : 'is-day');
+  iconEl.innerHTML = isNight
+    ? `<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`
+    : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.5" fill="currentColor" stroke="none"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.05" y2="7.05"/><line x1="16.95" y1="16.95" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.05" y2="16.95"/><line x1="16.95" y1="7.05" x2="19.07" y2="4.93"/></svg>`;
+
+  try {
+    const dateStr = new Intl.DateTimeFormat('es-ES', {
+      weekday: 'long', day: 'numeric', month: 'long'
+    }).format(now);
+    dateEl.textContent = dateStr;
+  } catch {
+    dateEl.textContent = now.toDateString();
+  }
+
+  const p = cockpitData.productoActivo;
+  contextEl.textContent = `Día ${p.diaActual} de ${p.diasTotal} del test de ${p.nombre}`;
+}
+
+/* ----- Sparkline SVG ----- */
+function buildSparkline(values, width = 120, height = 36) {
+  if (!values || values.length < 2) return '';
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min || 1;
+  const stepX = width / (values.length - 1);
+  const pts = values.map((v, i) => {
+    const x = i * stepX;
+    const y = height - ((v - min) / range) * (height - 6) - 3;
+    return [x, y];
+  });
+  const d = pts.map((p, i) => (i === 0 ? `M${p[0].toFixed(1)},${p[1].toFixed(1)}` : `L${p[0].toFixed(1)},${p[1].toFixed(1)}`)).join(' ');
+  const fillD = `${d} L${width},${height} L0,${height} Z`;
+  const last = pts[pts.length - 1];
+  // longitud aproximada para stroke-dasharray
+  let len = 0;
+  for (let i = 1; i < pts.length; i++) {
+    const dx = pts[i][0] - pts[i-1][0];
+    const dy = pts[i][1] - pts[i-1][1];
+    len += Math.sqrt(dx*dx + dy*dy);
+  }
+  return `
+    <svg class="ck-spark" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" aria-hidden="true">
+      <defs>
+        <linearGradient id="ckSparkFill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#2563EB" stop-opacity="0.6"/>
+          <stop offset="100%" stop-color="#2563EB" stop-opacity="0"/>
+        </linearGradient>
+        <linearGradient id="ckSparkFillDown" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#EF4444" stop-opacity="0.5"/>
+          <stop offset="100%" stop-color="#EF4444" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <path class="fill" d="${fillD}"/>
+      <path class="line" d="${d}" style="--len:${len.toFixed(0)}"/>
+      <circle class="ck-spark-dot-pulse" cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="3"/>
+      <circle class="ck-spark-dot" cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="3"/>
+    </svg>
+  `;
+}
+
+/* ----- Format helpers ----- */
+function formatNumber(n, decimals = 0) {
+  return new Intl.NumberFormat('es-ES', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals
+  }).format(n);
+}
+function formatCompact(n) {
+  if (n >= 1000000) return formatNumber(n / 1000000, 1) + 'M';
+  if (n >= 1000)    return formatNumber(n / 1000, 1) + 'k';
+  return formatNumber(n, 0);
+}
+
+/* ----- Count-up con easing easeOutExpo ----- */
+function countUp(el, target, { duration = 1400, prefix = '', suffix = '', decimals = 0 } = {}) {
+  const startTime = performance.now();
+  const valueEl  = el.querySelector('.ck-stat-num');
+  if (!valueEl) return;
+  function tick(now) {
+    const t = Math.min(1, (now - startTime) / duration);
+    const eased = 1 - Math.pow(2, -10 * t);
+    const current = target * eased;
+    valueEl.textContent = formatNumber(current, decimals);
+    if (t < 1) requestAnimationFrame(tick);
+    else valueEl.textContent = formatNumber(target, decimals);
+  }
+  requestAnimationFrame(tick);
+}
+
+/* ----- Render de las 4 stats ----- */
+function renderStats() {
+  const wrap = document.getElementById('ckStats');
+  if (!wrap) return;
+
+  wrap.innerHTML = cockpitData.stats.map((s, idx) => {
+    const isDown = s.change < 0;
+    const changeAbs = Math.abs(s.change);
+    const changeHTML = s.change !== 0 ? `
+      <span class="ck-stat-change ${isDown ? 'down' : 'up'}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          ${isDown
+            ? '<polyline points="6 9 12 15 18 9"/>'
+            : '<polyline points="6 15 12 9 18 15"/>'}
+        </svg>
+        ${changeAbs}%
+      </span>
+    ` : '';
+
+    return `
+      <div class="ck-stat cockpit-enter ${isDown ? 'is-down' : ''}" style="--delay:${100 + idx * 100}ms; --spark-delay:${500 + idx * 100}ms">
+        <div class="ck-stat-head">
+          <span class="ck-stat-icon ${s.iconClass || ''}" aria-hidden="true">${s.icon}</span>
+          <span class="ck-stat-label">${s.label}</span>
+        </div>
+        <div class="ck-stat-value-row">
+          <div class="ck-stat-value" data-target="${s.value}">
+            ${s.prefix ? `<span class="ck-stat-prefix">${s.prefix}</span>` : ''}
+            <span class="ck-stat-num">0</span>
+            ${s.suffix ? `<span class="ck-stat-suffix">${s.suffix}</span>` : ''}
+            ${s.flame ? `<span class="ck-stat-flame" title="${s.flameLabel || ''}">🔥</span>` : ''}
+          </div>
+          ${changeHTML}
+        </div>
+        ${buildSparkline(s.trend)}
+      </div>
+    `;
+  }).join('');
+
+  // Count-up con delay coordinado con la entrada
+  cockpitData.stats.forEach((s, idx) => {
+    const card = wrap.children[idx];
+    if (!card) return;
+    const target = s.value;
+    setTimeout(() => {
+      countUp(card, target, {
+        duration: 1500,
+        decimals: 0
+      });
+    }, 400 + idx * 100);
+  });
+}
+
+/* ----- Producto activo + barra 14 días ----- */
+function renderProducto() {
+  const p = cockpitData.productoActivo;
+  const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  setText('ckProductName', p.nombre);
+  setText('ckProductEmoji', p.emoji);
+  setText('ckProductSub', `Test de ${p.diasTotal} días en curso`);
+  setText('ckPDaysLeft', p.diasTotal - p.diaActual);
+  setText('ckPCuentas', p.cuentas);
+  setText('ckPViews', formatCompact(p.vistas));
+
+  const daysEl = document.getElementById('ckDays');
+  if (!daysEl) return;
+  let html = '';
+  for (let i = 1; i <= p.diasTotal; i++) {
+    let cls = '';
+    if (i < p.diaActual)      cls = 'is-past';
+    else if (i === p.diaActual) cls = 'is-now';
+    const delay = 600 + (i - 1) * 60;
+    html += `<span class="ck-day ${cls}" style="--day-delay:${delay}ms" aria-label="Día ${i}"></span>`;
+  }
+  daysEl.innerHTML = html;
+}
+
+/* ----- Anillo de objetivo ----- */
+function renderObjetivo() {
+  const o = cockpitData.objetivo;
+  const pct = Math.max(0, Math.min(1, o.actual / o.meta));
+  const pctStr = Math.round(pct * 100) + '%';
+
+  const titleEl = document.getElementById('ckGoalTitle');
+  const subEl   = document.getElementById('ckGoalSub');
+  const pctEl   = document.getElementById('ckGoalPct');
+  const fillEl  = document.getElementById('ckGoalFill');
+
+  if (titleEl) titleEl.textContent = o.label;
+  if (subEl)   subEl.textContent   = o.sub;
+
+  // Animar el % de 0 a target
+  if (pctEl) {
+    const start = performance.now();
+    const dur = 1400;
+    function tick(now) {
+      const t = Math.min(1, (now - start) / dur);
+      const eased = 1 - Math.pow(2, -10 * t);
+      pctEl.textContent = Math.round(pct * 100 * eased) + '%';
+      if (t < 1) requestAnimationFrame(tick);
+      else pctEl.textContent = pctStr;
+    }
+    setTimeout(() => requestAnimationFrame(tick), 800);
+  }
+
+  if (fillEl) {
+    const circumference = 2 * Math.PI * 52; // r=52
+    const offset = circumference * (1 - pct);
+    // forzar reflow para que la transición se aplique
+    setTimeout(() => { fillEl.style.strokeDashoffset = offset; }, 50);
+  }
+
+  // Color según cercanía
+  const goalCard = document.querySelector('.ck-goal');
+  if (goalCard) {
+    goalCard.classList.remove('is-near', 'is-mid', 'is-far');
+    if (pct >= 0.75)      goalCard.classList.add('is-near');
+    else if (pct >= 0.4)  goalCard.classList.add('is-mid');
+    else                  goalCard.classList.add('is-far');
+  }
+}
+
+function renderCockpit() {
+  renderWelcome();
+  renderStats();
+  renderProducto();
+  renderObjetivo();
+}
+
+/* ----- Contador de herramientas activas (compat con cualquier otro contador) ----- */
 function renderToolsCount() {
   const el = document.getElementById('toolsCount');
   if (!el) return;
@@ -403,6 +751,7 @@ function setYear() {
 
 /* ----- Init ----- */
 document.addEventListener('DOMContentLoaded', () => {
+  renderCockpit();
   renderCategoryChips();
   renderTools();
   renderToolsCount();

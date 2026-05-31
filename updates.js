@@ -5,6 +5,13 @@
 */
 const UPDATES = [
   {
+    id: '2026-05-31-click-here',
+    title: 'Nueva herramienta: Generador de enlaces Click-Here',
+    items: [
+      'Añadida a la suite la herramienta Click-Here para crear enlaces que redirigen desde tu bio de TikTok directamente a tu tienda. Abre la herramienta desde el grid y vas directo al panel de administración para generar el enlace en segundos.',
+    ],
+  },
+  {
     id: '2026-05-31-product-hub-conversor-usd',
     title: 'Product Hub: conversor USD → EUR al registrar día',
     items: [

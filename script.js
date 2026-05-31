@@ -205,6 +205,15 @@ const tools = [
     icon: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`
   },
   {
+    id: 'click-here',
+    name: 'Generador de enlaces Click-Here',
+    description: 'Crea el enlace para redirigir desde tu bio de TikTok directo a tu tienda. Sin fricción, sin pasos intermedios.',
+    url: 'https://www.click-here.store/admin',
+    status: 'available',
+    category: 'redes',
+    icon: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>`
+  },
+  {
     id: 'soon-2',
     name: 'Próximamente',
     description: 'Estamos trabajando en más piezas para completar tu flujo de trabajo.',

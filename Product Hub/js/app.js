@@ -9,6 +9,59 @@ const state = {
   tab: "tienda",       // "tienda" | "redes"
 };
 
+/* ---------- FX: tasa USD → EUR ----------
+   Fuente: api.frankfurter.app (gratuita, sin key, datos del BCE).
+   Cache de 12h en localStorage. Fallback ~0.92 si no hay red ni cache. */
+const FX_CACHE_KEY = "__zonga_fx_usd_eur__";
+const FX_CACHE_TTL = 12 * 60 * 60 * 1000;
+const FX_FALLBACK = 0.92;
+
+function getCachedFx() {
+  try {
+    const raw = localStorage.getItem(FX_CACHE_KEY);
+    if (!raw) return null;
+    const obj = JSON.parse(raw);
+    if (!obj || typeof obj.rate !== "number" || !obj.ts) return null;
+    return { rate: obj.rate, ts: obj.ts, fresh: Date.now() - obj.ts < FX_CACHE_TTL };
+  } catch { return null; }
+}
+
+async function fetchUsdEurRate() {
+  try {
+    const res = await fetch("https://api.frankfurter.app/latest?from=USD&to=EUR");
+    if (!res.ok) throw new Error("fx http " + res.status);
+    const data = await res.json();
+    const rate = data?.rates?.EUR;
+    const date = data?.date || null;
+    if (typeof rate !== "number") throw new Error("fx no rate");
+    try { localStorage.setItem(FX_CACHE_KEY, JSON.stringify({ rate, ts: Date.now(), date })); } catch {}
+    return { rate, ts: Date.now(), date, source: "live" };
+  } catch (e) {
+    return null;
+  }
+}
+
+let _fxPromise = null;
+async function ensureUsdEurRate() {
+  const cached = getCachedFx();
+  if (cached && cached.fresh) return { ...cached, source: "cache" };
+  if (!_fxPromise) {
+    _fxPromise = fetchUsdEurRate().finally(() => { _fxPromise = null; });
+  }
+  const live = await _fxPromise;
+  if (live) return live;
+  if (cached) return { ...cached, source: "cache-stale" };
+  return { rate: FX_FALLBACK, ts: 0, source: "fallback" };
+}
+
+function fmtRateNumber(n) {
+  return n.toFixed(4).replace(".", ",");
+}
+function fmtEurFromUsd(usd, rate) {
+  const eur = (usd || 0) * rate;
+  return eur.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 /* ---------- Theme ---------- */
 function initTheme() {
   const saved = localStorage.getItem("ph-theme");
@@ -321,7 +374,17 @@ function tiendaHTML(p) {
       </div>
       <div class="field field-2">
         <div><label>Pedidos del día</label><input class="input" type="number" min="0" id="inOrders" placeholder="0" /></div>
-        <div><label>Ingresos del día (€)</label><input class="input" type="number" min="0" id="inRev" placeholder="0" /></div>
+        <div>
+          <div class="ingresos-head">
+            <label for="inRev">Ingresos del día</label>
+            <div class="cur-toggle" id="curToggle" role="tablist" aria-label="Moneda de los ingresos">
+              <button type="button" class="cur-btn active" data-cur="eur" role="tab" aria-pressed="true" aria-label="Euros">€</button>
+              <button type="button" class="cur-btn"        data-cur="usd" role="tab" aria-pressed="false" aria-label="Dólares">$</button>
+            </div>
+          </div>
+          <input class="input" type="number" min="0" step="0.01" id="inRev" placeholder="0" data-cur="eur" inputmode="decimal" />
+          <div class="cur-hint" id="curHint" hidden></div>
+        </div>
       </div>
       <button class="btn btn-primary" id="saveDayBtn" style="width:100%;justify-content:center;margin-top:18px">
         <i data-lucide="check"></i>Guardar día</button>
@@ -536,16 +599,83 @@ function bindTab() {
 
 function bindTienda() {
   const p = getProduct(state.productId);
+
+  /* --- Conversor USD → EUR --- */
+  const toggle = document.getElementById("curToggle");
+  const inRev = document.getElementById("inRev");
+  const hint = document.getElementById("curHint");
+  // Estado FX (se hidrata cuando llega la tasa)
+  let fxState = { rate: FX_FALLBACK, source: "fallback", date: null, loading: true };
+
+  function updateCurHint() {
+    if (!hint || !inRev) return;
+    const cur = inRev.dataset.cur || "eur";
+    if (cur !== "usd") { hint.hidden = true; hint.innerHTML = ""; return; }
+
+    const raw = parseFloat(inRev.value || "0") || 0;
+    const eurStr = fmtEurFromUsd(raw, fxState.rate);
+    const rateStr = fmtRateNumber(fxState.rate);
+
+    let tag;
+    if (fxState.loading)              tag = `obteniendo tasa…`;
+    else if (fxState.source === "live")        tag = `tasa de hoy${fxState.date ? " · " + fxState.date : ""}`;
+    else if (fxState.source === "cache")       tag = `tasa cacheada`;
+    else if (fxState.source === "cache-stale") tag = `última tasa disponible (sin red)`;
+    else                                       tag = `tasa de referencia (sin red)`;
+
+    hint.hidden = false;
+    hint.innerHTML = `
+      <span class="conv-row">
+        <i data-lucide="arrow-right"></i>
+        <span>≈ <strong class="conv">${eurStr} €</strong></span>
+      </span>
+      <span class="cur-tag">$1 = ${rateStr} € · ${tag}</span>
+    `;
+    if (window.lucide) lucide.createIcons();
+  }
+
+  // Pedir la tasa en cuanto se monta la pestaña
+  ensureUsdEurRate().then((r) => {
+    fxState = { ...r, loading: false };
+    if (inRev?.dataset.cur === "usd") updateCurHint();
+  });
+
+  if (toggle) {
+    toggle.querySelectorAll(".cur-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const cur = btn.dataset.cur;
+        toggle.querySelectorAll(".cur-btn").forEach((b) => {
+          const on = b === btn;
+          b.classList.toggle("active", on);
+          b.setAttribute("aria-pressed", on ? "true" : "false");
+        });
+        if (inRev) {
+          inRev.dataset.cur = cur;
+          inRev.placeholder = cur === "usd" ? "0.00 $" : "0";
+          updateCurHint();
+          inRev.focus();
+        }
+      });
+    });
+  }
+  if (inRev) inRev.addEventListener("input", updateCurHint);
+
   const save = document.getElementById("saveDayBtn");
   if (save) save.addEventListener("click", () => {
     const date = document.getElementById("inDate").value;
     const ord = parseInt(document.getElementById("inOrders").value || "0", 10);
-    const rev = parseFloat(document.getElementById("inRev").value || "0");
+    const cur = inRev?.dataset.cur || "eur";
+    const raw = parseFloat(inRev?.value || "0") || 0;
+    const rev = cur === "usd" ? raw * fxState.rate : raw;
     if (!date || (ord === 0 && rev === 0)) { toast("Rellena pedidos o ingresos", "alert-triangle"); return; }
     p.series.push({ date, pedidos: Math.max(0, ord), ingresos: Math.max(0, rev) });
     p.series.sort((a, b) => a.date.localeCompare(b.date));
     p.day = p.extended ? p.day + 1 : Math.min(p.target, p.day + 1);
-    toast("Día guardado correctamente");
+    if (cur === "usd") {
+      toast(`Día guardado · ${fmtEurFromUsd(raw, fxState.rate)} € (de ${raw.toFixed(2)} $)`);
+    } else {
+      toast("Día guardado correctamente");
+    }
     render();
   });
 

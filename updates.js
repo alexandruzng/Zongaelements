@@ -5,6 +5,13 @@
 */
 const UPDATES = [
   {
+    id: '2026-05-31-product-hub-conversor-usd',
+    title: 'Product Hub: conversor USD → EUR al registrar día',
+    items: [
+      'En la card "Registrar día de hoy" del Product Hub ya puedes elegir si introduces los ingresos en € o en $ con un pequeño toggle al lado del label. Si pones la cantidad en dólares, debajo del input aparece en tiempo real el equivalente en euros usando la tasa de cambio del día (fuente: api.frankfurter.app, datos del BCE). Al guardar, el día se guarda siempre convertido a € para que el revenue total, el ticket medio, el break-even y la gráfica sigan siendo coherentes. La tasa se cachea 12 horas para no llamar a la red en cada tecla; si no hay conexión se usa la última tasa disponible o una de referencia (~0,92) como respaldo.',
+    ],
+  },
+  {
     id: '2026-05-30-cockpit-conexiones',
     title: 'Cockpit: 4 stats y objetivo conectados a tus datos',
     items: [

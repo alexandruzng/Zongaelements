@@ -369,6 +369,66 @@ svg.lucide { width: 1em; height: 1em; stroke-width: 2; }
 .input::placeholder { color: var(--faint); }
 .field-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
+/* ---------- Conversor USD ⇄ EUR (Ingresos del día) ---------- */
+.ingresos-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  margin-bottom: 6px;
+}
+.ingresos-head label { margin-bottom: 0; }
+
+.cur-toggle {
+  display: inline-flex; align-items: center; gap: 2px;
+  background: color-mix(in srgb, var(--blue) 8%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--blue) 18%, var(--border));
+  border-radius: 999px; padding: 2px;
+}
+.cur-btn {
+  border: 0; background: transparent; cursor: pointer;
+  font: 700 12px/1 'Inter', system-ui, sans-serif;
+  color: var(--muted);
+  padding: 5px 10px; min-width: 28px;
+  border-radius: 999px;
+  transition: background-color .15s ease, color .15s ease, box-shadow .15s ease, transform .12s ease;
+}
+.cur-btn:hover { color: var(--ink); }
+.cur-btn.active {
+  background: var(--surface);
+  color: var(--blue);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08), 0 0 0 1px color-mix(in srgb, var(--blue) 14%, transparent);
+}
+.cur-btn:active { transform: scale(0.95); }
+
+.cur-hint {
+  margin-top: 8px;
+  display: flex; flex-direction: column; gap: 2px;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 12.5px; font-weight: 500;
+  color: var(--muted);
+  animation: curHintIn .25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.cur-hint[hidden] { display: none; }
+.cur-hint .conv-row {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: var(--ink);
+}
+.cur-hint .conv-row .lucide {
+  width: 14px; height: 14px; color: var(--blue);
+}
+.cur-hint .conv {
+  font-weight: 700; font-size: 14px;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+.cur-hint .cur-tag {
+  font-size: 11px; font-weight: 500;
+  color: var(--faint);
+  letter-spacing: 0.01em;
+}
+@keyframes curHintIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 /* history table */
 .htable { width: 100%; border-collapse: collapse; }
 .htable th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted);

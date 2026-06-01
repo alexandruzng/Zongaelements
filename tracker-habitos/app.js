@@ -58,7 +58,10 @@ function dayAngles(day) {
   return [aStart, aEnd];
 }
 function ringRadii(habitIdx) {
-  const rIn = WHEEL_INNER + habitIdx * WHEEL_RING_W;
+  // Invertido: el hábito 1 va al anillo exterior y el hábito 9 al interior,
+  // para que el orden coincida con la lectura de la leyenda (1 arriba/fuera, 9 dentro).
+  const ringPos = 8 - habitIdx;
+  const rIn = WHEEL_INNER + ringPos * WHEEL_RING_W;
   const rOut = rIn + WHEEL_RING_W;
   return [rIn, rOut];
 }
@@ -272,7 +275,7 @@ function SetupScreen({ initial, onCreate, onBack, monthKey, isInherited }) {
       placeholder: SUGGESTIONS[i],
       onChange: (e) => setHabit(i, e.target.value)
     }
-  ), /* @__PURE__ */ React.createElement("div", { className: "habit-meta" }, "Anillo ", i === 0 ? "interior" : i === 8 ? "exterior" : `n\xBA${i + 1}`, " \xB7 ", h.length, "/40")))), /* @__PURE__ */ React.createElement("div", { className: "setup-actions" }, /* @__PURE__ */ React.createElement("button", { className: "ghost-btn", onClick: onBack }, "\u2190 Volver"), /* @__PURE__ */ React.createElement(
+  ), /* @__PURE__ */ React.createElement("div", { className: "habit-meta" }, "Anillo ", i === 0 ? "exterior" : i === 8 ? "interior" : `n\xBA${9 - i}`, " \xB7 ", h.length, "/40")))), /* @__PURE__ */ React.createElement("div", { className: "setup-actions" }, /* @__PURE__ */ React.createElement("button", { className: "ghost-btn", onClick: onBack }, "\u2190 Volver"), /* @__PURE__ */ React.createElement(
     "button",
     {
       className: "primary-btn",

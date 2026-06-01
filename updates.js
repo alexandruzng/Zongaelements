@@ -5,6 +5,13 @@
 */
 const UPDATES = [
   {
+    id: '2026-06-02-tracker-orden-anillos',
+    title: 'Tracker de hábitos: orden de anillos corregido',
+    items: [
+      'Se ha invertido el orden de los anillos de la rueda para que coincida con la leyenda: el hábito 1 ahora ocupa el anillo exterior y el hábito 9 el interior. Antes estaba al revés y al pulsar el anillo interior aparecía el hábito 1 en vez del 9. Tus marcas y datos guardados no se ven afectados.',
+    ],
+  },
+  {
     id: '2026-06-01-politicas-nuevo-artifact',
     title: 'Generador de políticas: nueva versión',
     items: [

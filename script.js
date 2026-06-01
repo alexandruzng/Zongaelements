@@ -100,7 +100,7 @@ const tools = [
     id: 'politicas',
     name: 'Generador de políticas',
     description: 'Crea políticas legales (privacidad, devoluciones, envíos, términos) listas para tu tienda en segundos.',
-    url: 'https://claude.site/public/artifacts/8db4c369-adf7-4f26-a5e3-03360703e591/embed?utm_source=embedded_artifact&utm_medium=iframe&utm_campaign=artifact_frame',
+    url: 'https://claude.site/public/artifacts/71f877eb-2516-4449-94c5-366ee02a7f7e/embed?utm_source=embedded_artifact&utm_medium=iframe&utm_campaign=artifact_frame',
     status: 'available',
     category: 'tienda',
     icon: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>`

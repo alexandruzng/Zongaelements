@@ -5,6 +5,13 @@
 */
 const UPDATES = [
   {
+    id: '2026-06-01-politicas-nuevo-artifact',
+    title: 'Generador de políticas: nueva versión',
+    items: [
+      'El Generador de políticas ahora apunta a una versión actualizada de la herramienta. Ábrelo desde el grid y genera tus políticas legales (privacidad, devoluciones, envíos, términos) con el nuevo diseño.',
+    ],
+  },
+  {
     id: '2026-05-31-click-here',
     title: 'Nueva herramienta: Generador de enlaces Click-Here',
     items: [

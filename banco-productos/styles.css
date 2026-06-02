@@ -89,6 +89,7 @@ body {
   transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
 }
 img, svg { display: block; max-width: 100%; }
+[hidden] { display: none !important; }
 button { font-family: inherit; cursor: pointer; border: 0; background: none; color: inherit; }
 input, textarea, select { font-family: inherit; font-size: 14px; }
 h1, h2, h3 { margin: 0; letter-spacing: -0.02em; font-weight: 800; line-height: 1.2; }

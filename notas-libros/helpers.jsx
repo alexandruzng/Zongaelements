@@ -33,7 +33,10 @@ function useTheme() {
   return [theme, setTheme];
 }
 
-/* ---------- Redimensionar imagen de portada a dataURL ligero ---------- */
+/* ---------- Redimensionar imagen de portada ----------
+   Devuelve { dataUrl, blob }: el dataUrl es para previsualizar al instante y
+   el blob es lo que se sube a Firebase Storage (mucho más ligero que guardar
+   el base64 en localStorage). */
 function fileToCover(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -50,12 +53,63 @@ function fileToCover(file) {
         canvas.width = w; canvas.height = h;
         const ctx = canvas.getContext("2d");
         ctx.drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL("image/jpeg", 0.82));
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.82);
+        canvas.toBlob(
+          (blob) => resolve({ dataUrl, blob: blob || dataUrlToBlob(dataUrl) }),
+          "image/jpeg", 0.82
+        );
       };
       img.src = reader.result;
     };
     reader.readAsDataURL(file);
   });
+}
+
+/* ---------- Firebase Storage para portadas ----------
+   Mismo patrón que el Banco de productos: la portada se sube a Storage y en el
+   libro solo se guarda la URL de descarga + la ruta (coverPath). Si Storage no
+   está disponible, se cae al dataURL como respaldo para no perder la imagen. */
+function waitStorage() {
+  return new Promise((resolve) => {
+    if (window.__zongaStorage) return resolve(window.__zongaStorage);
+    const done = () => resolve(window.__zongaStorage || null);
+    window.addEventListener("zonga:storageReady", done, { once: true });
+    setTimeout(done, 6000);
+  });
+}
+const withTimeout = (p, ms) => Promise.race([
+  p, new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), ms))
+]);
+
+function dataUrlToBlob(dataUrl) {
+  const [head, b64] = dataUrl.split(",");
+  const mime = (head.match(/data:(.*?);/) || [])[1] || "image/jpeg";
+  const bin = atob(b64);
+  const arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return new Blob([arr], { type: mime });
+}
+
+/* Sube una portada (blob) a Storage. Devuelve { url, path } o null si falla. */
+async function uploadCover(id, blob) {
+  try {
+    const stor = await waitStorage();
+    if (!stor) return null;
+    const uid = await withTimeout(stor.uid(), 5000);
+    const ext = (blob.type && blob.type.split("/")[1]) || "jpg";
+    const path = `users/${uid}/notas-libros/${id}.${ext}`;
+    const url = await stor.upload(path, blob);
+    return { url, path };
+  } catch (e) {
+    console.warn("[notas-libros] subida de portada falló, uso imagen local", e?.message || e);
+    return null;
+  }
+}
+
+/* Borra la portada de Storage (al eliminar un libro). Silencioso si ya no existe. */
+async function deleteCover(path) {
+  if (!path) return;
+  try { const stor = await waitStorage(); if (stor) await stor.del(path); } catch {}
 }
 
 /* ---------- Estado del libro ---------- */
@@ -134,4 +188,5 @@ const Icon = {
 Object.assign(window, {
   useBooks, useTheme, fileToCover, STATUS, STATUS_ORDER,
   StatusBadge, StarRating, StarIcon, Icon,
+  uploadCover, deleteCover, dataUrlToBlob,
 });

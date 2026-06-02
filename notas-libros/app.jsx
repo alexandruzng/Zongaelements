@@ -89,6 +89,29 @@ function App() {
     setBooks(prev => prev.map(b => b.id === id ? { ...b, ...patch } : b));
   };
 
+  // Migración: sube a Storage las portadas antiguas que aún viven como dataURL
+  // en localStorage, dejándolas como URL + ruta. Se ejecuta una vez por sesión,
+  // cuando hay datos. Las portadas de ejemplo (seed) se quedan como están.
+  const migratedRef = useRef(false);
+  useEffect(() => {
+    if (migratedRef.current || !seeded) return;
+    const pending = books.filter(b =>
+      !b.coverPath &&
+      typeof b.cover === "string" && b.cover.startsWith("data:") &&
+      !String(b.id).startsWith("seed")
+    );
+    if (pending.length === 0) return;
+    migratedRef.current = true;
+    (async () => {
+      for (const b of pending) {
+        try {
+          const up = await uploadCover(b.id, dataUrlToBlob(b.cover));
+          if (up) updateBook(b.id, { cover: up.url, coverPath: up.path });
+        } catch (e) { /* se reintenta en la próxima carga */ }
+      }
+    })();
+  }, [books, seeded]);
+
   const current = books.find(b => b.id === view.id);
 
   return (

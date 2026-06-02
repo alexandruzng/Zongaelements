@@ -1,7 +1,8 @@
 /* addbook.jsx — modal para agregar un libro nuevo */
 
 function AddBookModal({ onClose, onCreate }) {
-  const [cover, setCover] = useState(null);
+  const [cover, setCover] = useState(null);      // dataUrl solo para previsualizar
+  const [coverBlob, setCoverBlob] = useState(null); // lo que se sube a Storage
   const [title, setTitle] = useState("");
   const [totalPages, setTotalPages] = useState("");
   const [currentPage, setCurrentPage] = useState("0");
@@ -15,8 +16,9 @@ function AddBookModal({ onClose, onCreate }) {
     if (!file) return;
     setBusy(true);
     try {
-      const dataUrl = await fileToCover(file);
+      const { dataUrl, blob } = await fileToCover(file);
       setCover(dataUrl);
+      setCoverBlob(blob);
       setErrors(e => ({ ...e, cover: null }));
     } catch (e) { /* ignore */ }
     setBusy(false);
@@ -40,13 +42,22 @@ function AddBookModal({ onClose, onCreate }) {
     return Object.keys(err).length === 0;
   };
 
-  const submit = () => {
+  const submit = async () => {
     if (!validate()) return;
+    setBusy(true);
     const tp = parseInt(totalPages, 10);
     const cp = Math.max(0, Math.min(parseInt(currentPage, 10) || 0, tp));
+    const id = "b" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+    // Sube la portada a Storage; si falla, se guarda el dataURL como respaldo.
+    let coverUrl = cover, coverPath = "";
+    if (coverBlob) {
+      const up = await uploadCover(id, coverBlob);
+      if (up) { coverUrl = up.url; coverPath = up.path; }
+    }
+
     onCreate({
-      id: "b" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-      cover, title: title.trim(),
+      id, cover: coverUrl, coverPath, title: title.trim(),
       totalPages: tp, currentPage: cp,
       status, rating, notes: "",
       createdAt: Date.now(),

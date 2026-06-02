@@ -393,8 +393,6 @@ input, textarea, select { font-family: inherit; }
   border-radius: var(--radius); box-shadow: var(--shadow-card);
   border: 1px solid var(--line-soft);
   padding: 38px clamp(26px, 4vw, 52px);
-  background-image: repeating-linear-gradient(var(--paper) 0 31px, var(--paper-line) 31px 32px);
-  background-position: 0 14px;
 }
 .notes-paper textarea {
   width: 100%; min-height: 56vh; border: none; outline: none; resize: none;

@@ -1,12 +1,13 @@
 /* reader.jsx — pantalla de notas: progreso, lateral con portada, guardar */
 
-function Reader({ book, onBack, onUpdate }) {
+function Reader({ book, onBack, onUpdate, onDelete }) {
   const [notes, setNotes] = useState(book.notes || "");
   const [page, setPage] = useState(book.currentPage || 0);
   const [rating, setRating] = useState(book.rating || 0);
   const [status, setStatus] = useState(book.status);
   const [savedFlash, setSavedFlash] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [confirmDel, setConfirmDel] = useState(false);
   const flashTimer = useRef(null);
 
   const pct = book.totalPages > 0 ? Math.min(100, Math.round((page / book.totalPages) * 100)) : 0;
@@ -68,6 +69,9 @@ function Reader({ book, onBack, onUpdate }) {
           <div className={"save-state" + (savedFlash ? " saved" : "")}>
             {savedFlash ? (<><Icon.check /> Guardado</>) : dirty ? "Cambios sin guardar" : "Todo guardado"}
           </div>
+          <button className="icon-btn danger" onClick={() => setConfirmDel(true)} aria-label="Eliminar libro" title="Eliminar libro">
+            <Icon.trash />
+          </button>
         </div>
         <div className="progress-bar" title={pct + "% leído"}>
           <div className="progress-fill" style={{ width: pct + "%" }}></div>
@@ -126,6 +130,22 @@ function Reader({ book, onBack, onUpdate }) {
           </div>
         </section>
       </div>
+
+      {confirmDel && (
+        <div className="overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) setConfirmDel(false); }}>
+          <div className="modal confirm" role="alertdialog" aria-modal="true">
+            <div className="confirm-inner">
+              <div className="confirm-icon"><Icon.trash /></div>
+              <h2>¿Eliminar este libro?</h2>
+              <p>Se borrarán <strong>«{book.title}»</strong>, tus notas y su portada. Esta acción no se puede deshacer.</p>
+              <div className="confirm-actions">
+                <button className="btn ghost" onClick={() => setConfirmDel(false)}>Cancelar</button>
+                <button className="btn danger" onClick={() => onDelete(book.id)}><Icon.trash /> Eliminar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

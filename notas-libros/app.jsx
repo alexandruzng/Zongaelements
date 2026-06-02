@@ -89,6 +89,13 @@ function App() {
     setBooks(prev => prev.map(b => b.id === id ? { ...b, ...patch } : b));
   };
 
+  const deleteBook = (id) => {
+    const b = books.find(x => x.id === id);
+    if (b && b.coverPath) deleteCover(b.coverPath); // limpia la portada de Storage
+    setBooks(prev => prev.filter(x => x.id !== id));
+    setView({ name: "library", id: null });
+  };
+
   // Migración: sube a Storage las portadas antiguas que aún viven como dataURL
   // en localStorage, dejándolas como URL + ruta. Se ejecuta una vez por sesión,
   // cuando hay datos. Las portadas de ejemplo (seed) se quedan como están.
@@ -117,7 +124,7 @@ function App() {
   return (
     <>
       {view.name === "reader" && current ? (
-        <Reader book={current} onBack={goLibrary} onUpdate={updateBook} />
+        <Reader book={current} onBack={goLibrary} onUpdate={updateBook} onDelete={deleteBook} />
       ) : (
         <Library
           books={books}

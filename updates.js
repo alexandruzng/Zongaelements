@@ -5,6 +5,13 @@
 */
 const UPDATES = [
   {
+    id: '2026-06-02-notas-libros-borrar',
+    title: 'Notas de Libros: eliminar libros',
+    items: [
+      'Ya puedes borrar un libro de tu estantería. Abre el libro y pulsa el botón de la papelera (arriba a la derecha): te pedirá confirmación y, al aceptar, se elimina el libro, sus notas y su portada (también de la nube). La acción no se puede deshacer.',
+    ],
+  },
+  {
     id: '2026-06-02-notas-libros',
     title: 'Nueva herramienta: Notas de Libros',
     items: [

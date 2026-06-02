@@ -17,6 +17,8 @@
   --accent:    oklch(0.585 0.135 42);
   --accent-ink: oklch(0.992 0.006 82);
   --accent-soft: oklch(0.92 0.045 50);
+  --danger:    oklch(0.545 0.165 26);
+  --danger-bg: oklch(0.93 0.05 26);
 
   /* Estados */
   --st-leyendo: oklch(0.60 0.135 64);
@@ -56,6 +58,8 @@
   --accent:    oklch(0.70 0.125 48);
   --accent-ink: oklch(0.18 0.02 55);
   --accent-soft: oklch(0.36 0.06 48);
+  --danger:    oklch(0.70 0.155 26);
+  --danger-bg: oklch(0.33 0.07 26);
 
   --st-leyendo: oklch(0.78 0.135 72);
   --st-porleer: oklch(0.74 0.085 250);
@@ -162,7 +166,13 @@ input, textarea, select { font-family: inherit; }
   border: 1px solid var(--line); box-shadow: none;
 }
 .btn.ghost:hover { background: var(--surface-2); }
+.btn.danger { background: var(--danger); color: #fff; }
+.btn.danger:hover { filter: brightness(1.06); }
 .btn:disabled { opacity: .5; cursor: not-allowed; transform: none; filter: none; }
+
+/* icon button — variante peligro (eliminar) */
+.icon-btn.danger { color: var(--danger); }
+.icon-btn.danger:hover { background: var(--danger-bg); border-color: var(--danger); }
 
 /* ---------- Library ---------- */
 .library { width: 100%; max-width: var(--maxw); margin: 0 auto; padding: clamp(20px, 4vw, 40px) clamp(18px, 5vw, 46px) 90px; }
@@ -409,6 +419,20 @@ input, textarea, select { font-family: inherit; }
   .side > .side-info { flex: 1; min-width: 180px; }
   .page-card { flex: 1 1 100%; }
 }
+
+/* ---------- Confirmación de borrado ---------- */
+.modal.confirm { max-width: 420px; }
+.confirm-inner { padding: 30px 28px; text-align: center; }
+.confirm-icon {
+  width: 56px; height: 56px; margin: 0 auto 16px; border-radius: 50%;
+  background: var(--danger-bg); color: var(--danger);
+  display: grid; place-items: center;
+}
+.confirm-icon svg { width: 26px; height: 26px; }
+.confirm-inner h2 { font-family: var(--serif); font-weight: 600; font-size: 22px; margin: 0 0 8px; letter-spacing: -0.01em; }
+.confirm-inner p { color: var(--ink-soft); font-size: 14.5px; line-height: 1.6; margin: 0 0 24px; }
+.confirm-inner p strong { color: var(--ink); font-weight: 700; }
+.confirm-actions { display: flex; gap: 10px; justify-content: center; }
 
 /* close button */
 .x-btn { width: 36px; height: 36px; border-radius: 9px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-soft); display: grid; place-items: center; transition: background .15s; }

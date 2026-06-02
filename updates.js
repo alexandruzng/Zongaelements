@@ -5,6 +5,13 @@
 */
 const UPDATES = [
   {
+    id: '2026-06-02-notas-libros',
+    title: 'Nueva herramienta: Notas de Libros',
+    items: [
+      'Ya puedes llevar tu biblioteca de lectura dentro de Zonga. Pulsa "Añadir libro", pon el título, el autor, las páginas totales y una portada (sube una imagen o se genera una automática), y empieza a registrar lo que lees. Cada libro tiene su estado (📕 por leer, 📖 leyendo, ✅ leído), una barra de progreso por páginas, valoración con estrellas y un espacio amplio para tus notas y citas. La biblioteca tiene buscador y modo oscuro. Lo importante: tus libros y notas ahora se guardan en la nube y se sincronizan entre todos tus dispositivos, así que no se borran nunca. Ábrela desde el grid, en la categoría Productividad Personal.',
+    ],
+  },
+  {
     id: '2026-06-02-banco-productos-detalle',
     title: 'Banco de productos: vista de detalle',
     items: [

@@ -5,6 +5,13 @@
 */
 const UPDATES = [
   {
+    id: '2026-06-02-banco-productos-detalle',
+    title: 'Banco de productos: vista de detalle',
+    items: [
+      'Ahora puedes pulsar sobre cualquier tarjeta de producto para abrir su ficha completa: foto grande, estado, fuente, coste, venta, beneficio y margen en bloques, el enlace a la tienda, tus notas y la fecha en que lo añadiste. Desde esa misma ficha puedes editarlo o eliminarlo.',
+    ],
+  },
+  {
     id: '2026-06-02-banco-productos',
     title: 'Nueva herramienta: Banco de productos',
     items: [

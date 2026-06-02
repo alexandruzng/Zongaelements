@@ -238,7 +238,7 @@ svg { width: 20px; height: 20px; flex: none; }
   gap: 18px;
 }
 .card {
-  position: relative; display: flex; flex-direction: column;
+  position: relative; display: flex; flex-direction: column; cursor: pointer;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -443,6 +443,51 @@ svg { width: 20px; height: 20px; flex: none; }
 .chip[data-src].is-active { background: var(--c-primary-soft); color: var(--c-primary); border-color: var(--c-primary); }
 
 .form__actions { display: flex; justify-content: flex-end; gap: 10px; padding-top: 6px; }
+
+/* ---------- Detalle ---------- */
+.modal__panel--detail { max-width: 560px; overflow: hidden; }
+.detail__x {
+  position: absolute; top: 12px; right: 12px; z-index: 3;
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  backdrop-filter: blur(6px); border: 1px solid var(--border);
+}
+.detail__hero { position: relative; aspect-ratio: 16 / 10; background: var(--surface-2); }
+.detail__hero img { width: 100%; height: 100%; object-fit: cover; }
+.detail__hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 55%, color-mix(in srgb, var(--surface) 92%, transparent)); }
+.detail__badges { position: absolute; left: 16px; bottom: 14px; z-index: 2; display: flex; gap: 8px; flex-wrap: wrap; }
+.detail__badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 700; backdrop-filter: blur(6px); }
+.detail__badge--src { background: color-mix(in srgb, var(--surface) 86%, transparent); color: var(--text-soft); border: 1px solid var(--border); }
+
+.detail__content { padding: 18px 22px 22px; display: flex; flex-direction: column; gap: 18px; }
+.detail__name { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.25; }
+
+.detail__stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.detail__stat { background: var(--surface-2); border: 1px solid var(--border); border-radius: 14px; padding: 12px; text-align: center; }
+.detail__stat span { display: block; font-size: 10.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 5px; }
+.detail__stat b { font-size: 16px; font-weight: 800; letter-spacing: -0.02em; }
+.detail__stat--profit b { color: var(--pos); }
+.detail__stat--loss b { color: var(--neg); }
+
+.detail__section { display: flex; flex-direction: column; gap: 7px; }
+.detail__section h4 { font-size: 11.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; }
+.detail__notes { font-size: 14px; color: var(--text-soft); line-height: 1.6; white-space: pre-wrap; }
+.detail__linkbtn {
+  display: inline-flex; align-items: center; gap: 8px; align-self: flex-start;
+  padding: 10px 16px; border-radius: 12px; font-weight: 700; font-size: 13.5px;
+  background: var(--c-primary-soft); color: var(--c-primary);
+  transition: background var(--dur) var(--ease), transform var(--dur) var(--ease);
+  word-break: break-all;
+}
+.detail__linkbtn:hover { background: var(--c-primary); color: #fff; transform: translateY(-1px); }
+.detail__linkbtn svg { width: 16px; height: 16px; }
+
+.detail__meta { font-size: 11.5px; color: var(--text-muted); display: flex; flex-wrap: wrap; gap: 4px 16px; }
+.detail__actions { display: flex; gap: 10px; padding-top: 4px; border-top: 1px solid var(--border); margin-top: 2px; padding-top: 18px; }
+.detail__actions .btn { flex: 1; justify-content: center; }
+
+@media (max-width: 480px) {
+  .detail__stats { grid-template-columns: repeat(2, 1fr); }
+}
 
 /* ---------- Toast ---------- */
 .toast {

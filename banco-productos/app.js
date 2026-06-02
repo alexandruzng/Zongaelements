@@ -247,6 +247,77 @@
   }
 
   /* ============================================================
+     DETALLE
+     ============================================================ */
+  const fmtDate = (ts) => ts ? new Date(ts).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' }) : '—';
+
+  function openDetail(p) {
+    const { cost, price, profit, margin } = profitOf(p);
+    const st = stById(p.status), sc = srcById(p.source);
+    const hasPrices = (cost || price);
+    const profitCls = profit >= 0 ? 'detail__stat--profit' : 'detail__stat--loss';
+
+    $('#detailBody').innerHTML = `
+      <div class="detail__hero">
+        ${p.photo ? `<img src="${esc(p.photo)}" alt="${esc(p.name)}">` : ''}
+        <div class="detail__badges">
+          <span class="detail__badge st-${p.status}">${st.emoji} ${st.label}</span>
+          <span class="detail__badge detail__badge--src">${sc.emoji} ${sc.label}</span>
+        </div>
+      </div>
+      <div class="detail__content">
+        <h3 class="detail__name" id="detailName">${esc(p.name)}</h3>
+
+        ${hasPrices ? `
+        <div class="detail__stats">
+          <div class="detail__stat"><span>Coste</span><b>${fmtMoney(cost, p.currency)}</b></div>
+          <div class="detail__stat"><span>Venta</span><b>${fmtMoney(price, p.currency)}</b></div>
+          <div class="detail__stat ${profitCls}"><span>Beneficio</span><b>${fmtMoney(profit, p.currency)}</b></div>
+          <div class="detail__stat ${profitCls}"><span>Margen</span><b>${Math.round(margin)}%</b></div>
+        </div>` : ''}
+
+        ${p.link ? `
+        <div class="detail__section">
+          <h4>Tienda</h4>
+          <a class="detail__linkbtn" href="${esc(p.link)}" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
+            ${esc(p.link)}
+          </a>
+        </div>` : ''}
+
+        ${p.notes ? `
+        <div class="detail__section">
+          <h4>Notas</h4>
+          <p class="detail__notes">${esc(p.notes)}</p>
+        </div>` : ''}
+
+        <div class="detail__meta">
+          <span>Añadido el ${fmtDate(p.createdAt)}</span>
+          ${p.updatedAt && p.updatedAt !== p.createdAt ? `<span>· Editado el ${fmtDate(p.updatedAt)}</span>` : ''}
+        </div>
+
+        <div class="detail__actions">
+          <button type="button" class="btn btn--ghost" data-detail-edit="${p.id}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+            Editar
+          </button>
+          <button type="button" class="btn btn--danger" data-detail-del="${p.id}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+            Eliminar
+          </button>
+        </div>
+      </div>`;
+
+    $('#detail').hidden = false;
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeDetail() {
+    $('#detail').hidden = true;
+    if ($('#modal').hidden) document.body.style.overflow = '';
+  }
+
+  /* ============================================================
      MODAL / FORM
      ============================================================ */
   function buildPickers() {
@@ -397,6 +468,15 @@
   }
 
   /* ---------- Confirm + Toast ---------- */
+  function askDelete(id) {
+    const p = products.find(x => x.id === id); if (!p) return;
+    askConfirm('¿Eliminar producto?', `“${p.name}” se eliminará para siempre.`, () => {
+      if (p.photoPath) deleteCloudPhoto(p.photoPath);
+      products = products.filter(x => x.id !== p.id);
+      saveProducts(); renderGrid(); closeConfirm(); toast('Producto eliminado');
+    });
+  }
+
   function askConfirm(title, text, cb) {
     $('#confirmTitle').textContent = title;
     $('#confirmText').textContent = text;
@@ -450,14 +530,20 @@
       const edit = e.target.closest('[data-edit]');
       const del = e.target.closest('[data-del]');
       if (edit) { const p = products.find(x => x.id === edit.dataset.edit); if (p) openModal(p); return; }
-      if (del) {
-        const p = products.find(x => x.id === del.dataset.del); if (!p) return;
-        askConfirm('¿Eliminar producto?', `“${p.name}” se eliminará para siempre.`, () => {
-          if (p.photoPath) deleteCloudPhoto(p.photoPath);
-          products = products.filter(x => x.id !== p.id);
-          saveProducts(); renderGrid(); closeConfirm(); toast('Producto eliminado');
-        });
-      }
+      if (del) { askDelete(del.dataset.del); return; }
+      // clic en el enlace "Abrir": dejar el comportamiento por defecto
+      if (e.target.closest('.card__link')) return;
+      const card = e.target.closest('.card');
+      if (card) { const p = products.find(x => x.id === card.dataset.id); if (p) openDetail(p); }
+    });
+
+    // detalle
+    $('#detail').addEventListener('click', (e) => {
+      if (e.target.closest('[data-detail-close]')) { closeDetail(); return; }
+      const edit = e.target.closest('[data-detail-edit]');
+      const del = e.target.closest('[data-detail-del]');
+      if (edit) { const p = products.find(x => x.id === edit.dataset.detailEdit); closeDetail(); if (p) openModal(p); return; }
+      if (del) { closeDetail(); askDelete(del.dataset.detailDel); }
     });
 
     // modal close
@@ -465,7 +551,11 @@
     $('#confirm').addEventListener('click', (e) => { if (e.target.closest('[data-confirm-close]')) closeConfirm(); });
     $('#confirmOk').addEventListener('click', () => confirmCb && confirmCb());
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') { if (!$('#confirm').hidden) closeConfirm(); else if (!$('#modal').hidden) closeModal(); }
+      if (e.key === 'Escape') {
+        if (!$('#confirm').hidden) closeConfirm();
+        else if (!$('#modal').hidden) closeModal();
+        else if (!$('#detail').hidden) closeDetail();
+      }
     });
 
     // form

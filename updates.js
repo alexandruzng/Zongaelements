@@ -5,6 +5,13 @@
 */
 const UPDATES = [
   {
+    id: '2026-06-02-banco-productos',
+    title: 'Nueva herramienta: Banco de productos',
+    items: [
+      'Ya puedes guardar todos tus productos en un solo sitio. Pulsa "Añadir producto", sube una foto (o pega la URL de la imagen del propio AliExpress), pon el nombre, el link de la tienda, el coste y el precio de venta — la herramienta te calcula el beneficio y el margen automáticamente. Elige el estado (🔍 por evaluar, 🧪 testeando, 🏆 ganador, 🗑️ descartado) y la fuente (➖ sin especificar, 🔥 burner, 🔬 research), añade notas y guarda. Cada producto aparece como una tarjeta visual con buscador y filtros por estado y fuente, un panel arriba con tus totales (productos, ganadores, descartados y beneficio potencial) y modo oscuro. Las fotos se guardan en la nube y los datos se sincronizan entre tus dispositivos, así que no se pierden nunca. Ábrela desde el grid, en la categoría Tienda.',
+    ],
+  },
+  {
     id: '2026-06-02-tracker-orden-anillos',
     title: 'Tracker de hábitos: orden de anillos corregido',
     items: [

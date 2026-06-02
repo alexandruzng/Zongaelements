@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Banco de productos · Zonga</title>
+<meta name="description" content="Tu banco de productos para dropshipping: guarda cada producto con su foto, coste, precio de venta, beneficio, estado y fuente. Todo sincronizado en la nube.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563EB' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z'/%3E%3Cpath d='m3.3 7 8.7 5 8.7-5'/%3E%3Cpath d='M12 22V12'/%3E%3C/svg%3E">
+
+<meta property="og:title" content="Banco de productos · Zonga Elements">
+<meta property="og:description" content="Guarda y organiza todos tus productos: foto, coste, precio de venta, beneficio, estado y fuente.">
+<meta property="og:type" content="website">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ===================== TOPBAR ===================== -->
+<header class="topbar">
+  <div class="topbar__inner">
+    <a class="brand" href="/index.html" aria-label="Volver al inicio">
+      <span class="brand__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+      </span>
+      <span class="brand__text">
+        <strong>Banco de productos</strong>
+        <small>Zonga Elements</small>
+      </span>
+    </a>
+
+    <div class="topbar__actions">
+      <button id="themeToggle" class="icon-btn" type="button" aria-label="Cambiar tema" title="Modo claro / oscuro">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+      </button>
+      <button id="addBtn" class="btn btn--primary" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+        <span>Añadir producto</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- ===================== STATS ===================== -->
+  <section class="stats" id="stats" aria-label="Resumen"></section>
+
+  <!-- ===================== TOOLBAR ===================== -->
+  <section class="toolbar">
+    <div class="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input id="search" type="search" placeholder="Buscar por nombre o nota…" autocomplete="off">
+    </div>
+
+    <div class="filters" id="statusFilters" role="tablist" aria-label="Filtrar por estado"></div>
+
+    <div class="filters filters--right">
+      <select id="sourceFilter" class="select" aria-label="Filtrar por fuente">
+        <option value="all">Todas las fuentes</option>
+        <option value="sin-especificar">➖ Sin especificar</option>
+        <option value="burner">🔥 Burner</option>
+        <option value="research">🔬 Research</option>
+      </select>
+    </div>
+  </section>
+
+  <!-- ===================== GRID ===================== -->
+  <section id="grid" class="grid" aria-live="polite"></section>
+
+  <!-- ===================== EMPTY ===================== -->
+  <section id="empty" class="empty" hidden>
+    <div class="empty__art" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+    </div>
+    <h2 id="emptyTitle">Aún no hay productos</h2>
+    <p id="emptyText">Añade tu primer producto para empezar a construir tu banco.</p>
+    <button class="btn btn--primary" type="button" data-add>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+      <span>Añadir producto</span>
+    </button>
+  </section>
+</main>
+
+<!-- ===================== MODAL FORM ===================== -->
+<div class="modal" id="modal" hidden>
+  <div class="modal__backdrop" data-close></div>
+  <div class="modal__panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <header class="modal__head">
+      <h2 id="modalTitle">Nuevo producto</h2>
+      <button class="icon-btn" type="button" data-close aria-label="Cerrar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </header>
+
+    <form id="form" class="form" novalidate>
+      <!-- FOTO -->
+      <div class="field">
+        <label class="field__label">Foto del producto <span class="req">obligatoria</span></label>
+        <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Subir foto del producto">
+          <img id="photoPreview" class="dropzone__img" alt="" hidden>
+          <div class="dropzone__placeholder" id="dropPlaceholder">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+            <span><strong>Sube una imagen</strong> o arrástrala aquí</span>
+            <small>JPG, PNG, WEBP · o pega una URL abajo</small>
+          </div>
+          <button type="button" class="dropzone__clear" id="photoClear" hidden aria-label="Quitar foto">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <input type="file" id="photoFile" accept="image/*" hidden>
+        <div class="urlrow">
+          <input type="url" id="photoUrl" class="input" placeholder="…o pega el enlace de una imagen (ej. la del AliExpress)">
+        </div>
+        <p class="field__error" id="photoError" hidden>Añade una foto: sube un archivo o pega una URL.</p>
+      </div>
+
+      <!-- NOMBRE -->
+      <div class="field">
+        <label class="field__label" for="name">Nombre del producto <span class="req">obligatorio</span></label>
+        <input type="text" id="name" class="input" placeholder="Ej. Lámpara de luna 3D" maxlength="120" required>
+        <p class="field__error" id="nameError" hidden>Ponle un nombre al producto.</p>
+      </div>
+
+      <!-- LINK -->
+      <div class="field">
+        <label class="field__label" for="link">Link de la tienda</label>
+        <div class="input-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          <input type="url" id="link" class="input" placeholder="https://aliexpress.com/item/…">
+        </div>
+      </div>
+
+      <!-- PRECIOS -->
+      <div class="field">
+        <div class="field__label-row">
+          <label class="field__label">Coste y precio de venta</label>
+          <div class="currency-toggle" id="currencyToggle" role="group" aria-label="Moneda">
+            <button type="button" data-cur="EUR" class="is-active">€ EUR</button>
+            <button type="button" data-cur="USD">$ USD</button>
+          </div>
+        </div>
+        <div class="price-grid">
+          <label class="price-box">
+            <span>Coste</span>
+            <div class="price-input">
+              <i class="cur-sym">€</i>
+              <input type="number" id="cost" class="input" placeholder="0.00" min="0" step="0.01" inputmode="decimal">
+            </div>
+          </label>
+          <label class="price-box">
+            <span>Precio de venta</span>
+            <div class="price-input">
+              <i class="cur-sym">€</i>
+              <input type="number" id="price" class="input" placeholder="0.00" min="0" step="0.01" inputmode="decimal">
+            </div>
+          </label>
+        </div>
+        <div class="profit-preview" id="profitPreview" hidden></div>
+      </div>
+
+      <!-- ESTADO -->
+      <div class="field">
+        <label class="field__label">Estado del producto</label>
+        <div class="chips" id="statusPicker" role="radiogroup" aria-label="Estado"></div>
+      </div>
+
+      <!-- FUENTE -->
+      <div class="field">
+        <label class="field__label">Fuente</label>
+        <div class="chips" id="sourcePicker" role="radiogroup" aria-label="Fuente"></div>
+      </div>
+
+      <!-- NOTAS -->
+      <div class="field">
+        <label class="field__label" for="notes">Notas</label>
+        <textarea id="notes" class="input textarea" rows="3" placeholder="Cualquier detalle: variantes, proveedor, ángulo de marketing…" maxlength="600"></textarea>
+      </div>
+
+      <footer class="form__actions">
+        <button type="button" class="btn btn--ghost" data-close>Cancelar</button>
+        <button type="submit" class="btn btn--primary" id="saveBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>
+          <span>Guardar producto</span>
+        </button>
+      </footer>
+    </form>
+  </div>
+</div>
+
+<!-- ===================== CONFIRM ===================== -->
+<div class="modal modal--sm" id="confirm" hidden>
+  <div class="modal__backdrop" data-confirm-close></div>
+  <div class="modal__panel" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <h2 id="confirmTitle" class="confirm__title">¿Eliminar producto?</h2>
+    <p id="confirmText" class="confirm__text">Esta acción no se puede deshacer.</p>
+    <div class="form__actions">
+      <button type="button" class="btn btn--ghost" data-confirm-close>Cancelar</button>
+      <button type="button" class="btn btn--danger" id="confirmOk">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+
+<script src="app.js"></script>
+<script src="/zonga-memory.js"></script>
+<script type="module" src="/firebase.js"></script>
+<script type="module" src="/sync.js"></script>
+</body>
+</html>

@@ -6,9 +6,9 @@
 const UPDATES = [
   {
     id: '2026-06-05-diario-recuperar-fotos',
-    title: 'Diario: recuperación automática de fotos',
+    title: 'Diario: recuperación de fotos perdidas',
     items: [
-      'Si tus fotos del diario desaparecieron (se veían cuadros en blanco), ya vuelven solas. Las imágenes y vídeos se guardan en la nube, pero cada dispositivo necesitaba un "mapa" local para saber dónde estaban; si tu navegador limpiaba sus datos, ese mapa se perdía y las fotos no se mostraban aunque siguieran a salvo. Ahora, cuando el diario no encuentra una foto, busca directamente en tu carpeta de la nube, reconstruye el mapa y la vuelve a mostrar. Abre el diario y entra en Multimedia (o en cualquier día con fotos): tras unos segundos reaparecerán. Nota: solo se recuperan las que llegaron a subirse a la nube en su momento.',
+      'Si tus fotos del diario desaparecieron (cuadros en blanco o entradas sin imágenes), ya vuelven. Las fotos y vídeos siempre estuvieron a salvo en la nube, pero el enlace local que apuntaba a ellas se perdía cuando el navegador limpiaba sus datos. Ahora la pestaña Multimedia lista directamente tu carpeta de la nube y muestra TODAS tus fotos, aunque su entrada hubiera perdido la referencia: las que ya no están enlazadas a un día aparecen marcadas como «recuperada». Abre el diario → Multimedia y, tras unos segundos, verás tus fotos otra vez. Solo se recuperan las que llegaron a subirse a la nube en su momento.',
     ],
   },
   {

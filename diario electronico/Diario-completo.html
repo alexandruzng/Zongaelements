@@ -1520,37 +1520,86 @@ function LettersPage({ letters, onCreateLetter }) {
 // MULTIMEDIA PAGE
 // ═══════════════════════════════════════════
 function MultimediaPage({ entries }) {
+  const [selected, setSelected] = React.useState(null);
+  const [cloudItems, setCloudItems] = React.useState([]);
+  const [loadingCloud, setLoadingCloud] = React.useState(true);
+
+  // Fotos enlazadas a entradas + set de ids ya referenciados (para no duplicar)
+  const referenced = new Set();
   const mediaItems = [];
   Object.entries(entries).forEach(([k, e]) => {
     if (e.photos?.length > 0) {
-      e.photos.forEach((p, i) => mediaItems.push({ key: k, src: p, idx: i, rating: e.rating }));
+      e.photos.forEach((p, i) => {
+        mediaItems.push({ key: k, src: p, idx: i, rating: e.rating });
+        if (isIdbRef(p)) referenced.add(idbRefId(p));
+      });
     }
   });
   mediaItems.sort((a, b) => b.key.localeCompare(a.key));
 
-  const [selected, setSelected] = React.useState(null);
+  // Listar la carpeta de la nube: recupera fotos cuyas referencias se perdieron.
+  React.useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const stor = await waitStorage();
+        if (!stor || !stor.list) { if (!cancelled) setLoadingCloud(false); return; }
+        const uid = await stor.uid();
+        const items = await stor.list(`users/${uid}/diario`);
+        // Reconstruir el mapa de rutas para que las fotos también resuelvan en otras vistas.
+        const m = getMediaPaths(); let added = 0;
+        items.forEach(it => {
+          const id = it.name.replace(/\.[^.]+$/, '');
+          if (!m[id] || !m[id].path) { m[id] = { path: it.path, url: it.url }; added++; }
+        });
+        if (added) setMediaPaths(m);
+        if (!cancelled) setCloudItems(items.map(it => {
+          const id = it.name.replace(/\.[^.]+$/, '');
+          const ts = Number((id.match(/_(\d{10,})_/) || [])[1]) || null;
+          return { id, url: it.url, isVideo: /\.(mp4|webm|mov|m4v)$/i.test(it.name), ts };
+        }));
+      } catch (e) { console.warn('[diario] multimedia cloud', e); }
+      if (!cancelled) setLoadingCloud(false);
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Huérfanas: están en la nube pero ninguna entrada las referencia.
+  const orphaned = cloudItems
+    .filter(c => !referenced.has(c.id))
+    .sort((a, b) => (b.ts || 0) - (a.ts || 0))
+    .map(c => ({ key: c.ts ? dateKey(new Date(c.ts).getFullYear(), new Date(c.ts).getMonth(), new Date(c.ts).getDate()) : null, src: c.url, orphan: true, isVideo: c.isVideo }));
+
+  const allItems = [...mediaItems, ...orphaned];
 
   return (
     <div>
-      <SectionHeader title="Multimedia" icon="📸" subtitle={`${mediaItems.length} archivos`} />
+      <SectionHeader title="Multimedia" icon="📸" subtitle={`${allItems.length} archivos`} />
 
-      {mediaItems.length === 0 && <EmptyState icon="📸" text="Añade fotos y vídeos a tus entradas para verlos aquí" />}
+      {loadingCloud && allItems.length === 0 && <EmptyState icon="⏳" text="Buscando tus fotos en la nube…" />}
+      {!loadingCloud && allItems.length === 0 && <EmptyState icon="📸" text="Añade fotos y vídeos a tus entradas para verlos aquí" />}
+
+      {orphaned.length > 0 && (
+        <div style={{ background:'#fff7ed', border:'1px solid #fed7aa', color:'#9a3412', borderRadius:12, padding:'10px 14px', fontSize:13, marginBottom:14 }}>
+          ☁ Se han recuperado <strong>{orphaned.length}</strong> foto(s) de la nube que habían perdido su enlace con el día. Se muestran aquí marcadas como «recuperada».
+        </div>
+      )}
 
       <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(140px, 1fr))', gap:8 }}>
-        {mediaItems.map((item, i) => (
+        {allItems.map((item, i) => (
           <div key={i} onClick={() => setSelected(item)}
             style={{ position:'relative', aspectRatio:'1', borderRadius:16, overflow:'hidden', cursor:'pointer', transition:'transform .2s' }}
             onMouseEnter={e => e.currentTarget.style.transform='scale(1.02)'}
             onMouseLeave={e => e.currentTarget.style.transform='scale(1)'}
           >
-            {isVideoSrc(item.src) ? (
+            {(item.isVideo || isVideoSrc(item.src)) ? (
               <VideoMedia src={item.src} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
             ) : (
               <ImageMedia src={item.src} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
             )}
             <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'8px 10px', background:'linear-gradient(transparent, rgba(0,0,0,0.6))', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-              <span style={{ fontSize:11, color:'#fff', fontWeight:600 }}>{formatDateShort(item.key)}</span>
-              <span style={{ fontSize:11, color:'#fff' }}>{ratingEmoji(item.rating)}</span>
+              <span style={{ fontSize:11, color:'#fff', fontWeight:600 }}>{item.orphan ? '☁ recuperada' : formatDateShort(item.key)}</span>
+              {!item.orphan && <span style={{ fontSize:11, color:'#fff' }}>{ratingEmoji(item.rating)}</span>}
             </div>
           </div>
         ))}
@@ -1564,12 +1613,14 @@ function MultimediaPage({ entries }) {
           animation:'dFadeIn .2s ease'
         }}>
           <div style={{ maxWidth:'90vw', maxHeight:'85vh' }}>
-            {isVideoSrc(selected.src) ? (
+            {(selected.isVideo || isVideoSrc(selected.src)) ? (
               <VideoMedia src={selected.src} controls autoPlay style={{ maxWidth:'90vw', maxHeight:'85vh', borderRadius:16 }} />
             ) : (
               <ImageMedia src={selected.src} style={{ maxWidth:'90vw', maxHeight:'85vh', borderRadius:16 }} />
             )}
-            <div style={{ textAlign:'center', marginTop:12, color:'#fff', fontSize:14 }}>{formatDateShort(selected.key)}</div>
+            <div style={{ textAlign:'center', marginTop:12, color:'#fff', fontSize:14 }}>
+              {selected.orphan ? (selected.key ? 'Recuperada · ' + formatDateShort(selected.key) : 'Recuperada') : formatDateShort(selected.key)}
+            </div>
           </div>
         </div>
       )}

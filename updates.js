@@ -9,7 +9,7 @@ const UPDATES = [
     title: 'Diario: recuperación de fotos perdidas',
     items: [
       'Si tus fotos del diario desaparecieron (cuadros en blanco o entradas sin imágenes), ya vuelven. Las fotos y vídeos siempre estuvieron a salvo en la nube, pero el enlace local que apuntaba a ellas se perdía cuando el navegador limpiaba sus datos. Ahora la pestaña Multimedia lista directamente tu carpeta de la nube y muestra TODAS tus fotos, aunque su entrada hubiera perdido la referencia: las que ya no están enlazadas a un día aparecen marcadas como «recuperada». Abre el diario → Multimedia y, tras unos segundos, verás tus fotos otra vez. Solo se recuperan las que llegaron a subirse a la nube en su momento.',
-      'Además, si aparecen fotos «recuperadas», verás un botón «Devolver las fotos a su día»: al pulsarlo, cada foto vuelve a engancharse a la entrada de la fecha en que la subiste, de modo que ese día queda completo otra vez (no solo en Multimedia).',
+      'Además, si hay fotos «recuperadas» sin día, en Multimedia tienes el botón «🛠 Asignar fotos a su día»: abre una lista con cada foto y un selector de fecha para que la coloques en su día correcto (la fecha original no se puede recuperar de la nube, solo se sabe cuándo se subió). Desde ahí también puedes mover una foto de un día a otro o quitarla de un día.',
     ],
   },
   {

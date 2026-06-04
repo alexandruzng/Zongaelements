@@ -1519,19 +1519,21 @@ function LettersPage({ letters, onCreateLetter }) {
 // ═══════════════════════════════════════════
 // MULTIMEDIA PAGE
 // ═══════════════════════════════════════════
-function MultimediaPage({ entries, onRelink }) {
+function MultimediaPage({ entries, onSetPhotoDay }) {
   const [selected, setSelected] = React.useState(null);
   const [cloudItems, setCloudItems] = React.useState([]);
   const [loadingCloud, setLoadingCloud] = React.useState(true);
+  const [managing, setManaging] = React.useState(false);
 
-  // Fotos enlazadas a entradas + set de ids ya referenciados (para no duplicar)
+  // Fotos enlazadas a entradas + mapa id → día (para saber dónde está cada una)
   const referenced = new Set();
+  const idToDay = {};
   const mediaItems = [];
   Object.entries(entries).forEach(([k, e]) => {
     if (e.photos?.length > 0) {
       e.photos.forEach((p, i) => {
         mediaItems.push({ key: k, src: p, idx: i, rating: e.rating });
-        if (isIdbRef(p)) referenced.add(idbRefId(p));
+        if (isIdbRef(p)) { referenced.add(idbRefId(p)); idToDay[idbRefId(p)] = k; }
       });
     }
   });
@@ -1556,7 +1558,8 @@ function MultimediaPage({ entries, onRelink }) {
         if (!cancelled) setCloudItems(items.map(it => {
           const id = it.name.replace(/\.[^.]+$/, '');
           const ts = Number((id.match(/_(\d{10,})_/) || [])[1]) || null;
-          return { id, url: it.url, isVideo: /\.(mp4|webm|mov|m4v)$/i.test(it.name), ts };
+          const isVideo = /\.(mp4|webm|mov|m4v)$/i.test(it.name);
+          return { id, url: it.url, isVideo, ts, ref: (isVideo ? VIDEO_REF_PREFIX : IMG_REF_PREFIX) + id };
         }));
       } catch (e) { console.warn('[diario] multimedia cloud', e); }
       if (!cancelled) setLoadingCloud(false);
@@ -1568,12 +1571,14 @@ function MultimediaPage({ entries, onRelink }) {
   const orphaned = cloudItems
     .filter(c => !referenced.has(c.id))
     .sort((a, b) => (b.ts || 0) - (a.ts || 0))
-    .map(c => ({
-      key: c.ts ? dateKey(new Date(c.ts).getFullYear(), new Date(c.ts).getMonth(), new Date(c.ts).getDate()) : null,
-      src: c.url, orphan: true, isVideo: c.isVideo, id: c.id,
-      ref: (c.isVideo ? VIDEO_REF_PREFIX : IMG_REF_PREFIX) + c.id,
-    }));
-  const relinkable = orphaned.filter(o => o.key);
+    .map(c => ({ key: null, src: c.url, orphan: true, isVideo: c.isVideo, id: c.id, ref: c.ref }));
+
+  // Orden de gestión: primero las sin asignar, luego por subida (más reciente arriba).
+  const manageItems = [...cloudItems].sort((a, b) => {
+    const ua = idToDay[a.id] ? 1 : 0, ub = idToDay[b.id] ? 1 : 0;
+    if (ua !== ub) return ua - ub;
+    return (b.ts || 0) - (a.ts || 0);
+  });
 
   const allItems = [...mediaItems, ...orphaned];
 
@@ -1584,21 +1589,43 @@ function MultimediaPage({ entries, onRelink }) {
       {loadingCloud && allItems.length === 0 && <EmptyState icon="⏳" text="Buscando tus fotos en la nube…" />}
       {!loadingCloud && allItems.length === 0 && <EmptyState icon="📸" text="Añade fotos y vídeos a tus entradas para verlos aquí" />}
 
-      {orphaned.length > 0 && (
-        <div style={{ background:'#fff7ed', border:'1px solid #fed7aa', color:'#9a3412', borderRadius:12, padding:'10px 14px', fontSize:13, marginBottom:14 }}>
-          ☁ Se han recuperado <strong>{orphaned.length}</strong> foto(s) de la nube que habían perdido su enlace con el día. Se muestran aquí marcadas como «recuperada».
-          {onRelink && relinkable.length > 0 && (
-            <div style={{ marginTop:10 }}>
-              <button onClick={() => {
-                const byDay = {};
-                relinkable.forEach(o => { (byDay[o.key] = byDay[o.key] || []).push(o.ref); });
-                onRelink(byDay);
-              }} style={{
-                background:'#9a3412', color:'#fff', border:'none', borderRadius:8,
-                padding:'8px 14px', fontSize:13, fontWeight:700, cursor:'pointer'
-              }}>
-                Devolver {relinkable.length} foto(s) a su día
-              </button>
+      {onSetPhotoDay && cloudItems.length > 0 && (orphaned.length > 0 || managing) && (
+        <div style={{ background:'#fff7ed', border:'1px solid #fed7aa', color:'#9a3412', borderRadius:12, padding:'12px 14px', fontSize:13, marginBottom:14 }}>
+          {orphaned.length > 0 && (
+            <div style={{ marginBottom: managing ? 12 : 0 }}>
+              ☁ Hay <strong>{orphaned.length}</strong> foto(s) recuperada(s) de la nube sin día asignado. La fecha de cada foto no se pudo recuperar (solo se sabe cuándo se subió), así que <strong>asígnala tú a su día</strong> abajo.
+            </div>
+          )}
+          <button onClick={() => setManaging(m => !m)} style={{
+            background: managing ? 'transparent' : '#9a3412', color: managing ? '#9a3412' : '#fff',
+            border: managing ? '1px solid #9a3412' : 'none', borderRadius:8,
+            padding:'8px 14px', fontSize:13, fontWeight:700, cursor:'pointer'
+          }}>
+            {managing ? 'Cerrar' : '🛠 Asignar fotos a su día'}
+          </button>
+
+          {managing && (
+            <div style={{ marginTop:12, display:'flex', flexDirection:'column', gap:8 }}>
+              {manageItems.map(c => (
+                <div key={c.id} style={{ display:'flex', alignItems:'center', gap:10, background:'#fff', borderRadius:10, padding:8 }}>
+                  <div style={{ width:48, height:48, borderRadius:8, overflow:'hidden', flexShrink:0, background:'#f0f0f0' }}>
+                    {c.isVideo ? <VideoMedia src={c.url} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+                      : <img src={c.url} style={{ width:'100%', height:'100%', objectFit:'cover' }} />}
+                  </div>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ fontSize:11, color:'#9a3412', fontWeight:600 }}>
+                      {idToDay[c.id] ? 'Asignada a ' + formatDateShort(idToDay[c.id]) : 'Sin asignar'}
+                    </div>
+                    <input type="date" value={idToDay[c.id] || ''} max={todayKey()}
+                      onChange={(ev) => { if (ev.target.value) onSetPhotoDay(c.ref, ev.target.value); }}
+                      style={{ marginTop:4, fontSize:13, padding:'4px 6px', borderRadius:6, border:'1px solid #ddd', color:'#1a1a1a' }} />
+                  </div>
+                  {idToDay[c.id] && (
+                    <button onClick={() => onSetPhotoDay(c.ref, null)} title="Quitar del día"
+                      style={{ background:'none', border:'none', color:'#9a3412', cursor:'pointer', fontSize:18, padding:4 }}>✕</button>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -1812,16 +1839,21 @@ function App() {
     setEntries(prev => ({ ...prev, [dk]: data }));
   };
 
-  // Reasignar fotos recuperadas de la nube a la entrada de su día (por fecha).
-  const handleRelinkOrphans = (byDay) => {
+  // Asignar (o mover) una foto recuperada al día indicado. day=null la quita.
+  // Primero la elimina de cualquier día donde estuviera, luego la añade al nuevo.
+  const handleSetPhotoDay = (ref, day) => {
     setEntries(prev => {
-      const next = { ...prev };
-      Object.entries(byDay).forEach(([day, refs]) => {
-        const e = next[day] ? { ...next[day] } : { rating: 5, text: '', date: day };
-        const have = new Set(e.photos || []);
-        e.photos = [ ...(e.photos || []), ...refs.filter(r => !have.has(r)) ];
-        next[day] = e;
+      const next = {};
+      Object.entries(prev).forEach(([k, e]) => {
+        next[k] = (e.photos || []).includes(ref)
+          ? { ...e, photos: e.photos.filter(p => p !== ref) }
+          : e;
       });
+      if (day) {
+        const e = next[day] ? { ...next[day] } : { rating: 5, text: '', date: day };
+        e.photos = [ ...(e.photos || []), ref ];
+        next[day] = e;
+      }
       return next;
     });
   };
@@ -1899,7 +1931,7 @@ function App() {
           <LettersPage letters={letters}
             onCreateLetter={l => setLetters(prev => [...prev, l])} />
         )}
-        {tab === 'media' && <MultimediaPage entries={entries} onRelink={handleRelinkOrphans} />}
+        {tab === 'media' && <MultimediaPage entries={entries} onSetPhotoDay={handleSetPhotoDay} />}
         {tab === 'objectives' && (
           <ObjectivesPage objectives={objectives}
             onCreateObjective={o => setObjectives(prev => [...prev, o])}

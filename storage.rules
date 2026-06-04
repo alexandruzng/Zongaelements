@@ -1,0 +1,13 @@
+rules_version = '2';
+
+// Reglas de Firebase Storage para Zonga Elements.
+// Cada usuario autenticado solo puede leer/listar/escribir dentro de su
+// propia carpeta users/{uid}/**. El permiso `read` incluye get + list, que
+// es lo que necesita la recuperación de fotos del diario (listAll).
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /users/{userId}/{allPaths=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}

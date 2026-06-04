@@ -197,14 +197,43 @@ function ImageMedia({ src, style }) {
   return <img src={url} style={style} />;
 }
 
+// Recuperación: si se perdió el mapa local de rutas (p. ej. el navegador
+// borró localStorage/IndexedDB), los archivos siguen en Firebase Storage.
+// Listamos la carpeta una sola vez y reconstruimos el mapa id → {path, url}.
+let __mediaDirPromise = null;
+async function ensureMediaDir() {
+  if (__mediaDirPromise) return __mediaDirPromise;
+  __mediaDirPromise = (async () => {
+    const stor = await waitStorage().catch(() => null);
+    if (!stor || !stor.list) return getMediaPaths();
+    let uid;
+    try { uid = await stor.uid(); } catch { return getMediaPaths(); }
+    const items = await stor.list(`users/${uid}/diario`).catch(() => []);
+    const m = getMediaPaths();
+    let added = 0;
+    for (const it of items) {
+      const id = it.name.replace(/\.[^.]+$/, ''); // "id.ext" → "id"
+      if (!m[id] || !m[id].path) { m[id] = { path: it.path, url: it.url }; added++; }
+    }
+    if (added) setMediaPaths(m);
+    return m;
+  })();
+  return __mediaDirPromise;
+}
+
 async function resolveMediaUrl(refStr) {
   // 1. IDB local
   const id = idbRefId(refStr);
   const blob = await idbGet(id).catch(() => null);
   if (blob) return { url: URL.createObjectURL(blob), isBlob: true };
   // 2. Cloud
-  const paths = getMediaPaths();
+  let paths = getMediaPaths();
   let entry = paths[id];
+  // 3. Si no tenemos la ruta, intentar recuperarla listando la carpeta de la nube.
+  if (!entry || !entry.path) {
+    paths = await ensureMediaDir();
+    entry = paths[id];
+  }
   if (!entry || !entry.path) return null;
   try {
     let url = entry.url;

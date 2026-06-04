@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
 import { getAuth, setPersistence, browserLocalPersistence, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
-import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-storage.js";
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject, listAll } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-storage.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDxWfswAK0Pxg3atZ7GU9zui1zKpoSuMiE",
@@ -35,6 +35,16 @@ window.__zongaStorage = {
   },
   getUrl: async (path) => await getDownloadURL(storageRef(storage, path)),
   del: async (path) => { try { await deleteObject(storageRef(storage, path)); } catch (e) { /* ignora si ya no existe */ } },
+  // Lista una carpeta y devuelve [{ name, path, url }] de cada archivo.
+  // Se usa para recuperar fotos cuyo mapa de rutas local se perdió.
+  list: async (prefix) => {
+    const res = await listAll(storageRef(storage, prefix));
+    return Promise.all(res.items.map(async (itemRef) => ({
+      name: itemRef.name,
+      path: itemRef.fullPath,
+      url: await getDownloadURL(itemRef),
+    })));
+  },
 };
 window.dispatchEvent(new Event("zonga:storageReady"));
 

@@ -1519,7 +1519,7 @@ function LettersPage({ letters, onCreateLetter }) {
 // ═══════════════════════════════════════════
 // MULTIMEDIA PAGE
 // ═══════════════════════════════════════════
-function MultimediaPage({ entries }) {
+function MultimediaPage({ entries, onRelink }) {
   const [selected, setSelected] = React.useState(null);
   const [cloudItems, setCloudItems] = React.useState([]);
   const [loadingCloud, setLoadingCloud] = React.useState(true);
@@ -1568,7 +1568,12 @@ function MultimediaPage({ entries }) {
   const orphaned = cloudItems
     .filter(c => !referenced.has(c.id))
     .sort((a, b) => (b.ts || 0) - (a.ts || 0))
-    .map(c => ({ key: c.ts ? dateKey(new Date(c.ts).getFullYear(), new Date(c.ts).getMonth(), new Date(c.ts).getDate()) : null, src: c.url, orphan: true, isVideo: c.isVideo }));
+    .map(c => ({
+      key: c.ts ? dateKey(new Date(c.ts).getFullYear(), new Date(c.ts).getMonth(), new Date(c.ts).getDate()) : null,
+      src: c.url, orphan: true, isVideo: c.isVideo, id: c.id,
+      ref: (c.isVideo ? VIDEO_REF_PREFIX : IMG_REF_PREFIX) + c.id,
+    }));
+  const relinkable = orphaned.filter(o => o.key);
 
   const allItems = [...mediaItems, ...orphaned];
 
@@ -1582,6 +1587,20 @@ function MultimediaPage({ entries }) {
       {orphaned.length > 0 && (
         <div style={{ background:'#fff7ed', border:'1px solid #fed7aa', color:'#9a3412', borderRadius:12, padding:'10px 14px', fontSize:13, marginBottom:14 }}>
           ☁ Se han recuperado <strong>{orphaned.length}</strong> foto(s) de la nube que habían perdido su enlace con el día. Se muestran aquí marcadas como «recuperada».
+          {onRelink && relinkable.length > 0 && (
+            <div style={{ marginTop:10 }}>
+              <button onClick={() => {
+                const byDay = {};
+                relinkable.forEach(o => { (byDay[o.key] = byDay[o.key] || []).push(o.ref); });
+                onRelink(byDay);
+              }} style={{
+                background:'#9a3412', color:'#fff', border:'none', borderRadius:8,
+                padding:'8px 14px', fontSize:13, fontWeight:700, cursor:'pointer'
+              }}>
+                Devolver {relinkable.length} foto(s) a su día
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -1793,6 +1812,20 @@ function App() {
     setEntries(prev => ({ ...prev, [dk]: data }));
   };
 
+  // Reasignar fotos recuperadas de la nube a la entrada de su día (por fecha).
+  const handleRelinkOrphans = (byDay) => {
+    setEntries(prev => {
+      const next = { ...prev };
+      Object.entries(byDay).forEach(([day, refs]) => {
+        const e = next[day] ? { ...next[day] } : { rating: 5, text: '', date: day };
+        const have = new Set(e.photos || []);
+        e.photos = [ ...(e.photos || []), ...refs.filter(r => !have.has(r)) ];
+        next[day] = e;
+      });
+      return next;
+    });
+  };
+
   const today = new Date();
 
   // Greeting
@@ -1866,7 +1899,7 @@ function App() {
           <LettersPage letters={letters}
             onCreateLetter={l => setLetters(prev => [...prev, l])} />
         )}
-        {tab === 'media' && <MultimediaPage entries={entries} />}
+        {tab === 'media' && <MultimediaPage entries={entries} onRelink={handleRelinkOrphans} />}
         {tab === 'objectives' && (
           <ObjectivesPage objectives={objectives}
             onCreateObjective={o => setObjectives(prev => [...prev, o])}

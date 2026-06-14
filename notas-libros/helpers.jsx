@@ -12,8 +12,33 @@ function loadBooks() {
   } catch (e) { /* ignore */ }
   return null;
 }
+/* Guarda los libros en localStorage. Las NOTAS son lo prioritario: si el
+   navegador se queda sin espacio (cuota llena), se reintenta soltando las
+   portadas en base64 para que las notas siempre quepan. Las portadas reales
+   ya viven en la nube como URL, así que esto solo afecta a las de ejemplo o a
+   respaldos locales puntuales. Emite "notas-libros:persist" con el resultado
+   para que la interfaz nunca diga "Guardado" si en realidad falló. */
 function saveBooks(books) {
-  try { localStorage.setItem(STORE_KEY, JSON.stringify(books)); } catch (e) { /* quota */ }
+  const attempt = (data) => {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(data)); return true; }
+    catch (e) { return false; }
+  };
+
+  let ok = attempt(books);
+  let trimmed = false;
+
+  if (!ok) {
+    const slim = books.map(b =>
+      (typeof b.cover === "string" && b.cover.startsWith("data:"))
+        ? { ...b, cover: "" }
+        : b
+    );
+    ok = attempt(slim);
+    trimmed = ok;
+  }
+
+  window.dispatchEvent(new CustomEvent("notas-libros:persist", { detail: { ok, trimmed } }));
+  return ok;
 }
 
 /* Hook de libros con persistencia */

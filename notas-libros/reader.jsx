@@ -7,8 +7,10 @@ function Reader({ book, onBack, onUpdate, onDelete }) {
   const [status, setStatus] = useState(book.status);
   const [savedFlash, setSavedFlash] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [saveError, setSaveError] = useState(null);
   const [confirmDel, setConfirmDel] = useState(false);
   const flashTimer = useRef(null);
+  const pendingSaveRef = useRef(false);
 
   const pct = book.totalPages > 0 ? Math.min(100, Math.round((page / book.totalPages) * 100)) : 0;
 
@@ -35,12 +37,31 @@ function Reader({ book, onBack, onUpdate, onDelete }) {
   };
 
   const doSave = () => {
+    setSaveError(null);
+    pendingSaveRef.current = true;
+    // El "Guardado" lo confirma el evento de persistencia real (abajo), no antes:
+    // así nunca decimos que se guardó si en realidad falló por falta de espacio.
     onUpdate(book.id, { notes, currentPage: clampPage(parseInt(page, 10) || 0), rating, status });
-    setDirty(false);
-    setSavedFlash(true);
-    clearTimeout(flashTimer.current);
-    flashTimer.current = setTimeout(() => setSavedFlash(false), 2200);
   };
+
+  // Confirma (o desmiente) el guardado según si localStorage aceptó los datos.
+  useEffect(() => {
+    const onPersist = (e) => {
+      if (!pendingSaveRef.current) return;
+      pendingSaveRef.current = false;
+      if (e.detail && e.detail.ok) {
+        setSaveError(null);
+        setSavedFlash(true);
+        clearTimeout(flashTimer.current);
+        flashTimer.current = setTimeout(() => setSavedFlash(false), 2200);
+      } else {
+        setSavedFlash(false);
+        setSaveError("No se pudo guardar: el almacenamiento del navegador está lleno. Tus notas siguen en pantalla; libera espacio (borra algún libro o portada) y vuelve a guardar.");
+      }
+    };
+    window.addEventListener("notas-libros:persist", onPersist);
+    return () => window.removeEventListener("notas-libros:persist", onPersist);
+  }, []);
 
   // Guardar con Cmd/Ctrl + S
   useEffect(() => {
@@ -55,7 +76,7 @@ function Reader({ book, onBack, onUpdate, onDelete }) {
 
   // Aviso al salir con cambios sin guardar
   const handleBack = () => {
-    if (dirty && !window.confirm("Tienes cambios sin guardar. ¿Salir de todos modos?")) return;
+    if ((dirty || saveError) && !window.confirm("Tienes cambios sin guardar. ¿Salir de todos modos?")) return;
     onBack();
   };
 
@@ -66,8 +87,8 @@ function Reader({ book, onBack, onUpdate, onDelete }) {
       <div className="reader-top">
         <div className="reader-topbar">
           <button className="back-btn" onClick={handleBack}><Icon.back /> Estantería</button>
-          <div className={"save-state" + (savedFlash ? " saved" : "")}>
-            {savedFlash ? (<><Icon.check /> Guardado</>) : dirty ? "Cambios sin guardar" : "Todo guardado"}
+          <div className={"save-state" + (savedFlash ? " saved" : "") + (saveError ? " error" : "")}>
+            {saveError ? "⚠ Sin guardar" : savedFlash ? (<><Icon.check /> Guardado</>) : dirty ? "Cambios sin guardar" : "Todo guardado"}
           </div>
           <button className="icon-btn danger" onClick={() => setConfirmDel(true)} aria-label="Eliminar libro" title="Eliminar libro">
             <Icon.trash />
@@ -118,13 +139,14 @@ function Reader({ book, onBack, onUpdate, onDelete }) {
               spellCheck="true"
             />
           </div>
+          {saveError && <div className="save-err" role="alert">{saveError}</div>}
           <div className="notes-foot">
             <span className="words">{words} {words === 1 ? "palabra" : "palabras"}</span>
             {savedFlash ? (
               <span className="save-flash"><Icon.check /> Notas guardadas</span>
             ) : (
-              <button className="btn" onClick={doSave} disabled={!dirty}>
-                <Icon.save /> Guardar
+              <button className="btn" onClick={doSave} disabled={!dirty && !saveError}>
+                <Icon.save /> {saveError ? "Reintentar guardado" : "Guardar"}
               </button>
             )}
           </div>

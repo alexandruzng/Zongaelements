@@ -5,6 +5,13 @@
 */
 const UPDATES = [
   {
+    id: '2026-06-14-notas-libros-guardado',
+    title: 'Notas de Libros: se acabó el límite al guardar',
+    items: [
+      'Arreglado el problema por el que, a partir de cierto punto, tus notas dejaban de guardarse: escribías mucho, pulsabas «Guardar», parecía que se guardaba… pero al refrescar volvía a aparecer lo de antes. Pasaba porque el almacenamiento del navegador se llenaba (lo ocupaban sobre todo las portadas) y el guardado fallaba en silencio. Ahora, si el espacio se agota, la herramienta da prioridad absoluta a tus notas y libera sitio automáticamente, así que ya puedes escribir todo lo que quieras. Y si por lo que sea no pudiera guardar, te lo dice claramente con un aviso en rojo y un botón para reintentar, en vez de fingir que se guardó.',
+    ],
+  },
+  {
     id: '2026-06-05-diario-recuperar-fotos',
     title: 'Diario: recuperación de fotos perdidas',
     items: [

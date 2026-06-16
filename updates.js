@@ -5,6 +5,13 @@
 */
 const UPDATES = [
   {
+    id: '2026-06-16-notas-libros-sin-limite',
+    title: 'Notas de Libros: adiós al límite de texto',
+    items: [
+      'Si notabas que a partir de cierto punto el texto dejaba de guardarse (guardabas, refrescabas y faltaba un trozo), ya está resuelto de raíz. El navegador reserva un espacio compartido entre todas las herramientas de Zonga y tus notas, en texto plano, lo llenaban. Ahora tus notas se comprimen automáticamente antes de guardarse (ocupan 7-10 veces menos sin que tú notes nada), así que en el mismo espacio cabe muchísimo más: en la práctica puedes escribir todo lo que quieras. No tienes que hacer nada y tus notas actuales se conservan tal cual.',
+    ],
+  },
+  {
     id: '2026-06-14-notas-libros-guardado',
     title: 'Notas de Libros: se acabó el límite al guardar',
     items: [

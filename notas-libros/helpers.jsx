@@ -5,10 +5,31 @@ const { useState, useEffect, useRef, useCallback } = React;
 const STORE_KEY = "notas-libros:v1";
 const THEME_KEY = "notas-libros:theme";
 
+// Prefijo que marca un valor comprimido. El texto se comprime ~7-10x antes de
+// guardarlo, así que en el mismo espacio del navegador caben muchísimas más
+// notas. Sin prefijo = formato antiguo (JSON sin comprimir), se sigue leyendo.
+const COMPRESS_PREFIX = "LZ1:";
+const hasLZ = () => typeof LZString !== "undefined";
+
+function encodeBooks(books) {
+  const json = JSON.stringify(books);
+  if (hasLZ()) return COMPRESS_PREFIX + LZString.compressToEncodedURIComponent(json);
+  return json; // sin la librería, se guarda en plano (respaldo)
+}
+
+function decodeBooks(raw) {
+  if (!raw) return null;
+  if (raw.startsWith(COMPRESS_PREFIX)) {
+    if (!hasLZ()) return null;
+    const json = LZString.decompressFromEncodedURIComponent(raw.slice(COMPRESS_PREFIX.length));
+    return json ? JSON.parse(json) : null;
+  }
+  return JSON.parse(raw); // datos antiguos sin comprimir
+}
+
 function loadBooks() {
   try {
-    const raw = localStorage.getItem(STORE_KEY);
-    if (raw) return JSON.parse(raw);
+    return decodeBooks(localStorage.getItem(STORE_KEY));
   } catch (e) { /* ignore */ }
   return null;
 }
@@ -20,7 +41,7 @@ function loadBooks() {
    para que la interfaz nunca diga "Guardado" si en realidad falló. */
 function saveBooks(books) {
   const attempt = (data) => {
-    try { localStorage.setItem(STORE_KEY, JSON.stringify(data)); return true; }
+    try { localStorage.setItem(STORE_KEY, encodeBooks(data)); return true; }
     catch (e) { return false; }
   };
 

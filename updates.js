@@ -5,6 +5,13 @@
 */
 const UPDATES = [
   {
+    id: '2026-06-16-tracker-checklists',
+    title: 'Tracker de hábitos: nueva pestaña de Checklists',
+    items: [
+      'El tracker ahora tiene dos pestañas arriba: «Rueda de hábitos» (la de siempre, intacta) y una nueva «Checklists». En Checklists puedes crear todos los apartados que quieras (por ejemplo «Rutina de amanecer») y, dentro de cada uno, añadir tantos checklists como necesites, sin límite. Marca cada uno al completarlo. Abajo del todo tienes un botón «Resetear checklists» que desmarca solo lo que tengas hecho y vuelve a dejarlos activos, sin borrar tus apartados ni tus listas. Tus hábitos, marcas y observaciones de la rueda no se tocan: todo lo que ya tenías sigue exactamente igual.',
+    ],
+  },
+  {
     id: '2026-06-16-notas-libros-sin-limite',
     title: 'Notas de Libros: adiós al límite de texto',
     items: [

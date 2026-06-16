@@ -332,17 +332,26 @@ function defaultState() {
     marks: {},
     // observations keyed by monthKey
     observations: {},
+    // checklists por apartados (independiente de la rueda): { apartados: [{ id, title, items: [{ id, text, done }] }] }
+    checklists: { apartados: [] },
     currentMonth: mk
   };
 }
 function migrate(s) {
   if (!s) return s;
-  if (s.habitsByMonth) return s;
-  const out = __spreadProps(__spreadValues({}, s), { habitsByMonth: {} });
-  if (Array.isArray(s.habits) && s.currentMonth) {
-    out.habitsByMonth[s.currentMonth] = [...s.habits];
+  let out = s;
+  // Migración antigua: habits global -> habitsByMonth. No tocar si ya está migrado.
+  if (!out.habitsByMonth) {
+    out = __spreadProps(__spreadValues({}, s), { habitsByMonth: {} });
+    if (Array.isArray(s.habits) && s.currentMonth) {
+      out.habitsByMonth[s.currentMonth] = [...s.habits];
+    }
+    delete out.habits;
   }
-  delete out.habits;
+  // Campo nuevo de checklists: lo creamos vacío sin alterar el resto de datos.
+  if (!out.checklists) {
+    out = __spreadProps(__spreadValues({}, out), { checklists: { apartados: [] } });
+  }
   return out;
 }
 function habitsForMonth(habitsByMonth, monthKey) {
@@ -352,6 +361,272 @@ function habitsForMonth(habitsByMonth, monthKey) {
   const prev = keys.filter((k) => k < monthKey);
   const src = prev.length ? prev[prev.length - 1] : keys[keys.length - 1];
   return [...habitsByMonth[src]];
+}
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+function TabBar({ tab, setTab }) {
+  return /* @__PURE__ */ React.createElement(
+    "div",
+    { className: "tabbar no-print", role: "tablist" },
+    /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        className: "tab" + (tab === "rueda" ? " active" : ""),
+        role: "tab",
+        "aria-selected": tab === "rueda",
+        onClick: () => setTab("rueda")
+      },
+      /* @__PURE__ */ React.createElement(
+        "svg",
+        { width: 15, height: 15, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.6 },
+        /* @__PURE__ */ React.createElement("circle", { cx: 12, cy: 12, r: 9 }),
+        /* @__PURE__ */ React.createElement("circle", { cx: 12, cy: 12, r: 4 })
+      ),
+      "Rueda de h\xE1bitos"
+    ),
+    /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        className: "tab" + (tab === "checklists" ? " active" : ""),
+        role: "tab",
+        "aria-selected": tab === "checklists",
+        onClick: () => setTab("checklists")
+      },
+      /* @__PURE__ */ React.createElement(
+        "svg",
+        { width: 15, height: 15, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.6 },
+        /* @__PURE__ */ React.createElement("path", { d: "M9 11l3 3L22 4" }),
+        /* @__PURE__ */ React.createElement("path", { d: "M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" })
+      ),
+      "Checklists"
+    )
+  );
+}
+const CHECKLIST_CSS = `
+  .checklists { max-width: 880px; margin: 28px auto 0; display: grid; gap: 18px; }
+  .cl-intro { text-align: center; margin-bottom: 6px; }
+  .cl-intro p { font-family: "Instrument Serif"; font-size: 20px; color: var(--ink-soft); margin: 0; line-height: 1.4; }
+  .cl-add { display: flex; gap: 10px; background: #fffdf7; border: 1px solid var(--rule); border-radius: 2px; padding: 12px 12px 12px 18px; align-items: center; transition: border-color 0.15s; }
+  .cl-add:focus-within { border-color: var(--ink); }
+  .cl-add input { flex: 1; border: 0; background: transparent; outline: none; font-size: 16px; color: var(--ink); font-weight: 500; }
+  .cl-add input::placeholder { color: var(--ink-muted); font-style: italic; font-family: "Instrument Serif"; font-size: 19px; font-weight: 400; }
+  .cl-add-btn { background: var(--ink); color: #fff; border: 0; padding: 12px 22px; font-size: 14px; font-weight: 600; border-radius: 2px; display: inline-flex; align-items: center; gap: 7px; transition: background 0.15s, transform 0.15s; white-space: nowrap; }
+  .cl-add-btn:hover { background: #000; transform: translateY(-1px); }
+  .cl-group { background: #fffdf7; border: 1px solid var(--rule); border-radius: 2px; padding: 20px 22px; box-shadow: 0 1px 0 #fff inset; }
+  .cl-group-head { display: flex; align-items: center; gap: 12px; padding-bottom: 12px; margin-bottom: 8px; border-bottom: 1px solid var(--rule); }
+  .cl-title-input { flex: 1; min-width: 0; border: 0; background: transparent; outline: none; font-family: "Inter Tight"; font-weight: 700; font-size: 21px; letter-spacing: -0.01em; color: var(--ink); padding: 2px 0; }
+  .cl-title-input::placeholder { color: var(--ink-muted); font-style: italic; font-weight: 400; }
+  .cl-count { font-family: "JetBrains Mono"; font-size: 11px; color: var(--ink-muted); letter-spacing: 0.06em; white-space: nowrap; }
+  .cl-del-group { background: transparent; border: 0; color: var(--ink-muted); padding: 6px; border-radius: 2px; display: inline-flex; transition: color 0.12s, background 0.12s; }
+  .cl-del-group:hover { color: var(--miss); background: var(--miss-soft); }
+  .cl-items { list-style: none; padding: 0; margin: 0; display: grid; gap: 1px; }
+  .cl-item { display: flex; align-items: center; gap: 12px; padding: 9px 8px; border-radius: 2px; transition: background 0.12s; }
+  .cl-item:hover { background: var(--paper-2); }
+  .cl-check { width: 20px; height: 20px; border: 1.6px solid var(--ink-muted); border-radius: 5px; display: grid; place-items: center; flex-shrink: 0; background: #fff; cursor: pointer; transition: background 0.15s, border-color 0.15s; }
+  .cl-check:hover { border-color: var(--ink); }
+  .cl-item.done .cl-check { background: var(--done); border-color: var(--done); }
+  .cl-check svg { opacity: 0; transition: opacity 0.15s; }
+  .cl-item.done .cl-check svg { opacity: 1; }
+  .cl-text { flex: 1; font-size: 15.5px; color: var(--ink); cursor: pointer; transition: color 0.15s; line-height: 1.4; }
+  .cl-item.done .cl-text { color: var(--ink-muted); text-decoration: line-through; }
+  .cl-del-item { background: transparent; border: 0; color: var(--ink-muted); opacity: 0; padding: 2px 6px; font-size: 18px; line-height: 1; border-radius: 2px; transition: opacity 0.12s, color 0.12s; }
+  .cl-item:hover .cl-del-item { opacity: 1; }
+  .cl-del-item:hover { color: var(--miss); }
+  .cl-additem { display: flex; gap: 10px; margin-top: 10px; padding-top: 12px; border-top: 1px dashed var(--rule-soft); }
+  .cl-additem input { flex: 1; border: 0; border-bottom: 1px solid var(--rule); background: transparent; outline: none; font-size: 15px; padding: 7px 2px; color: var(--ink); transition: border-color 0.15s; }
+  .cl-additem input:focus { border-color: var(--ink); }
+  .cl-additem input::placeholder { color: var(--ink-muted); font-style: italic; }
+  .cl-additem button { background: transparent; border: 1px solid var(--rule); border-radius: 2px; padding: 7px 16px; font-size: 13px; color: var(--ink-soft); white-space: nowrap; transition: border-color 0.15s, color 0.15s; }
+  .cl-additem button:hover { border-color: var(--ink); color: var(--ink); }
+  .cl-empty { text-align: center; padding: 56px 24px; background: #fffdf7; border: 1px dashed var(--rule); border-radius: 2px; }
+  .cl-empty .cl-empty-big { font-family: "Instrument Serif"; font-style: italic; font-size: 26px; color: var(--ink); margin: 0 0 8px; }
+  .cl-empty p { font-size: 14px; color: var(--ink-soft); margin: 0; line-height: 1.5; }
+  .cl-footer { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-top: 8px; padding-top: 20px; border-top: 1px solid var(--rule); }
+  .cl-footer .cl-summary { font-family: "JetBrains Mono"; font-size: 12px; color: var(--ink-soft); letter-spacing: 0.04em; }
+  .cl-footer .cl-summary strong { color: var(--ink); font-weight: 600; }
+  .cl-reset { background: var(--ink); color: #fff; border: 0; padding: 13px 26px; font-size: 14px; font-weight: 600; border-radius: 2px; display: inline-flex; align-items: center; gap: 8px; transition: background 0.15s, transform 0.15s; }
+  .cl-reset:hover:not(:disabled) { background: #000; transform: translateY(-1px); }
+  .cl-reset:disabled { opacity: 0.35; cursor: not-allowed; }
+  @media (max-width: 560px) {
+    .cl-add { flex-wrap: wrap; }
+    .cl-footer { flex-direction: column; align-items: stretch; }
+    .cl-footer .cl-reset { justify-content: center; }
+  }
+`;
+function ChecklistsView({ checklists, setChecklists }) {
+  const groups = checklists && checklists.apartados ? checklists.apartados : [];
+  const [newGroup, setNewGroup] = useState("");
+  const [drafts, setDrafts] = useState({});
+  const setDraft = (gid, v) => setDrafts((d) => __spreadProps(__spreadValues({}, d), { [gid]: v }));
+  const addGroup = () => {
+    const t = newGroup.trim();
+    if (!t) return;
+    setChecklists((c) => ({ apartados: [...c.apartados || [], { id: uid(), title: t, items: [] }] }));
+    setNewGroup("");
+  };
+  const renameGroup = (gid, title) => setChecklists((c) => ({
+    apartados: c.apartados.map((g) => g.id === gid ? __spreadProps(__spreadValues({}, g), { title }) : g)
+  }));
+  const removeGroup = (gid) => {
+    const g = groups.find((x) => x.id === gid);
+    const label = g && g.title ? `"${g.title}"` : "este apartado";
+    if (!confirm(`\xBFBorrar ${label} y todos sus checklists?`)) return;
+    setChecklists((c) => ({ apartados: c.apartados.filter((g2) => g2.id !== gid) }));
+  };
+  const addItem = (gid) => {
+    const t = (drafts[gid] || "").trim();
+    if (!t) return;
+    setChecklists((c) => ({
+      apartados: c.apartados.map((g) => g.id === gid ? __spreadProps(__spreadValues({}, g), { items: [...g.items, { id: uid(), text: t, done: false }] }) : g)
+    }));
+    setDraft(gid, "");
+  };
+  const toggleItem = (gid, iid) => setChecklists((c) => ({
+    apartados: c.apartados.map((g) => g.id === gid ? __spreadProps(__spreadValues({}, g), {
+      items: g.items.map((it) => it.id === iid ? __spreadProps(__spreadValues({}, it), { done: !it.done }) : it)
+    }) : g)
+  }));
+  const removeItem = (gid, iid) => setChecklists((c) => ({
+    apartados: c.apartados.map((g) => g.id === gid ? __spreadProps(__spreadValues({}, g), {
+      items: g.items.filter((it) => it.id !== iid)
+    }) : g)
+  }));
+  const totalItems = groups.reduce((n, g) => n + g.items.length, 0);
+  const totalDone = groups.reduce((n, g) => n + g.items.filter((i) => i.done).length, 0);
+  const resetChecks = () => {
+    if (totalDone === 0) return;
+    if (!confirm(`\xBFDesmarcar los ${totalDone} checklists completados? Los apartados y las listas se mantienen, solo vuelven a estar activos.`)) return;
+    setChecklists((c) => ({
+      apartados: c.apartados.map((g) => __spreadProps(__spreadValues({}, g), {
+        items: g.items.map((it) => __spreadProps(__spreadValues({}, it), { done: false }))
+      }))
+    }));
+  };
+  const check = /* @__PURE__ */ React.createElement(
+    "svg",
+    { width: 13, height: 13, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth: 3, strokeLinecap: "round", strokeLinejoin: "round" },
+    /* @__PURE__ */ React.createElement("path", { d: "M5 12l5 5L20 6" })
+  );
+  return /* @__PURE__ */ React.createElement(
+    "div",
+    { className: "checklists no-print" },
+    /* @__PURE__ */ React.createElement("style", null, CHECKLIST_CSS),
+    /* @__PURE__ */ React.createElement(
+      "div",
+      { className: "cl-intro" },
+      /* @__PURE__ */ React.createElement("p", null, "Crea apartados (por ejemplo ", /* @__PURE__ */ React.createElement("em", null, "“Rutina de amanecer”"), ") y a\xF1ade dentro todos los checklists que quieras.")
+    ),
+    /* @__PURE__ */ React.createElement(
+      "div",
+      { className: "cl-add" },
+      /* @__PURE__ */ React.createElement("input", {
+        type: "text",
+        value: newGroup,
+        maxLength: 60,
+        placeholder: "Nombre del apartado…",
+        onChange: (e) => setNewGroup(e.target.value),
+        onKeyDown: (e) => {
+          if (e.key === "Enter") addGroup();
+        }
+      }),
+      /* @__PURE__ */ React.createElement(
+        "button",
+        { className: "cl-add-btn", onClick: addGroup },
+        /* @__PURE__ */ React.createElement(
+          "svg",
+          { width: 14, height: 14, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.2, strokeLinecap: "round" },
+          /* @__PURE__ */ React.createElement("path", { d: "M12 5v14M5 12h14" })
+        ),
+        "Nuevo apartado"
+      )
+    ),
+    groups.length === 0 ? /* @__PURE__ */ React.createElement(
+      "div",
+      { className: "cl-empty" },
+      /* @__PURE__ */ React.createElement("p", { className: "cl-empty-big" }, "A\xFAn no hay apartados"),
+      /* @__PURE__ */ React.createElement("p", null, "Empieza creando uno arriba: tus listas se guardan solas en este dispositivo.")
+    ) : groups.map((g) => {
+      const done = g.items.filter((i) => i.done).length;
+      return /* @__PURE__ */ React.createElement(
+        "div",
+        { className: "cl-group", key: g.id },
+        /* @__PURE__ */ React.createElement(
+          "div",
+          { className: "cl-group-head" },
+          /* @__PURE__ */ React.createElement("input", {
+            className: "cl-title-input",
+            type: "text",
+            value: g.title,
+            maxLength: 60,
+            placeholder: "Apartado sin nombre",
+            "aria-label": "Nombre del apartado",
+            onChange: (e) => renameGroup(g.id, e.target.value)
+          }),
+          /* @__PURE__ */ React.createElement("span", { className: "cl-count" }, done, "/", g.items.length),
+          /* @__PURE__ */ React.createElement(
+            "button",
+            { className: "cl-del-group", onClick: () => removeGroup(g.id), title: "Borrar apartado", "aria-label": "Borrar apartado" },
+            /* @__PURE__ */ React.createElement(
+              "svg",
+              { width: 15, height: 15, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round" },
+              /* @__PURE__ */ React.createElement("path", { d: "M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" })
+            )
+          )
+        ),
+        /* @__PURE__ */ React.createElement(
+          "ul",
+          { className: "cl-items" },
+          g.items.map((it) => /* @__PURE__ */ React.createElement(
+            "li",
+            { className: "cl-item" + (it.done ? " done" : ""), key: it.id },
+            /* @__PURE__ */ React.createElement(
+              "span",
+              { className: "cl-check", role: "checkbox", "aria-checked": it.done, tabIndex: 0, onClick: () => toggleItem(g.id, it.id), onKeyDown: (e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  toggleItem(g.id, it.id);
+                }
+              } },
+              check
+            ),
+            /* @__PURE__ */ React.createElement("span", { className: "cl-text", onClick: () => toggleItem(g.id, it.id) }, it.text),
+            /* @__PURE__ */ React.createElement("button", { className: "cl-del-item", onClick: () => removeItem(g.id, it.id), title: "Borrar checklist", "aria-label": "Borrar checklist" }, "\xD7")
+          ))
+        ),
+        /* @__PURE__ */ React.createElement(
+          "div",
+          { className: "cl-additem" },
+          /* @__PURE__ */ React.createElement("input", {
+            type: "text",
+            value: drafts[g.id] || "",
+            placeholder: "A\xF1adir checklist…",
+            onChange: (e) => setDraft(g.id, e.target.value),
+            onKeyDown: (e) => {
+              if (e.key === "Enter") addItem(g.id);
+            }
+          }),
+          /* @__PURE__ */ React.createElement("button", { onClick: () => addItem(g.id) }, "A\xF1adir")
+        )
+      );
+    }),
+    groups.length > 0 && /* @__PURE__ */ React.createElement(
+      "div",
+      { className: "cl-footer" },
+      /* @__PURE__ */ React.createElement("span", { className: "cl-summary" }, /* @__PURE__ */ React.createElement("strong", null, totalDone), " de ", /* @__PURE__ */ React.createElement("strong", null, totalItems), " completados"),
+      /* @__PURE__ */ React.createElement(
+        "button",
+        { className: "cl-reset", onClick: resetChecks, disabled: totalDone === 0 },
+        /* @__PURE__ */ React.createElement(
+          "svg",
+          { width: 15, height: 15, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" },
+          /* @__PURE__ */ React.createElement("path", { d: "M3 12a9 9 0 1 0 3-6.7L3 8" }),
+          /* @__PURE__ */ React.createElement("path", { d: "M3 3v5h5" })
+        ),
+        "Resetear checklists"
+      )
+    )
+  );
 }
 function App() {
   const [state, setState] = useState(() => migrate(loadState()) || defaultState());
@@ -434,6 +709,13 @@ function MainScreen({ state, setState, onEditHabits, onChangeMonth, onReset }) {
   const setObservations = (v) => {
     setState((s) => __spreadProps(__spreadValues({}, s), { observations: __spreadProps(__spreadValues({}, s.observations), { [monthKey]: v }) }));
   };
+  const [tab, setTab] = useState("rueda");
+  const checklists = state.checklists || { apartados: [] };
+  const setChecklists = (updater) => setState((s) => {
+    const cur = s.checklists || { apartados: [] };
+    const next = typeof updater === "function" ? updater(cur) : updater;
+    return __spreadProps(__spreadValues({}, s), { checklists: next });
+  });
   const [hoveredDay, setHoveredDay] = useState(null);
   const [popover, setPopover] = useState(null);
   const wheelHostRef = useRef(null);
@@ -597,6 +879,13 @@ function MainScreen({ state, setState, onEditHabits, onChangeMonth, onReset }) {
         .motiv { text-align: center; margin-top: 56px; font-family: "Instrument Serif"; font-style: italic; font-size: clamp(18px, 2vw, 22px); color: var(--ink-soft); padding: 0 20px; line-height: 1.4; max-width: 920px; margin-left: auto; margin-right: auto; }
         .motiv::before, .motiv::after { content: "\u2014"; margin: 0 12px; color: var(--ink-muted); font-style: normal; }
 
+        /* Tabs: Rueda / Checklists */
+        .tabbar { display: flex; gap: 4px; justify-content: center; margin: 22px auto 0; background: #fffdf7; border: 1px solid var(--rule); border-radius: 999px; padding: 4px; width: fit-content; }
+        .tabbar .tab { display: inline-flex; align-items: center; gap: 8px; background: transparent; border: 0; padding: 10px 20px; font-size: 14px; font-weight: 600; color: var(--ink-muted); border-radius: 999px; letter-spacing: 0.01em; transition: color 0.15s, background 0.15s; }
+        .tabbar .tab:hover { color: var(--ink); }
+        .tabbar .tab.active { background: var(--ink); color: #fff; }
+        .tabbar .tab svg { flex-shrink: 0; }
+
         /* Wheel hover: column highlight handled via per-cell stroke */
         path.wheel-cell.sel { filter: drop-shadow(0 0 0 var(--ink)); }
         path.wheel-cell-done.sel, path.wheel-cell-miss.sel { transform: scale(1.015); }
@@ -608,7 +897,7 @@ function MainScreen({ state, setState, onEditHabits, onChangeMonth, onReset }) {
           .motiv { color: #000; }
           .wheel-host { max-width: 800px; margin: 0 auto; }
         }
-      `), /* @__PURE__ */ React.createElement("div", { className: "topbar no-print" }, /* @__PURE__ */ React.createElement("div", { className: "brand" }, /* @__PURE__ */ React.createElement("span", { className: "brand-eyebrow" }, "Mes en curso"), /* @__PURE__ */ React.createElement("span", { className: "brand-mark" }, MONTH_NAMES[month0], " ", year)), /* @__PURE__ */ React.createElement("div", { className: "month-nav" }, /* @__PURE__ */ React.createElement("button", { onClick: () => navMonth(-1), "aria-label": "Mes anterior" }, "\u2039"), /* @__PURE__ */ React.createElement("span", { className: "label" }, MONTH_NAMES[month0], /* @__PURE__ */ React.createElement("span", { className: "y" }, year)), /* @__PURE__ */ React.createElement("button", { onClick: () => navMonth(1), "aria-label": "Mes siguiente" }, "\u203A")), /* @__PURE__ */ React.createElement("div", { className: "top-actions" }, /* @__PURE__ */ React.createElement("button", { onClick: onEditHabits }, /* @__PURE__ */ React.createElement("svg", { width: "13", height: "13", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2" }, /* @__PURE__ */ React.createElement("path", { d: "M12 20h9M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z" })), "Editar h\xE1bitos"), /* @__PURE__ */ React.createElement("button", { onClick: print }, /* @__PURE__ */ React.createElement("svg", { width: "13", height: "13", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2" }, /* @__PURE__ */ React.createElement("path", { d: "M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z" })), "Imprimir"), /* @__PURE__ */ React.createElement("button", { className: "danger", onClick: onReset }, "Reiniciar"))), /* @__PURE__ */ React.createElement("div", { className: "hero-title" }, /* @__PURE__ */ React.createElement("div", { className: "eyebrow no-print" }, "Planificaci\xF3n \xB7 ", dim, " d\xEDas"), /* @__PURE__ */ React.createElement("h1", null, "Tracker ", /* @__PURE__ */ React.createElement("span", { className: "italic" }, "H\xE1bitos"))), /* @__PURE__ */ React.createElement("div", { className: "stage" }, /* @__PURE__ */ React.createElement("div", { className: "legend no-print" }, /* @__PURE__ */ React.createElement("div", { className: "legend-title" }, /* @__PURE__ */ React.createElement("span", null, "Leyenda"), /* @__PURE__ */ React.createElement("span", null, activeHabits.length, " activos")), isInherited && /* @__PURE__ */ React.createElement("div", { className: "legend-inherit", onClick: onEditHabits, role: "button", title: "Personalizar h\xE1bitos para este mes" }, /* @__PURE__ */ React.createElement("span", null, "Heredados del mes anterior. ", /* @__PURE__ */ React.createElement("u", null, "Editar para ", MONTH_NAMES[month0]))), /* @__PURE__ */ React.createElement("ul", { className: "legend-list" }, habits.map((h, i) => {
+      `), /* @__PURE__ */ React.createElement("div", { className: "topbar no-print" }, /* @__PURE__ */ React.createElement("div", { className: "brand" }, /* @__PURE__ */ React.createElement("span", { className: "brand-eyebrow" }, "Mes en curso"), /* @__PURE__ */ React.createElement("span", { className: "brand-mark" }, MONTH_NAMES[month0], " ", year)), tab === "rueda" && /* @__PURE__ */ React.createElement("div", { className: "month-nav" }, /* @__PURE__ */ React.createElement("button", { onClick: () => navMonth(-1), "aria-label": "Mes anterior" }, "\u2039"), /* @__PURE__ */ React.createElement("span", { className: "label" }, MONTH_NAMES[month0], /* @__PURE__ */ React.createElement("span", { className: "y" }, year)), /* @__PURE__ */ React.createElement("button", { onClick: () => navMonth(1), "aria-label": "Mes siguiente" }, "\u203A")), tab === "rueda" && /* @__PURE__ */ React.createElement("div", { className: "top-actions" }, /* @__PURE__ */ React.createElement("button", { onClick: onEditHabits }, /* @__PURE__ */ React.createElement("svg", { width: "13", height: "13", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2" }, /* @__PURE__ */ React.createElement("path", { d: "M12 20h9M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z" })), "Editar h\xE1bitos"), /* @__PURE__ */ React.createElement("button", { onClick: print }, /* @__PURE__ */ React.createElement("svg", { width: "13", height: "13", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2" }, /* @__PURE__ */ React.createElement("path", { d: "M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z" })), "Imprimir"), /* @__PURE__ */ React.createElement("button", { className: "danger", onClick: onReset }, "Reiniciar"))), /* @__PURE__ */ React.createElement(TabBar, { tab, setTab }), /* @__PURE__ */ React.createElement("div", { className: "hero-title" }, /* @__PURE__ */ React.createElement("div", { className: "eyebrow no-print" }, tab === "rueda" ? `Planificaci\xF3n \xB7 ${dim} d\xEDas` : "Listas de control"), /* @__PURE__ */ React.createElement("h1", null, "Tracker ", /* @__PURE__ */ React.createElement("span", { className: "italic" }, "H\xE1bitos"))), tab === "rueda" && /* @__PURE__ */ React.createElement("div", { className: "stage" }, /* @__PURE__ */ React.createElement("div", { className: "legend no-print" }, /* @__PURE__ */ React.createElement("div", { className: "legend-title" }, /* @__PURE__ */ React.createElement("span", null, "Leyenda"), /* @__PURE__ */ React.createElement("span", null, activeHabits.length, " activos")), isInherited && /* @__PURE__ */ React.createElement("div", { className: "legend-inherit", onClick: onEditHabits, role: "button", title: "Personalizar h\xE1bitos para este mes" }, /* @__PURE__ */ React.createElement("span", null, "Heredados del mes anterior. ", /* @__PURE__ */ React.createElement("u", null, "Editar para ", MONTH_NAMES[month0]))), /* @__PURE__ */ React.createElement("ul", { className: "legend-list" }, habits.map((h, i) => {
     const active = !!(h && h.trim());
     const habitDone = activeHabits.includes(i) ? Object.entries(marks).filter(([k, v]) => v === "done" && k.startsWith(`${i}_`)).length : 0;
     return /* @__PURE__ */ React.createElement("li", { key: i, className: "legend-item" + (active ? "" : " inactive") }, /* @__PURE__ */ React.createElement("span", { className: "ring-no" }, i + 1), /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("span", { className: "ring-dot", style: { background: window.RING_TINTS[i] } }), /* @__PURE__ */ React.createElement("span", { className: "legend-name" + (active ? "" : " placeholder") }, active ? h : "\u2014")), /* @__PURE__ */ React.createElement("span", { className: "legend-prog" }, active ? `${habitDone}/${dim}` : "\u2014"));
@@ -639,6 +928,6 @@ function MainScreen({ state, setState, onEditHabits, onChangeMonth, onReset }) {
       onChange: (e) => setObservations(e.target.value),
       placeholder: "Qu\xE9 aprend\xED este mes\u2026"
     }
-  )))), /* @__PURE__ */ React.createElement("div", { className: "motiv" }, "Haz hoy lo que otros no est\xE1n dispuestos a hacer, para vivir ma\xF1ana como otros nunca podr\xE1n."));
+  )))), tab === "checklists" && /* @__PURE__ */ React.createElement(ChecklistsView, { checklists, setChecklists }), tab === "rueda" && /* @__PURE__ */ React.createElement("div", { className: "motiv" }, "Haz hoy lo que otros no est\xE1n dispuestos a hacer, para vivir ma\xF1ana como otros nunca podr\xE1n."));
 }
 ReactDOM.createRoot(document.getElementById("root")).render(/* @__PURE__ */ React.createElement(App, null));

@@ -37,6 +37,8 @@
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="/lz-string.min.js"></script>
+<script src="/zonga-storage.js"></script>
 </head>
 <body>
 <div id="root"></div>
@@ -48,17 +50,22 @@ const STREAKS_KEY = 'diario_streaks_v2';
 const LETTERS_KEY = 'diario_letters_v2';
 const OBJECTIVES_KEY = 'diario_objectives_v2';
 
-function loadData(key, fallback) { try { return JSON.parse(localStorage.getItem(key)) || fallback; } catch { return fallback; } }
+function loadData(key, fallback) {
+  try {
+    const raw = window.ZongaLS ? ZongaLS.load(key) : localStorage.getItem(key);
+    return JSON.parse(raw) || fallback;
+  } catch { return fallback; }
+}
 let __saveWarned = false;
 function saveData(key, val) {
-  try {
-    localStorage.setItem(key, JSON.stringify(val));
-  } catch (err) {
-    console.error('[diario] No se pudo guardar', key, err);
-    if (!__saveWarned) {
-      __saveWarned = true;
-      alert('No se ha podido guardar la entrada porque el almacenamiento local está lleno. Quita alguna foto/vídeo o elimina entradas antiguas para liberar espacio.');
-    }
+  // ZongaLS comprime el texto (~7-10x) y avisa si la cuota sigue llena.
+  const ok = window.ZongaLS
+    ? ZongaLS.save(key, JSON.stringify(val))
+    : (() => { try { localStorage.setItem(key, JSON.stringify(val)); return true; } catch { return false; } })();
+  if (!ok && !__saveWarned) {
+    __saveWarned = true;
+    console.error('[diario] No se pudo guardar', key);
+    alert('No se ha podido guardar la entrada porque el almacenamiento local está lleno. Quita alguna foto/vídeo o elimina entradas antiguas para liberar espacio.');
   }
 }
 

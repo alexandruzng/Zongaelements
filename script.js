@@ -7,6 +7,12 @@
    - Año dinámico en el footer
    ============================================ */
 
+/* Lectura de claves que otras herramientas ahora guardan comprimidas (ZongaLS).
+   Compatible con datos antiguos sin comprimir. */
+function readLS(key) {
+  return window.ZongaLS ? ZongaLS.load(key) : localStorage.getItem(key);
+}
+
 /* ----- Categorías ----- */
 /* Cada herramienta pertenece a una categoría. Los chips se renderizan en orden. */
 const categories = [
@@ -431,8 +437,8 @@ const DIARIO_STREAKS_KEY = 'diario_streaks_v2';
 
 function loadDiaryStreaks() {
   try {
-    const streaks = JSON.parse(localStorage.getItem(DIARIO_STREAKS_KEY) || '[]');
-    const entries = JSON.parse(localStorage.getItem(DIARIO_ENTRIES_KEY) || '{}');
+    const streaks = JSON.parse(readLS(DIARIO_STREAKS_KEY) || '[]');
+    const entries = JSON.parse(readLS(DIARIO_ENTRIES_KEY) || '{}');
     if (!Array.isArray(streaks) || !streaks.length) return [];
     const todayKey = new Date().toISOString().slice(0, 10);
     return streaks.map(s => {
@@ -454,7 +460,7 @@ const FZ_GOALS_KEY = 'fz:goals';
 
 function loadFinanceGoals() {
   try {
-    const raw = localStorage.getItem(FZ_GOALS_KEY);
+    const raw = readLS(FZ_GOALS_KEY);
     if (!raw) return [];
     const arr = JSON.parse(raw);
     return Array.isArray(arr) ? arr : [];

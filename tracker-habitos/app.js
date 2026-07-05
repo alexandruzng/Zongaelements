@@ -307,7 +307,7 @@ function daysInMonth(year, month0) {
 }
 function loadState() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = window.ZongaLS ? ZongaLS.load(STORAGE_KEY) : localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     return JSON.parse(raw);
   } catch (e) {
@@ -315,10 +315,10 @@ function loadState() {
   }
 }
 function saveState(s) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
-  } catch (e) {
-  }
+  const json = JSON.stringify(s);
+  // ZongaLS comprime y avisa si la cuota está llena en vez de perder datos en silencio.
+  if (window.ZongaLS) { ZongaLS.save(STORAGE_KEY, json); return; }
+  try { localStorage.setItem(STORAGE_KEY, json); } catch (e) {}
 }
 function defaultState() {
   const now = /* @__PURE__ */ new Date();

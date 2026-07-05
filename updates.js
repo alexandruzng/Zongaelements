@@ -5,6 +5,14 @@
 */
 const UPDATES = [
   {
+    id: '2026-07-05-guardado-movil',
+    title: 'Diario, Tracker y Finanzas: se acabó que no se guardara en el móvil',
+    items: [
+      'Si escribías en el Diario, marcabas casillas del Tracker de hábitos o metías movimientos en el Gestor de finanzas y al refrescar no quedaba nada (sobre todo en el móvil), ya está arreglado de raíz. Todas las herramientas comparten un mismo espacio de almacenamiento del navegador y en el móvil ese espacio es más pequeño; cuando se llenaba, el guardado fallaba en silencio y perdías lo que acababas de hacer. Ahora estas tres herramientas comprimen tus datos antes de guardarlos (ocupan varias veces menos, sin que notes nada) y, además, al abrir cualquier herramienta se libera espacio comprimiendo lo que ya tenías guardado. Tus datos actuales se conservan tal cual y no tienes que hacer nada.',
+      'Y si aun así el almacenamiento se llenara del todo, ahora te avisa con una banda roja arriba en vez de fingir que se guardó, para que sepas que debes liberar espacio (por ejemplo borrando fotos o entradas antiguas del Diario).',
+    ],
+  },
+  {
     id: '2026-06-16-tracker-checklists',
     title: 'Tracker de hábitos: nueva pestaña de Checklists',
     items: [

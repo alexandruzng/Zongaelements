@@ -55,23 +55,31 @@ function App() {
   useE(() => {document.documentElement.setAttribute('data-theme', theme);localStorage.setItem('fz:theme', theme);}, [theme]);
 
   // Data state (persisted)
+  // lee: ZongaLS descomprime y es compatible con datos antiguos sin comprimir.
+  const readLS = (key) => (window.ZongaLS ? ZongaLS.load(key) : localStorage.getItem(key));
+  // escribe: comprime y avisa si la cuota está llena en vez de perder datos en silencio.
+  const writeLS = (key, val) => {
+    const json = JSON.stringify(val);
+    if (window.ZongaLS) { ZongaLS.save(key, json); return; }
+    try { localStorage.setItem(key, json); } catch (e) {}
+  };
   const [transactions, setTransactions] = useS(() => {
     try {
-      const raw = localStorage.getItem('fz:transactions');
+      const raw = readLS('fz:transactions');
       if (raw) return JSON.parse(raw);
     } catch (e) {}
     return A_FD.SEED_TX;
   });
   const [goals, setGoals] = useS(() => {
     try {
-      const raw = localStorage.getItem('fz:goals');
+      const raw = readLS('fz:goals');
       if (raw) return JSON.parse(raw);
     } catch (e) {}
     return A_FD.GOALS_SEED;
   });
   const [budgets, setBudgets] = useS(() => {
     try {
-      const raw = localStorage.getItem('fz:budgets');
+      const raw = readLS('fz:budgets');
       if (raw) return JSON.parse(raw);
     } catch (e) {}
     return A_FD.BUDGETS_SEED;
@@ -80,7 +88,7 @@ function App() {
   // Categorías personalizadas (key, label, color, icon, type: 'expense'|'income', custom: true)
   const [customCats, setCustomCats] = useS(() => {
     try {
-      const raw = localStorage.getItem('fz:categories');
+      const raw = readLS('fz:categories');
       if (raw) return JSON.parse(raw);
     } catch (e) {}
     return [];
@@ -89,7 +97,7 @@ function App() {
   // Overrides para categorías built-in: { food: { label, color, icon }, ... }
   const [categoryOverrides, setCategoryOverrides] = useS(() => {
     try {
-      const raw = localStorage.getItem('fz:categoryOverrides');
+      const raw = readLS('fz:categoryOverrides');
       if (raw) return JSON.parse(raw);
     } catch (e) {}
     return {};
@@ -108,8 +116,8 @@ function App() {
 
   useE(() => {
     rebuildCategories();
-    try { localStorage.setItem('fz:categories', JSON.stringify(customCats)); } catch (e) {}
-    try { localStorage.setItem('fz:categoryOverrides', JSON.stringify(categoryOverrides)); } catch (e) {}
+    writeLS('fz:categories', customCats);
+    writeLS('fz:categoryOverrides', categoryOverrides);
   }, [customCats, categoryOverrides]);
 
   const addCategory = (cat) => setCustomCats(prev => [...prev, cat]);
@@ -130,9 +138,9 @@ function App() {
     });
   };
 
-  useE(() => { try { localStorage.setItem('fz:transactions', JSON.stringify(transactions)); } catch(e) {} }, [transactions]);
-  useE(() => { try { localStorage.setItem('fz:goals', JSON.stringify(goals)); } catch(e) {} }, [goals]);
-  useE(() => { try { localStorage.setItem('fz:budgets', JSON.stringify(budgets)); } catch(e) {} }, [budgets]);
+  useE(() => { writeLS('fz:transactions', transactions); }, [transactions]);
+  useE(() => { writeLS('fz:goals', goals); }, [goals]);
+  useE(() => { writeLS('fz:budgets', budgets); }, [budgets]);
 
   // UI state
   const [view, setView] = useS(localStorage.getItem('fz:view') || 'dashboard');

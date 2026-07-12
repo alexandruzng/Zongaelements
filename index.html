@@ -479,7 +479,6 @@
       </a>
 
       <nav class="nav-links" aria-label="Navegación principal">
-        <a href="#cockpit">Cockpit</a>
         <a href="#herramientas">Herramientas</a>
         <a href="#guarda-info">Backup</a>
       </nav>
@@ -494,134 +493,9 @@
 
   <main>
 
-    <!-- ======= COCKPIT ======= -->
-    <section class="cockpit" id="cockpit" aria-label="Tu panel de control">
-      <div class="cockpit-bg" aria-hidden="true"></div>
-      <div class="cockpit-grain" aria-hidden="true"></div>
-
-      <!-- Gradientes y filtros globales para sparklines -->
-      <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-        <defs>
-          <linearGradient id="ckSparkFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"   stop-color="#2563EB" stop-opacity="0.28"/>
-            <stop offset="60%"  stop-color="#2563EB" stop-opacity="0.08"/>
-            <stop offset="100%" stop-color="#2563EB" stop-opacity="0"/>
-          </linearGradient>
-          <linearGradient id="ckSparkFillDown" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"   stop-color="#EF4444" stop-opacity="0.24"/>
-            <stop offset="60%"  stop-color="#EF4444" stop-opacity="0.06"/>
-            <stop offset="100%" stop-color="#EF4444" stop-opacity="0"/>
-          </linearGradient>
-          <linearGradient id="ckSparkStroke" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%"   stop-color="#60A5FA"/>
-            <stop offset="100%" stop-color="#2563EB"/>
-          </linearGradient>
-          <linearGradient id="ckSparkStrokeDown" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%"   stop-color="#F87171"/>
-            <stop offset="100%" stop-color="#DC2626"/>
-          </linearGradient>
-          <filter id="ckSparkShadow" x="-20%" y="-50%" width="140%" height="200%">
-            <feGaussianBlur in="SourceAlpha" stdDeviation="1.2"/>
-            <feOffset dy="2" result="off"/>
-            <feComponentTransfer><feFuncA type="linear" slope="0.35"/></feComponentTransfer>
-            <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
-          </filter>
-        </defs>
-      </svg>
-
-      <div class="container cockpit-inner">
-
-        <!-- 1. Saludo personal -->
-        <header class="ck-welcome cockpit-enter" style="--delay:0ms">
-          <div class="ck-welcome-text">
-            <div class="ck-greet-row">
-              <h1 class="ck-greet" id="ckGreet">Buenos días, Zonga</h1>
-              <span class="ck-time-icon" id="ckTimeIcon" aria-hidden="true"></span>
-            </div>
-            <p class="ck-date" id="ckDate">—</p>
-            <p class="ck-context" id="ckContext">—</p>
-          </div>
-        </header>
-
-        <!-- 2. Stats vivas -->
-        <div class="ck-stats" id="ckStats" aria-label="Indicadores clave">
-          <!-- renderizadas en JS -->
-        </div>
-
-        <!-- 3 + 4. Producto activo + Objetivo -->
-        <div class="ck-board">
-          <article class="ck-card ck-product cockpit-enter" style="--delay:500ms" id="ckProductCard">
-            <div class="ck-card-head">
-              <span class="ck-eyebrow">Producto activo en testeo</span>
-              <div class="ck-switcher" id="ckSwitcher" hidden>
-                <button class="ck-sw-btn" id="ckProductPrev" aria-label="Producto anterior" type="button">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-                </button>
-                <span class="ck-sw-idx" id="ckProductIdx">1 / 1</span>
-                <button class="ck-sw-btn" id="ckProductNext" aria-label="Siguiente producto" type="button">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-                </button>
-              </div>
-              <span class="ck-status-pill" id="ckStatusPill"><span class="ck-status-dot"></span> En curso</span>
-            </div>
-
-            <div class="ck-product-main">
-              <div class="ck-product-emoji" id="ckProductEmoji">🐾</div>
-              <div class="ck-product-meta">
-                <h2 class="ck-product-name" id="ckProductName">—</h2>
-                <p class="ck-product-sub" id="ckProductSub">—</p>
-              </div>
-            </div>
-
-            <div class="ck-days" id="ckDays" aria-label="Progreso del test de 14 días">
-              <!-- renderizado en JS -->
-            </div>
-
-            <div class="ck-product-stats">
-              <div><strong id="ckPDaysLeft">—</strong><span>días restantes</span></div>
-              <div><strong id="ckPCuentas">—</strong><span>cuentas activas</span></div>
-              <div><strong id="ckPViews">—</strong><span>vistas acumuladas</span></div>
-            </div>
-
-            <a class="ck-product-link" href="Product Hub/Product Hub.html">
-              Abrir Product Hub
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-            </a>
-          </article>
-
-          <article class="ck-card ck-goal cockpit-enter" style="--delay:700ms">
-            <span class="ck-eyebrow">Próximo objetivo</span>
-
-            <div class="ck-goal-ring-wrap">
-              <svg class="ck-goal-ring" viewBox="0 0 120 120" aria-hidden="true">
-                <circle class="ck-goal-track" cx="60" cy="60" r="52"></circle>
-                <circle class="ck-goal-fill" id="ckGoalFill" cx="60" cy="60" r="52"></circle>
-              </svg>
-              <div class="ck-goal-center">
-                <span class="ck-goal-pct" id="ckGoalPct">0%</span>
-                <span class="ck-goal-mini">completado</span>
-              </div>
-            </div>
-
-            <div class="ck-goal-body">
-              <p class="ck-goal-title" id="ckGoalTitle">—</p>
-              <p class="ck-goal-sub" id="ckGoalSub">—</p>
-            </div>
-          </article>
-        </div>
-
-      </div>
-    </section>
-
     <!-- ======= HERRAMIENTAS ======= -->
     <section class="section section-tools" id="herramientas">
       <div class="container">
-        <div class="section-head section-head-left reveal">
-          <span class="eyebrow">Herramientas</span>
-          <h2>Tu arsenal</h2>
-          <p>Cada pieza resuelve una parte del flujo. Abre la que necesites, haz el trabajo y sigue.</p>
-        </div>
-
         <div class="tools-toolbar reveal">
           <div class="tools-search">
             <svg class="tools-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">

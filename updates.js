@@ -5,6 +5,13 @@
 */
 const UPDATES = [
   {
+    id: '2026-07-12-inicio-limpio',
+    title: 'Inicio más limpio: directo a las herramientas',
+    items: [
+      'La página de inicio ya no muestra el panel de bienvenida con el saludo, las métricas del test (revenue, pedidos, vistas, racha), el producto activo en testeo ni el próximo objetivo. Al entrar vas directamente a tus herramientas, sin ruido de por medio. No se ha borrado nada de tus herramientas: el Product Hub y el resto siguen igual, con sus datos intactos; solo se ha quitado ese panel visual de la portada.',
+    ],
+  },
+  {
     id: '2026-07-05-guardado-movil',
     title: 'Diario, Tracker y Finanzas: se acabó que no se guardara en el móvil',
     items: [

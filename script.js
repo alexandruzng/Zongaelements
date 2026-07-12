@@ -1173,7 +1173,6 @@ function setYear() {
 
 /* ----- Init ----- */
 document.addEventListener('DOMContentLoaded', () => {
-  renderCockpit();
   renderCategoryChips();
   renderTools();
   renderToolsCount();

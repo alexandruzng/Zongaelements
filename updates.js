@@ -5,6 +5,13 @@
 */
 const UPDATES = [
   {
+    id: '2026-07-12-calculadora-kpi-ads',
+    title: 'Nueva herramienta en Ads: Calculadora de KPIs',
+    items: [
+      'La sección «Ads» estrena su primera herramienta: una Calculadora de KPIs que reproduce exactamente tu hoja de cálculo. Rellenas AOV, comisiones de pasarela, COGS, objetivo de beneficio y las tasas del embudo (view content, carrito, checkout, conversión) y te calcula al instante, en dos escenarios (Breakeven y Objetivo), tus costes máximos por compra (CPP), por inicio de checkout (CPIC), por añadido al carrito (CPATC) y por view content (CPVC), además del ROAS. Incluye una vista visual del embudo y el resumen de gastos del negocio. Las fórmulas son idénticas a las de tu Excel (no se ha cambiado ningún cálculo) y todo ocurre en tu navegador; tus últimos números se recuerdan para la próxima vez. Ábrela desde la pestaña «Ads».',
+    ],
+  },
+  {
     id: '2026-07-12-ads-tema-rojo',
     title: 'Sección Ads con identidad propia (en rojo)',
     items: [

@@ -247,6 +247,19 @@ const tools = [
   }
 ];
 
+/* ----- Catálogo de herramientas de Ads ----- */
+/* Sección independiente (pestaña "Ads"). Misma estructura que `tools`. */
+const adsTools = [
+  {
+    id: 'calc-kpi-ads',
+    name: 'Calculadora de KPIs para Ads',
+    description: 'Calcula tus KPIs de breakeven y de objetivo (CPP, CPIC, CPATC, CPVC y ROAS) a partir del AOV, comisiones, COGS, embudo de conversión y objetivo de beneficio. Réplica exacta de tu hoja de cálculo, en tiempo real.',
+    url: 'calculadora-kpi-ads/index.html',
+    status: 'available',
+    icon: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="8" y2="10"/><line x1="12" y1="10" x2="12" y2="10"/><line x1="16" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="8" y2="14"/><line x1="12" y1="14" x2="12" y2="14"/><line x1="16" y1="14" x2="16" y2="18"/><line x1="8" y1="18" x2="12" y2="18"/></svg>`
+  }
+];
+
 /* ----- Estado de filtros ----- */
 let activeCategory = 'all';
 let searchQuery = '';
@@ -1096,6 +1109,50 @@ function renderCockpit() {
   watchUserName();
 }
 
+/* ----- Render de tarjetas de la pestaña Ads ----- */
+function renderAdsTools() {
+  const grid = document.getElementById('adsGrid');
+  if (!grid) return;
+  const lastUsed = readLastUsed();
+
+  grid.innerHTML = adsTools.map((t, idx) => {
+    const isSoon = t.status === 'coming-soon';
+    const isExternal = !isSoon && /^https?:\/\//.test(t.url);
+    const linkText = isSoon ? 'Próximamente' : 'Abrir';
+    const linkAttrs = isSoon
+      ? 'aria-disabled="true"'
+      : (isExternal ? 'target="_blank" rel="noopener noreferrer"' : '');
+
+    let metaHTML = '';
+    if (!isSoon) {
+      const used = formatLastUsed(lastUsed[t.id]);
+      metaHTML = used
+        ? `<span class="tool-meta">${used}</span>`
+        : `<span class="tool-meta is-pending">Sin abrir aún</span>`;
+    }
+
+    const delay = Math.min(idx * 50, 600);
+    return `
+      <article class="tool-card cockpit-enter ${isSoon ? 'is-soon' : ''}" style="--delay:${delay}ms" data-tool-id="${t.id}">
+        <div class="tool-icon" aria-hidden="true">${t.icon}</div>
+        <h3>${t.name}</h3>
+        <p>${t.description}</p>
+        ${metaHTML}
+        <a class="tool-link" href="${t.url}" ${linkAttrs} data-tool-link="${t.id}">
+          ${linkText} <span aria-hidden="true">→</span>
+        </a>
+      </article>
+    `;
+  }).join('');
+
+  grid.querySelectorAll('a[data-tool-link]').forEach(a => {
+    a.addEventListener('click', () => {
+      const id = a.getAttribute('data-tool-link');
+      if (id) markToolUsed(id);
+    });
+  });
+}
+
 /* ----- Contador de herramientas activas (compat con cualquier otro contador) ----- */
 function renderToolsCount() {
   const el = document.getElementById('toolsCount');
@@ -1223,6 +1280,7 @@ function setYear() {
 document.addEventListener('DOMContentLoaded', () => {
   renderCategoryChips();
   renderTools();
+  renderAdsTools();
   renderToolsCount();
   renderFooterLinks();
   initToolsSearch();

@@ -5,6 +5,13 @@
 */
 const UPDATES = [
   {
+    id: '2026-07-12-tracker-beneficio-ads',
+    title: 'Nueva herramienta en Ads: Tracker de beneficio diario',
+    items: [
+      'La sección Ads suma una segunda herramienta que reproduce tu hoja de seguimiento diario. Apuntas cada día tus ganancias y tus costes de producto y de ads, y te calcula automáticamente la comisión (7% por defecto, editable), los costes totales, el beneficio, el margen y el beneficio acumulado. Incluye tarjetas de resumen (ganancias, costes, beneficio, margen y días), un gráfico de evolución del beneficio acumulado y un selector de moneda (EUR por defecto). Puedes añadir y borrar días libremente y todo se guarda en tu navegador. Ábrela desde la pestaña «Ads».',
+    ],
+  },
+  {
     id: '2026-07-12-calc-kpi-editable-moneda',
     title: 'Calculadora de KPIs: KPIs editables y selector de moneda',
     items: [

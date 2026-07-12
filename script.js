@@ -257,6 +257,14 @@ const adsTools = [
     url: 'calculadora-kpi-ads/index.html',
     status: 'available',
     icon: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="8" y2="10"/><line x1="12" y1="10" x2="12" y2="10"/><line x1="16" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="8" y2="14"/><line x1="12" y1="14" x2="12" y2="14"/><line x1="16" y1="14" x2="16" y2="18"/><line x1="8" y1="18" x2="12" y2="18"/></svg>`
+  },
+  {
+    id: 'tracker-beneficio-ads',
+    name: 'Tracker de beneficio diario',
+    description: 'Registra día a día tus ganancias y tus costes de producto y de ads. Calcula sola la comisión, los costes, el beneficio, el margen y el beneficio acumulado, con gráfico de evolución. Réplica de tu hoja de seguimiento.',
+    url: 'tracker-beneficio-ads/index.html',
+    status: 'available',
+    icon: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="21" x2="21" y2="21"/><rect x="5" y="12" width="3.5" height="7"/><rect x="10.25" y="8" width="3.5" height="11"/><rect x="15.5" y="4" width="3.5" height="15"/></svg>`
   }
 ];
 

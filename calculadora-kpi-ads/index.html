@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Calculadora de KPIs para Ads · Zonga Elements</title>
-  <meta name="description" content="Calcula tus KPIs de breakeven y objetivo para campañas de ads: CPP, CPIC, CPATC, CPVC y ROAS, en tiempo real." />
+  <meta name="description" content="Calcula tus KPIs de breakeven y objetivo para campañas de ads: CPP, CPIC, CPATC, CPVC y ROAS, en tiempo real y editables." />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -82,7 +82,7 @@
       display: flex; align-items: center; justify-content: space-between;
       height: 62px; gap: 12px;
     }
-    .brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 700; }
+    .brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 700; text-decoration: none; color: inherit; }
     .brand .logo-badge {
       width: 30px; height: 30px; border-radius: 9px;
       background: linear-gradient(135deg, var(--c-primary) 0%, var(--c-primary-100) 100%);
@@ -191,6 +191,20 @@
 
     .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
+    /* ---------- Selector de moneda ---------- */
+    .cur-switch { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .cur-switch button {
+      padding: 9px 6px; border-radius: var(--radius-sm);
+      border: 1px solid var(--c-border); background: var(--c-bg-alt);
+      font-size: 13px; font-weight: 600; color: var(--c-text-soft);
+      transition: background var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease), transform var(--dur) var(--ease);
+    }
+    .cur-switch button:hover { border-color: var(--c-primary-100); color: var(--c-primary); }
+    .cur-switch button.is-active {
+      background: var(--c-primary); border-color: var(--c-primary); color: #fff;
+      box-shadow: var(--shadow-sm);
+    }
+
     /* ---------- Resultados ---------- */
     .results { display: flex; flex-direction: column; gap: 24px; }
 
@@ -222,6 +236,15 @@
     }
     .funnel-note strong { font-weight: 700; }
 
+    /* Aviso de que los KPIs son editables */
+    .edit-hint {
+      display: flex; align-items: center; gap: 9px;
+      font-size: 12.5px; color: var(--c-text-soft); line-height: 1.4;
+      margin: -4px 2px 0;
+    }
+    .edit-hint svg { color: var(--c-primary); flex: none; }
+    .edit-hint strong { color: var(--c-text); font-weight: 700; }
+
     /* Escenarios */
     .scenarios { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
     @media (max-width: 620px) { .scenarios { grid-template-columns: 1fr; } }
@@ -238,32 +261,60 @@
     }
     .scn-tag .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
     .scn-cpp-label { font-size: 12px; color: var(--c-text-soft); font-weight: 500; }
-    .scn-cpp { font-size: 34px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; margin-top: 2px; }
-    .scn-sub { font-size: 12px; color: var(--c-text-soft); margin-top: 4px; }
+    .scn-sub { font-size: 12px; color: var(--c-text-soft); margin-top: 6px; }
 
     .scn.breakeven .scn-tag { background: var(--c-amber-soft); color: var(--c-amber); }
-    .scn.breakeven .scn-cpp { color: var(--c-amber); }
     .scn.objetivo .scn-tag { background: var(--c-green-soft); color: var(--c-green); }
-    .scn.objetivo .scn-cpp { color: var(--c-green); }
 
     .scn-rows { padding: 8px 20px 12px; }
     .scn-row {
       display: flex; align-items: center; justify-content: space-between; gap: 10px;
-      padding: 11px 0; border-bottom: 1px solid var(--c-border);
+      padding: 10px 0; border-bottom: 1px solid var(--c-border);
     }
     .scn-row:last-child { border-bottom: 0; }
     .scn-row .k { font-size: 12.5px; color: var(--c-text-soft); font-weight: 500; }
     .scn-row .k b { display: block; color: var(--c-text); font-weight: 600; font-size: 13px; }
-    .scn-row .v { font-size: 16px; font-weight: 700; color: var(--c-text); white-space: nowrap; }
 
     .scn-foot {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 15px 20px; background: var(--c-bg-alt); border-top: 1px solid var(--c-border);
+      padding: 14px 20px; background: var(--c-bg-alt); border-top: 1px solid var(--c-border);
     }
     .scn-foot .lbl { font-size: 12px; font-weight: 600; color: var(--c-text-soft); }
-    .scn-foot .roas { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
-    .scn.breakeven .scn-foot .roas { color: var(--c-amber); }
-    .scn.objetivo .scn-foot .roas { color: var(--c-green); }
+
+    /* Campos KPI editables */
+    .kpi-wrap {
+      display: flex; align-items: center;
+      border: 1px solid var(--c-border); border-radius: var(--radius-sm);
+      background: #fff; overflow: hidden;
+      transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+    }
+    .kpi-wrap .unit { padding: 0 9px; font-size: 13px; font-weight: 600; color: var(--c-text-soft); white-space: nowrap; user-select: none; }
+    .kpi-wrap .unit.left { border-right: 1px solid var(--c-border); }
+    .kpi-wrap .unit.right { border-left: 1px solid var(--c-border); }
+    .kpi-wrap input {
+      flex: 1; width: 100%; min-width: 0;
+      border: 0; outline: 0; background: transparent;
+      text-align: right; padding: 9px 10px;
+      font-size: 15px; font-weight: 700; color: var(--c-text);
+      -moz-appearance: textfield;
+    }
+    .kpi-wrap input::-webkit-outer-spin-button,
+    .kpi-wrap input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+    .kpi-wrap.big { margin-top: 6px; }
+    .kpi-wrap.big input { font-size: 30px; font-weight: 800; letter-spacing: -0.02em; padding: 8px 12px; }
+    .kpi-wrap.big .unit { font-size: 20px; }
+
+    .scn-row .kpi-wrap { width: 122px; flex: none; }
+    .scn-foot .kpi-wrap { width: 104px; flex: none; }
+
+    /* Colores por escenario */
+    .scn.breakeven .kpi-wrap:focus-within { border-color: var(--c-amber); box-shadow: 0 0 0 3px var(--c-amber-soft); }
+    .scn.objetivo  .kpi-wrap:focus-within { border-color: var(--c-green); box-shadow: 0 0 0 3px var(--c-green-soft); }
+    .scn.breakeven .kpi-wrap.big input,
+    .scn.breakeven .scn-foot .kpi-wrap input { color: var(--c-amber); }
+    .scn.objetivo  .kpi-wrap.big input,
+    .scn.objetivo  .scn-foot .kpi-wrap input { color: var(--c-green); }
 
     /* Gastos referencia */
     .ref-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
@@ -307,7 +358,7 @@
     <div class="head">
       <span class="eyebrow"><span class="dot"></span> Calculadora de Ads</span>
       <h1>KPIs de Breakeven &amp; Objetivo</h1>
-      <p>Rellena tus números y obtén al instante cuánto puedes pagar por cada evento del embudo para no perder dinero (breakeven) y para alcanzar tu objetivo de beneficio.</p>
+      <p>Rellena tus números y obtén al instante cuánto puedes pagar por cada evento del embudo para no perder dinero (breakeven) y para alcanzar tu objetivo de beneficio. Los KPIs son editables.</p>
     </div>
 
     <div class="layout">
@@ -324,10 +375,20 @@
         <div class="card-body">
 
           <div class="group">
+            <div class="group-title">Moneda</div>
+            <div class="cur-switch" role="group" aria-label="Elegir moneda">
+              <button type="button" data-cur="EUR">€ EUR</button>
+              <button type="button" data-cur="USD">$ USD</button>
+              <button type="button" data-cur="GBP">£ GBP</button>
+              <button type="button" data-cur="RON">RON</button>
+            </div>
+          </div>
+
+          <div class="group">
             <div class="group-title">Datos del pedido</div>
             <div class="field">
               <label for="aov">Valor promedio del pedido (AOV)</label>
-              <div class="input-wrap"><span class="unit left">$</span><input type="number" id="aov" step="0.01" min="0" inputmode="decimal"></div>
+              <div class="input-wrap"><span class="unit left cur">€</span><input type="number" id="aov" step="0.01" min="0" inputmode="decimal"></div>
             </div>
             <div class="field">
               <label for="com">Comisiones de pasarelas de pago</label>
@@ -335,7 +396,7 @@
             </div>
             <div class="field">
               <label for="cogs">Coste promedio del pedido (COGS, envío incl.)</label>
-              <div class="input-wrap"><span class="unit left">$</span><input type="number" id="cogs" step="0.01" min="0" inputmode="decimal"></div>
+              <div class="input-wrap"><span class="unit left cur">€</span><input type="number" id="cogs" step="0.01" min="0" inputmode="decimal"></div>
             </div>
             <div class="field">
               <label for="profit">Objetivo de beneficio</label>
@@ -362,41 +423,27 @@
           </div>
 
           <div class="group">
-            <div class="group-title">Conversión de moneda (Ad Acc no USD)</div>
-            <div class="field-grid">
-              <div class="field">
-                <label for="fx">1 USD equivale a</label>
-                <div class="input-wrap"><input type="number" id="fx" step="0.0001" min="0" inputmode="decimal"></div>
-              </div>
-              <div class="field">
-                <label for="sym">Símbolo de moneda</label>
-                <div class="input-wrap"><input type="text" id="sym" maxlength="4"></div>
-              </div>
-            </div>
-          </div>
-
-          <div class="group">
             <div class="group-title">Gastos mensuales del negocio</div>
             <div class="field-grid">
               <div class="field">
                 <label for="shopify">Shopify</label>
-                <div class="input-wrap"><input type="number" id="shopify" step="0.01" min="0" inputmode="decimal"></div>
+                <div class="input-wrap"><span class="unit left cur">€</span><input type="number" id="shopify" step="0.01" min="0" inputmode="decimal"></div>
               </div>
               <div class="field">
                 <label for="apps">Apps</label>
-                <div class="input-wrap"><input type="number" id="apps" step="0.01" min="0" inputmode="decimal"></div>
+                <div class="input-wrap"><span class="unit left cur">€</span><input type="number" id="apps" step="0.01" min="0" inputmode="decimal"></div>
               </div>
               <div class="field">
                 <label for="trabajadores">Trabajadores</label>
-                <div class="input-wrap"><input type="number" id="trabajadores" step="0.01" min="0" inputmode="decimal"></div>
+                <div class="input-wrap"><span class="unit left cur">€</span><input type="number" id="trabajadores" step="0.01" min="0" inputmode="decimal"></div>
               </div>
               <div class="field">
                 <label for="software">Software</label>
-                <div class="input-wrap"><input type="number" id="software" step="0.01" min="0" inputmode="decimal"></div>
+                <div class="input-wrap"><span class="unit left cur">€</span><input type="number" id="software" step="0.01" min="0" inputmode="decimal"></div>
               </div>
               <div class="field">
                 <label for="otros">Otros</label>
-                <div class="input-wrap"><input type="number" id="otros" step="0.01" min="0" inputmode="decimal"></div>
+                <div class="input-wrap"><span class="unit left cur">€</span><input type="number" id="otros" step="0.01" min="0" inputmode="decimal"></div>
               </div>
             </div>
           </div>
@@ -433,37 +480,42 @@
           </div>
         </div>
 
-        <!-- Escenarios -->
+        <!-- Escenarios (editables) -->
+        <p class="edit-hint">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+          <span>Se calculan solos a partir de tus datos, pero puedes <strong>editar cada KPI a tu gusto</strong>.</span>
+        </p>
+
         <div class="scenarios">
 
           <div class="scn breakeven">
             <div class="scn-head">
               <span class="scn-tag"><span class="dot"></span> Breakeven</span>
               <div class="scn-cpp-label">Coste máx. por compra (CPP)</div>
-              <div class="scn-cpp" id="beCPP">—</div>
+              <div class="kpi-wrap big"><span class="unit left cur">€</span><input type="number" id="beCPP" step="0.01" inputmode="decimal"></div>
               <div class="scn-sub">Ni beneficio ni pérdidas</div>
             </div>
             <div class="scn-rows">
-              <div class="scn-row"><span class="k">Cost per Initiate Checkout <b>CPIC</b></span><span class="v" id="beCPIC">—</span></div>
-              <div class="scn-row"><span class="k">Cost per Add to Cart <b>CPATC</b></span><span class="v" id="beCPATC">—</span></div>
-              <div class="scn-row"><span class="k">Cost per View Content <b>CPVC</b></span><span class="v" id="beCPVC">—</span></div>
+              <div class="scn-row"><span class="k">Cost per Initiate Checkout <b>CPIC</b></span><div class="kpi-wrap"><span class="unit left cur">€</span><input type="number" id="beCPIC" step="0.01" inputmode="decimal"></div></div>
+              <div class="scn-row"><span class="k">Cost per Add to Cart <b>CPATC</b></span><div class="kpi-wrap"><span class="unit left cur">€</span><input type="number" id="beCPATC" step="0.01" inputmode="decimal"></div></div>
+              <div class="scn-row"><span class="k">Cost per View Content <b>CPVC</b></span><div class="kpi-wrap"><span class="unit left cur">€</span><input type="number" id="beCPVC" step="0.01" inputmode="decimal"></div></div>
             </div>
-            <div class="scn-foot"><span class="lbl">ROAS mínimo</span><span class="roas" id="beROAS">—</span></div>
+            <div class="scn-foot"><span class="lbl">ROAS mínimo</span><div class="kpi-wrap"><input type="number" id="beROAS" step="0.01" inputmode="decimal"><span class="unit right">×</span></div></div>
           </div>
 
           <div class="scn objetivo">
             <div class="scn-head">
               <span class="scn-tag"><span class="dot"></span> Objetivo</span>
               <div class="scn-cpp-label">Coste máx. por compra (CPP)</div>
-              <div class="scn-cpp" id="obCPP">—</div>
+              <div class="kpi-wrap big"><span class="unit left cur">€</span><input type="number" id="obCPP" step="0.01" inputmode="decimal"></div>
               <div class="scn-sub" id="obSub">Con tu beneficio objetivo</div>
             </div>
             <div class="scn-rows">
-              <div class="scn-row"><span class="k">Cost per Initiate Checkout <b>CPIC</b></span><span class="v" id="obCPIC">—</span></div>
-              <div class="scn-row"><span class="k">Cost per Add to Cart <b>CPATC</b></span><span class="v" id="obCPATC">—</span></div>
-              <div class="scn-row"><span class="k">Cost per View Content <b>CPVC</b></span><span class="v" id="obCPVC">—</span></div>
+              <div class="scn-row"><span class="k">Cost per Initiate Checkout <b>CPIC</b></span><div class="kpi-wrap"><span class="unit left cur">€</span><input type="number" id="obCPIC" step="0.01" inputmode="decimal"></div></div>
+              <div class="scn-row"><span class="k">Cost per Add to Cart <b>CPATC</b></span><div class="kpi-wrap"><span class="unit left cur">€</span><input type="number" id="obCPATC" step="0.01" inputmode="decimal"></div></div>
+              <div class="scn-row"><span class="k">Cost per View Content <b>CPVC</b></span><div class="kpi-wrap"><span class="unit left cur">€</span><input type="number" id="obCPVC" step="0.01" inputmode="decimal"></div></div>
             </div>
-            <div class="scn-foot"><span class="lbl">ROAS objetivo</span><span class="roas" id="obROAS">—</span></div>
+            <div class="scn-foot"><span class="lbl">ROAS objetivo</span><div class="kpi-wrap"><input type="number" id="obROAS" step="0.01" inputmode="decimal"><span class="unit right">×</span></div></div>
           </div>
 
         </div>
@@ -496,57 +548,32 @@
       const DEFAULTS = {
         aov: 50, com: 7, cogs: 20, profit: 30,
         atc: 10, ic: 6, cv: 4,
-        fx: 1, sym: '$',
         shopify: 30, apps: 20, trabajadores: 30, software: 0, otros: 0
       };
+      const DRIVER_KEYS = ['aov', 'com', 'cogs', 'profit', 'atc', 'ic', 'cv'];
+      const GASTO_KEYS  = ['shopify', 'apps', 'trabajadores', 'software', 'otros'];
+      const KPI_KEYS    = ['beCPP', 'beCPIC', 'beCPATC', 'beCPVC', 'beROAS',
+                           'obCPP', 'obCPIC', 'obCPATC', 'obCPVC', 'obROAS'];
+      const ALL_NUM = DRIVER_KEYS.concat(GASTO_KEYS, KPI_KEYS);
 
-      const NUM_KEYS = ['aov','com','cogs','profit','atc','ic','cv','fx','shopify','apps','trabajadores','software','otros'];
-      const ALL_KEYS = NUM_KEYS.concat(['sym']);
-      const STORE_KEY = 'zonga_calc_kpi_ads_v1';
+      /* Símbolos de moneda. Por defecto EUR. */
+      const CUR = { EUR: '€', USD: '$', GBP: '£', RON: 'RON' };
+      const STORE_KEY = 'zonga_calc_kpi_ads_v2';
 
       const $ = (id) => document.getElementById(id);
-      const els = {};
-      ALL_KEYS.forEach(k => els[k] = $(k));
+      const el = {};
+      ALL_NUM.forEach(k => el[k] = $(k));
 
-      /* ---------- Persistencia (ligera, solo estos campos) ---------- */
-      function save() {
-        try {
-          const data = {};
-          ALL_KEYS.forEach(k => data[k] = els[k].value);
-          localStorage.setItem(STORE_KEY, JSON.stringify(data));
-        } catch (e) { /* almacenamiento lleno o bloqueado: se ignora */ }
-      }
-      function load() {
-        let saved = null;
-        try { saved = JSON.parse(localStorage.getItem(STORE_KEY) || 'null'); } catch (e) {}
-        ALL_KEYS.forEach(k => {
-          const v = (saved && saved[k] !== undefined && saved[k] !== '') ? saved[k] : DEFAULTS[k];
-          els[k].value = v;
-        });
-      }
+      let currency = 'EUR';
+      function symbol() { return CUR[currency] || '€'; }
 
       /* ---------- Utilidades ---------- */
-      function num(k) {
-        const v = parseFloat(els[k].value);
-        return isFinite(v) ? v : 0;
-      }
-      function fmt(n) {
-        if (!isFinite(n)) return '—';
-        return n.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      }
-      function money(n) {
-        if (!isFinite(n)) return '—';
-        const sym = (els.sym.value || '$').trim() || '$';
-        return sym + fmt(n);
-      }
-      function ratio(n) {
-        if (!isFinite(n)) return '—';
-        return n.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      }
-      function pretty(n) {
-        if (!isFinite(n)) return '—';
-        return n.toLocaleString('es-ES', { maximumFractionDigits: 1 });
-      }
+      function num(k) { const v = parseFloat(el[k].value); return isFinite(v) ? v : 0; }
+      function round2(n) { return Math.round((n + Number.EPSILON) * 100) / 100; }
+      function fmt(n) { return isFinite(n) ? n.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—'; }
+      function money(n) { return isFinite(n) ? symbol() + fmt(n) : '—'; }
+      function pretty(n) { return isFinite(n) ? n.toLocaleString('es-ES', { maximumFractionDigits: 1 }) : '—'; }
+      function setKPI(id, val) { el[id].value = isFinite(val) ? round2(val) : ''; }
 
       /* ---------- KPIs derivados de un CPP (reglas exactas de la hoja) ----------
          CPIC  = CPP × (conversión / checkout)
@@ -554,99 +581,130 @@
          CPVC  = CPP × (conversión / 100)   [view content = 100%]
          ROAS  = AOV / CPP
       */
-      function kpis(cpp, aov, atc, ic, cv, fx) {
+      function kpis(cpp, aov, atc, ic, cv) {
         return {
-          cpp:   cpp * fx,
-          cpic:  ic  > 0 ? cpp * (cv / ic)  * fx : NaN,
-          cpatc: atc > 0 ? cpp * (cv / atc) * fx : NaN,
-          cpvc:  cpp * (cv / 100) * fx,
-          roas:  cpp > 0 ? aov / cpp : NaN
+          cpp: cpp,
+          cpic: ic > 0 ? cpp * (cv / ic) : NaN,
+          cpatc: atc > 0 ? cpp * (cv / atc) : NaN,
+          cpvc: cpp * (cv / 100),
+          roas: cpp > 0 ? aov / cpp : NaN
         };
       }
 
-      /* ---------- Cálculo principal ---------- */
-      function calc() {
-        const aov = num('aov');
-        const com = num('com');
-        const cogs = num('cogs');
-        const profit = num('profit');
-        const atc = num('atc');
-        const ic = num('ic');
-        const cv = num('cv');
-        const fx = num('fx') > 0 ? num('fx') : 1;
+      /* Recalcula y RELLENA los campos KPI editables desde la fórmula */
+      function recomputeKPIs() {
+        const aov = num('aov'), com = num('com'), cogs = num('cogs'), profit = num('profit');
+        const atc = num('atc'), ic = num('ic'), cv = num('cv');
 
-        /* Margen por pedido = breakeven CPP */
-        const beCPP = aov - (com / 100) * aov - cogs;
-        /* Objetivo: reserva profit% del AOV como beneficio */
-        const obCPP = beCPP - (profit / 100) * aov;
+        const beCPP = aov - (com / 100) * aov - cogs;      // margen por pedido
+        const obCPP = beCPP - (profit / 100) * aov;        // reserva profit% del AOV
 
-        const be = kpis(beCPP, aov, atc, ic, cv, fx);
-        const ob = kpis(obCPP, aov, atc, ic, cv, fx);
+        const be = kpis(beCPP, aov, atc, ic, cv);
+        const ob = kpis(obCPP, aov, atc, ic, cv);
 
-        /* Escenario breakeven */
-        $('beCPP').textContent = money(be.cpp);
-        $('beCPIC').textContent = money(be.cpic);
-        $('beCPATC').textContent = money(be.cpatc);
-        $('beCPVC').textContent = money(be.cpvc);
-        $('beROAS').textContent = isFinite(be.roas) ? ratio(be.roas) + '×' : '—';
+        setKPI('beCPP', be.cpp);  setKPI('beCPIC', be.cpic);  setKPI('beCPATC', be.cpatc);  setKPI('beCPVC', be.cpvc);  setKPI('beROAS', be.roas);
+        setKPI('obCPP', ob.cpp);  setKPI('obCPIC', ob.cpic);  setKPI('obCPATC', ob.cpatc);  setKPI('obCPVC', ob.cpvc);  setKPI('obROAS', ob.roas);
+      }
 
-        /* Escenario objetivo */
-        $('obCPP').textContent = money(ob.cpp);
-        $('obCPIC').textContent = money(ob.cpic);
-        $('obCPATC').textContent = money(ob.cpatc);
-        $('obCPVC').textContent = money(ob.cpvc);
-        $('obROAS').textContent = isFinite(ob.roas) ? ratio(ob.roas) + '×' : '—';
-        $('obSub').textContent = 'Con ' + pretty(profit) + '% de beneficio';
+      /* Elementos que dependen de los drivers (no editables) */
+      function renderDerived() {
+        const atc = num('atc'), ic = num('ic'), cv = num('cv'), profit = num('profit');
 
-        /* Embudo (barras + % relativo a view content) */
-        setBar('barVC', 100, 100);
-        setBar('barATC', atc, 100);
-        setBar('barIC', ic, 100);
-        setBar('barCV', cv, 100);
+        setBar('barVC', 100); setBar('barATC', atc); setBar('barIC', ic); setBar('barCV', cv);
 
-        /* Nota: por cada compra necesitas... */
-        const perVC  = cv > 0 ? 100 / cv : NaN;
+        const perVC = cv > 0 ? 100 / cv : NaN;
         const perATC = cv > 0 ? atc / cv : NaN;
-        const perIC  = cv > 0 ? ic  / cv : NaN;
+        const perIC = cv > 0 ? ic / cv : NaN;
         $('funnelNote').innerHTML = isFinite(perVC)
           ? 'Por cada <strong>venta</strong> necesitas de media <strong>' + pretty(perVC) + '</strong> visitas de producto, <strong>' + pretty(perATC) + '</strong> carritos y <strong>' + pretty(perIC) + '</strong> checkouts.'
           : 'Introduce una tasa de conversión mayor que 0 para ver el detalle del embudo.';
 
-        /* Gastos (referencia, no entran en los KPIs) */
-        const total = num('shopify') + num('apps') + num('trabajadores') + num('software') + num('otros');
-        $('gTotal').textContent = money(total * fx);
-        $('gDaily').textContent = money((total / 30) * fx);
+        $('obSub').textContent = 'Con ' + pretty(profit) + '% de beneficio';
 
-        /* Aviso si el objetivo deja el CPP en negativo */
+        const total = num('shopify') + num('apps') + num('trabajadores') + num('software') + num('otros');
+        $('gTotal').textContent = money(total);
+        $('gDaily').textContent = money(total / 30);
+
+        const beCPP = num('aov') - (num('com') / 100) * num('aov') - num('cogs');
+        const obCPP = beCPP - (num('profit') / 100) * num('aov');
         const warn = $('warnBox');
         if (obCPP < 0) {
           warn.classList.add('show');
-          warn.textContent = 'Con estos números, tu objetivo de beneficio (' + pretty(profit) + '% del AOV) supera el margen por pedido: el CPP objetivo sale negativo. Tendrías que subir el AOV, bajar costes o reducir el objetivo.';
+          warn.textContent = 'Con estos números, tu objetivo de beneficio (' + pretty(profit) + '% del AOV) supera el margen por pedido: el CPP objetivo sale negativo. Sube el AOV, baja costes o reduce el objetivo.';
         } else {
           warn.classList.remove('show');
           warn.textContent = '';
         }
-
-        save();
       }
 
-      function setBar(id, value, max) {
-        const el = $(id);
-        const pct = max > 0 ? Math.max(0, Math.min(100, (value / max) * 100)) : 0;
-        el.style.width = pct + '%';
-        el.textContent = pretty(value) + '%';
+      function setBar(id, value) {
+        const bar = $(id);
+        const pct = Math.max(0, Math.min(100, value));
+        bar.style.width = pct + '%';
+        bar.textContent = pretty(value) + '%';
+      }
+
+      /* ---------- Moneda ---------- */
+      function applyCurrency() {
+        document.querySelectorAll('.unit.cur').forEach(u => u.textContent = symbol());
+        document.querySelectorAll('.cur-switch button').forEach(b => b.classList.toggle('is-active', b.dataset.cur === currency));
+        const total = num('shopify') + num('apps') + num('trabajadores') + num('software') + num('otros');
+        $('gTotal').textContent = money(total);
+        $('gDaily').textContent = money(total / 30);
+      }
+
+      /* ---------- Persistencia (ligera, solo estos campos) ---------- */
+      function save() {
+        try {
+          const data = { currency };
+          ALL_NUM.forEach(k => data[k] = el[k].value);
+          localStorage.setItem(STORE_KEY, JSON.stringify(data));
+        } catch (e) { /* almacenamiento lleno o bloqueado: se ignora */ }
+      }
+      function load() {
+        let s = null;
+        try { s = JSON.parse(localStorage.getItem(STORE_KEY) || 'null'); } catch (e) {}
+
+        DRIVER_KEYS.concat(GASTO_KEYS).forEach(k => {
+          el[k].value = (s && s[k] !== undefined && s[k] !== '') ? s[k] : DEFAULTS[k];
+        });
+        currency = (s && CUR[s.currency]) ? s.currency : 'EUR';
+
+        applyCurrency();
+        renderDerived();
+
+        // Si había KPIs guardados (posibles ediciones manuales), se restauran;
+        // si no, se calculan a partir de los datos.
+        if (s && s.beCPP !== undefined && s.beCPP !== '') {
+          KPI_KEYS.forEach(k => { el[k].value = (s[k] !== undefined ? s[k] : ''); });
+        } else {
+          recomputeKPIs();
+        }
       }
 
       /* ---------- Eventos ---------- */
-      ALL_KEYS.forEach(k => els[k].addEventListener('input', calc));
-      $('resetBtn').addEventListener('click', function () {
-        ALL_KEYS.forEach(k => els[k].value = DEFAULTS[k]);
-        calc();
+      // Cambiar un dato recalcula los KPIs y refresca el embudo/gastos.
+      DRIVER_KEYS.forEach(k => el[k].addEventListener('input', () => { recomputeKPIs(); renderDerived(); save(); }));
+      // Los gastos solo afectan al bloque de referencia.
+      GASTO_KEYS.forEach(k => el[k].addEventListener('input', () => { renderDerived(); save(); }));
+      // Editar un KPI a mano: se respeta tal cual (no recalcula).
+      KPI_KEYS.forEach(k => el[k].addEventListener('input', save));
+
+      document.querySelectorAll('.cur-switch button').forEach(b => {
+        b.addEventListener('click', () => { currency = b.dataset.cur; applyCurrency(); save(); });
+      });
+
+      $('resetBtn').addEventListener('click', () => {
+        DRIVER_KEYS.concat(GASTO_KEYS).forEach(k => el[k].value = DEFAULTS[k]);
+        currency = 'EUR';
+        applyCurrency();
+        recomputeKPIs();
+        renderDerived();
+        save();
       });
 
       /* ---------- Init ---------- */
       load();
-      calc();
     })();
   </script>
 </body>

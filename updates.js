@@ -5,6 +5,14 @@
 */
 const UPDATES = [
   {
+    id: '2026-07-12-calc-kpi-editable-moneda',
+    title: 'Calculadora de KPIs: KPIs editables y selector de moneda',
+    items: [
+      'La Calculadora de KPIs de la sección Ads ahora deja editar a mano cada KPI: los de Breakeven y los de Objetivo (CPP, CPIC, CPATC, CPVC y ROAS) se siguen calculando solos a partir de tus datos, pero puedes escribir el valor que quieras encima si prefieres fijar tus propios objetivos. Si cambias un dato de la izquierda, se vuelven a calcular.',
+      'Además hay un selector de moneda con botón (EUR, USD, GBP y RON), configurado por defecto en EUR, que cambia el símbolo en toda la herramienta.',
+    ],
+  },
+  {
     id: '2026-07-12-calculadora-kpi-ads',
     title: 'Nueva herramienta en Ads: Calculadora de KPIs',
     items: [

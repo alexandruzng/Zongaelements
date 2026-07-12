@@ -5,6 +5,13 @@
 */
 const UPDATES = [
   {
+    id: '2026-07-12-ads-tema-rojo',
+    title: 'Sección Ads con identidad propia (en rojo)',
+    items: [
+      'Al entrar en la pestaña «Ads», toda la portada cambia a una paleta roja en vez de azul, manteniendo el mismo estilo: el título «Zonga Elements» y el logo se ponen en rojo, el subrayado de la pestaña y los botones también, y la descripción de arriba pasa a hablar de tus herramientas de publicidad de pago. Al volver a «Orgánico» todo regresa al azul de siempre.',
+    ],
+  },
+  {
     id: '2026-07-12-secciones-organico-ads',
     title: 'Nuevas secciones: Orgánico y Ads',
     items: [

@@ -1438,6 +1438,16 @@ button:focus-visible {
   font-size: 17px;
 }
 
+/* Paleta roja cuando la pestaña Ads está activa (mismo estilo, otro color) */
+body.theme-ads {
+  --c-primary: #DC2626;
+  --c-primary-dark: #991B1B;
+  --c-primary-soft: #FEE2E2;
+  --c-primary-100: #F87171;
+  --shadow-md: 0 10px 30px -10px rgba(220, 38, 38, 0.22);
+  --shadow-lg: 0 20px 50px -20px rgba(220, 38, 38, 0.34);
+}
+
 /* Tabs en el navbar */
 .nav-tab.is-active { color: var(--c-text); font-weight: 600; }
 @media (min-width: 640px) {

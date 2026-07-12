@@ -1174,6 +1174,10 @@ function initTabs() {
     organico: document.getElementById('organico'),
     ads: document.getElementById('ads'),
   };
+  const heroSubs = {
+    organico: document.getElementById('heroSubOrganico'),
+    ads: document.getElementById('heroSubAds'),
+  };
 
   function activate(name) {
     if (!panels[name]) name = 'organico';
@@ -1186,6 +1190,12 @@ function initTabs() {
     Object.entries(panels).forEach(([key, el]) => {
       if (el) el.hidden = key !== name;
     });
+    // Descripción del hero según la sección
+    Object.entries(heroSubs).forEach(([key, el]) => {
+      if (el) el.hidden = key !== name;
+    });
+    // Paleta roja en Ads
+    document.body.classList.toggle('theme-ads', name === 'ads');
     // El panel recién mostrado puede tener elementos .reveal sin observar
     observeReveals();
   }

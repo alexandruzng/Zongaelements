@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Calendario de Beneficio Diario · Zonga Elements</title>
-  <meta name="description" content="Registra cada día tus ganancias y costes en un calendario y controla tu beneficio, margen y estadísticas del mes." />
+  <meta name="description" content="Registra cada día tus ganancias y costes por producto en un calendario y controla el beneficio y las estadísticas de cada producto." />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -14,48 +14,25 @@
 
   <style>
     /* ============================================
-       Calendario de Beneficio Diario — Zonga Elements
+       Calendario de Beneficio por Producto — Zonga Elements
        Paleta roja (identidad de la sección Ads)
        ============================================ */
     :root {
-      --c-primary: #DC2626;
-      --c-primary-dark: #991B1B;
-      --c-primary-soft: #FEE2E2;
-      --c-primary-100: #F87171;
-
-      --c-green: #059669;
-      --c-green-soft: #D1FAE5;
-      --c-red: #DC2626;
-      --c-red-soft: #FEE2E2;
-
-      --c-bg: #FFFFFF;
-      --c-bg-alt: #F8FAFC;
-      --c-text: #0F172A;
-      --c-text-soft: #64748B;
-      --c-border: #E2E8F0;
-
-      --radius-sm: 8px;
-      --radius-md: 12px;
-      --radius-lg: 16px;
-
+      --c-primary: #DC2626; --c-primary-dark: #991B1B; --c-primary-soft: #FEE2E2; --c-primary-100: #F87171;
+      --c-green: #059669; --c-green-soft: #D1FAE5; --c-red: #DC2626; --c-red-soft: #FEE2E2;
+      --c-bg: #FFFFFF; --c-bg-alt: #F8FAFC; --c-text: #0F172A; --c-text-soft: #64748B; --c-border: #E2E8F0;
+      --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px;
       --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.05);
       --shadow-md: 0 10px 30px -10px rgba(220, 38, 38, 0.18);
       --shadow-lg: 0 24px 60px -22px rgba(15, 23, 42, 0.35);
-
-      --ease: cubic-bezier(0.4, 0, 0.2, 1);
-      --dur: 180ms;
-      --max-w: 1080px;
+      --ease: cubic-bezier(0.4, 0, 0.2, 1); --dur: 180ms; --max-w: 1080px;
     }
-
     *, *::before, *::after { box-sizing: border-box; }
     html { -webkit-text-size-adjust: 100%; }
     body {
-      margin: 0;
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      margin: 0; font-family: 'Inter', system-ui, -apple-system, sans-serif;
       font-size: 14px; line-height: 1.6; color: var(--c-text);
-      background:
-        radial-gradient(1100px 520px at 50% -260px, var(--c-primary-soft) 0%, transparent 60%),
-        var(--c-bg-alt);
+      background: radial-gradient(1100px 520px at 50% -260px, var(--c-primary-soft) 0%, transparent 60%), var(--c-bg-alt);
       -webkit-font-smoothing: antialiased; min-height: 100vh;
     }
     h1, h2, h3 { margin: 0; letter-spacing: -0.02em; font-weight: 700; line-height: 1.2; }
@@ -63,84 +40,66 @@
     svg { display: block; }
     input { font-family: inherit; }
     button { font-family: inherit; cursor: pointer; border: 0; background: none; }
+    [hidden] { display: none !important; }
     .container { width: 100%; max-width: var(--max-w); margin: 0 auto; padding: 0 20px; }
 
     /* ---------- Topbar ---------- */
-    .topbar {
-      position: sticky; top: 0; z-index: 20;
-      backdrop-filter: saturate(180%) blur(10px);
-      background: rgba(255, 255, 255, 0.82);
-      border-bottom: 1px solid var(--c-border);
-    }
+    .topbar { position: sticky; top: 0; z-index: 30; backdrop-filter: saturate(180%) blur(10px); background: rgba(255,255,255,0.82); border-bottom: 1px solid var(--c-border); }
     .topbar-inner { display: flex; align-items: center; justify-content: space-between; height: 62px; gap: 12px; }
     .brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 700; text-decoration: none; color: inherit; }
-    .brand .logo-badge {
-      width: 30px; height: 30px; border-radius: 9px;
-      background: linear-gradient(135deg, var(--c-primary) 0%, var(--c-primary-100) 100%);
-      display: inline-flex; align-items: center; justify-content: center;
-      color: #fff; font-weight: 800; font-size: 16px; box-shadow: var(--shadow-sm);
-    }
+    .brand .logo-badge { width: 30px; height: 30px; border-radius: 9px; background: linear-gradient(135deg, var(--c-primary) 0%, var(--c-primary-100) 100%); display: inline-flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 16px; box-shadow: var(--shadow-sm); }
     .brand .brand-sub { color: var(--c-text-soft); font-weight: 500; font-size: 12px; }
-    .back-link {
-      display: inline-flex; align-items: center; gap: 7px;
-      font-size: 13px; font-weight: 600; color: var(--c-text-soft);
-      padding: 8px 14px; border-radius: var(--radius-sm);
-      border: 1px solid var(--c-border); background: #fff; text-decoration: none;
-      transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease), transform var(--dur) var(--ease);
-    }
+    .back-link { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600; color: var(--c-text-soft); padding: 8px 14px; border-radius: var(--radius-sm); border: 1px solid var(--c-border); background: #fff; text-decoration: none; transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease), transform var(--dur) var(--ease); }
     .back-link:hover { color: var(--c-primary); border-color: var(--c-primary-100); transform: translateX(-2px); }
 
     /* ---------- Header ---------- */
-    .head { text-align: center; padding: 40px 0 22px; }
-    .eyebrow {
-      display: inline-flex; align-items: center; gap: 8px;
-      font-size: 12px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
-      color: var(--c-primary); margin-bottom: 14px; padding: 6px 14px; border-radius: 999px;
-      background: #fff; border: 1px solid var(--c-primary-soft); box-shadow: var(--shadow-sm);
-    }
+    .head { text-align: center; padding: 38px 0 18px; }
+    .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--c-primary); margin-bottom: 14px; padding: 6px 14px; border-radius: 999px; background: #fff; border: 1px solid var(--c-primary-soft); box-shadow: var(--shadow-sm); }
     .eyebrow .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--c-primary); }
-    .head h1 {
-      font-size: clamp(28px, 5vw, 44px); font-weight: 800;
-      background: linear-gradient(90deg, var(--c-primary) 0%, var(--c-primary-100) 100%);
-      -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 12px;
-    }
+    .head h1 { font-size: clamp(28px, 5vw, 44px); font-weight: 800; background: linear-gradient(90deg, var(--c-primary) 0%, var(--c-primary-100) 100%); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 12px; }
     .head p { color: var(--c-text-soft); font-size: 16px; max-width: 600px; margin: 0 auto; }
 
-    /* ---------- Barra superior: mes + ajustes ---------- */
+    /* ---------- Tabs de vista ---------- */
+    .view-tabs { display: flex; justify-content: center; margin-bottom: 24px; }
+    .view-tabs .seg { display: inline-flex; gap: 5px; background: #fff; border: 1px solid var(--c-border); border-radius: 999px; padding: 5px; box-shadow: var(--shadow-sm); }
+    .view-tabs button { padding: 8px 20px; border-radius: 999px; font-size: 13.5px; font-weight: 700; color: var(--c-text-soft); transition: background var(--dur) var(--ease), color var(--dur) var(--ease); }
+    .view-tabs button.is-active { background: var(--c-primary); color: #fff; }
+
+    /* ---------- Barra superior calendario ---------- */
     .cal-top { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-bottom: 20px; }
     .month-nav { display: inline-flex; align-items: center; gap: 6px; }
-    .month-nav .nav-btn {
-      width: 38px; height: 38px; border-radius: var(--radius-sm);
-      border: 1px solid var(--c-border); background: #fff; color: var(--c-text);
-      display: inline-flex; align-items: center; justify-content: center;
-      transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease), background var(--dur) var(--ease);
-    }
+    .month-nav .nav-btn { width: 38px; height: 38px; border-radius: var(--radius-sm); border: 1px solid var(--c-border); background: #fff; color: var(--c-text); display: inline-flex; align-items: center; justify-content: center; transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease); }
     .month-nav .nav-btn:hover { color: var(--c-primary); border-color: var(--c-primary-100); }
-    .month-label {
-      min-width: 190px; text-align: center; font-size: 18px; font-weight: 800;
-      text-transform: capitalize; letter-spacing: -0.01em;
-    }
-    .today-btn {
-      margin-left: 4px; padding: 8px 14px; border-radius: var(--radius-sm);
-      border: 1px solid var(--c-border); background: #fff; font-size: 13px; font-weight: 600; color: var(--c-text-soft);
-      transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
-    }
+    .month-label { min-width: 176px; text-align: center; font-size: 17px; font-weight: 800; text-transform: capitalize; }
+    .today-btn { margin-left: 4px; padding: 8px 14px; border-radius: var(--radius-sm); border: 1px solid var(--c-border); background: #fff; font-size: 13px; font-weight: 600; color: var(--c-text-soft); transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease); }
     .today-btn:hover { color: var(--c-primary); border-color: var(--c-primary-100); }
-
     .cal-spacer { flex: 1; }
-    .cal-settings { display: inline-flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 
-    .cur-switch { display: inline-flex; gap: 5px; }
-    .cur-switch button {
-      padding: 8px 11px; border-radius: var(--radius-sm);
-      border: 1px solid var(--c-border); background: #fff;
-      font-size: 12.5px; font-weight: 600; color: var(--c-text-soft);
-      transition: background var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease);
-    }
-    .cur-switch button:hover { border-color: var(--c-primary-100); color: var(--c-primary); }
-    .cur-switch button.is-active { background: var(--c-primary); border-color: var(--c-primary); color: #fff; box-shadow: var(--shadow-sm); }
+    /* Dropdown de producto */
+    .prod-dd { position: relative; }
+    .prod-dd-btn { display: inline-flex; align-items: center; gap: 10px; padding: 6px 12px 6px 7px; border: 1px solid var(--c-border); border-radius: var(--radius-sm); background: #fff; min-width: 210px; transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease); }
+    .prod-dd-btn:hover { border-color: var(--c-primary-100); }
+    .prod-dd.open .prod-dd-btn { border-color: var(--c-primary); box-shadow: 0 0 0 3px var(--c-primary-soft); }
+    .prod-dd-cur { flex: 1; text-align: left; font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .prod-dd-chev { color: var(--c-text-soft); flex: none; }
+    .prod-dd-menu { position: absolute; top: calc(100% + 6px); left: 0; z-index: 25; min-width: 250px; max-height: 340px; overflow: auto; background: #fff; border: 1px solid var(--c-border); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); padding: 6px; }
+    .prod-opt { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border-radius: 8px; text-align: left; transition: background var(--dur) var(--ease); }
+    .prod-opt:hover { background: var(--c-bg-alt); }
+    .prod-opt.is-sel { background: var(--c-primary-soft); }
+    .prod-opt-name { flex: 1; font-weight: 600; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .prod-opt-check { color: var(--c-primary); }
+    .dd-sep { height: 1px; background: var(--c-border); margin: 6px 4px; }
+    .dd-new { color: var(--c-primary); font-weight: 700; justify-content: center; }
 
-    /* ---------- Estadísticas del mes ---------- */
+    /* Thumb de producto */
+    .thumb { border-radius: 8px; background-size: cover; background-position: center; flex: none; display: inline-flex; align-items: center; justify-content: center; overflow: hidden; }
+    .thumb-ph { background: linear-gradient(135deg, var(--c-primary), var(--c-primary-100)); color: #fff; font-weight: 800; }
+    .thumb-all { background: var(--c-bg-alt); border: 1px solid var(--c-border); color: var(--c-text-soft); }
+    .t26 { width: 26px; height: 26px; font-size: 12px; }
+    .t34 { width: 34px; height: 34px; font-size: 15px; }
+    .t48 { width: 48px; height: 48px; font-size: 20px; border-radius: 10px; }
+
+    /* ---------- Estadísticas ---------- */
     .stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 20px; }
     @media (max-width: 820px) { .stats { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 440px) { .stats { grid-template-columns: 1fr 1fr; } }
@@ -150,117 +109,115 @@
     .stat.accent { background: linear-gradient(135deg, var(--c-primary) 0%, var(--c-primary-dark) 100%); border-color: transparent; }
     .stat.accent .sk { color: rgba(255,255,255,0.85); }
     .stat.accent .sv { color: #fff; }
-    .pos { color: var(--c-green); }
-    .neg { color: var(--c-red); }
+    .pos { color: var(--c-green); } .neg { color: var(--c-red); }
 
     /* ---------- Calendario ---------- */
     .cal-card { background: #fff; border: 1px solid var(--c-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: 16px; margin-bottom: 32px; }
     .cal-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 8px; }
     .cal-weekdays span { text-align: center; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--c-text-soft); }
     .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
-
-    .day {
-      position: relative; aspect-ratio: 1 / 0.9; border: 1px solid var(--c-border);
-      border-radius: var(--radius-md); background: #fff; padding: 8px 9px;
-      display: flex; flex-direction: column; justify-content: space-between; align-items: stretch; text-align: left;
-      transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease);
-    }
+    .day { position: relative; aspect-ratio: 1 / 0.9; border: 1px solid var(--c-border); border-radius: var(--radius-md); background: #fff; padding: 8px 9px; display: flex; flex-direction: column; justify-content: space-between; align-items: stretch; text-align: left; transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease); }
     .day:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: var(--c-primary-100); }
     .day.empty { border: 0; background: transparent; pointer-events: none; }
     .day .dnum { font-size: 13px; font-weight: 700; color: var(--c-text); }
     .day.today { border-color: var(--c-primary); box-shadow: 0 0 0 2px var(--c-primary-soft); }
     .day.today .dnum { color: var(--c-primary); }
-    .day.has-data { border-color: transparent; box-shadow: inset 0 0 0 1px var(--c-border); }
     .day.pos-bg { background: linear-gradient(180deg, #fff 0%, var(--c-green-soft) 220%); }
     .day.neg-bg { background: linear-gradient(180deg, #fff 0%, var(--c-red-soft) 220%); }
     .day .dprofit { text-align: right; font-size: 13.5px; font-weight: 800; font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; }
-    .day .dprofit.pos { color: var(--c-green); }
-    .day .dprofit.neg { color: var(--c-red); }
-    .day .dprofit.zero { color: var(--c-text-soft); }
+    .day .dprofit.pos { color: var(--c-green); } .day .dprofit.neg { color: var(--c-red); } .day .dprofit.zero { color: var(--c-text-soft); }
     .day .ddot { position: absolute; top: 9px; right: 9px; width: 6px; height: 6px; border-radius: 50%; background: var(--c-primary-100); opacity: 0; }
     .day.has-data .ddot { opacity: 1; }
-
     @media (max-width: 560px) {
-      .cal-card { padding: 10px; }
-      .cal-grid, .cal-weekdays { gap: 5px; }
+      .cal-card { padding: 10px; } .cal-grid, .cal-weekdays { gap: 5px; }
       .day { padding: 6px; border-radius: 10px; aspect-ratio: 1 / 1; }
-      .day .dnum { font-size: 12px; }
-      .day .dprofit { font-size: 11px; }
+      .day .dnum { font-size: 12px; } .day .dprofit { font-size: 11px; }
     }
+    .cal-hint { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; text-align: center; color: var(--c-text-soft); font-size: 14px; padding: 26px 16px; background: var(--c-primary-soft); border-radius: var(--radius-md); margin-bottom: 20px; }
+    .cal-hint b { color: var(--c-primary-dark); }
 
-    /* ---------- Modal ---------- */
-    .backdrop {
-      position: fixed; inset: 0; z-index: 50;
-      background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(3px);
-      display: flex; align-items: center; justify-content: center; padding: 18px;
-      opacity: 0; pointer-events: none; transition: opacity var(--dur) var(--ease);
-    }
+    /* ---------- Vista productos ---------- */
+    .prod-view-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+    .prod-view-head h2 { font-size: 20px; }
+    .prod-view-head .count { color: var(--c-text-soft); font-weight: 600; font-size: 14px; }
+    .prod-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; margin-bottom: 32px; }
+    .prod-card { background: #fff; border: 1px solid var(--c-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: 16px; display: flex; flex-direction: column; gap: 14px; cursor: pointer; transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease); }
+    .prod-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: var(--c-primary-100); }
+    .prod-card-top { display: flex; align-items: center; gap: 12px; }
+    .prod-card-top h3 { font-size: 16px; }
+    .prod-card-sub { font-size: 12px; color: var(--c-text-soft); }
+    .prod-del { margin-left: auto; width: 30px; height: 30px; border-radius: 8px; color: var(--c-text-soft); display: inline-flex; align-items: center; justify-content: center; transition: background var(--dur) var(--ease), color var(--dur) var(--ease); }
+    .prod-del:hover { background: var(--c-red-soft); color: var(--c-red); }
+    .prod-card-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .prod-card-stats > div { background: var(--c-bg-alt); border-radius: 10px; padding: 9px 11px; }
+    .prod-card-stats span { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700; color: var(--c-text-soft); }
+    .prod-card-stats b { font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .prod-open { align-self: flex-start; font-size: 13px; font-weight: 700; color: var(--c-primary); display: inline-flex; align-items: center; gap: 5px; }
+    .empty-box { text-align: center; color: var(--c-text-soft); padding: 48px 20px; background: #fff; border: 1px dashed var(--c-border); border-radius: var(--radius-lg); }
+    .empty-box p { margin-bottom: 16px; font-size: 15px; }
+
+    /* ---------- Botones ---------- */
+    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: var(--radius-sm); font-weight: 600; font-size: 14px; transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease), background var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease); }
+    .btn-primary { background: var(--c-primary); color: #fff; box-shadow: var(--shadow-md); }
+    .btn-primary:hover { background: var(--c-primary-dark); transform: translateY(-2px); }
+    .btn-ghost { background: #fff; color: var(--c-text-soft); border: 1px solid var(--c-border); }
+    .btn-ghost:hover { color: var(--c-primary); border-color: var(--c-primary-100); }
+    .cur-switch { display: inline-flex; gap: 5px; }
+    .cur-switch button { padding: 8px 11px; border-radius: var(--radius-sm); border: 1px solid var(--c-border); background: #fff; font-size: 12.5px; font-weight: 600; color: var(--c-text-soft); transition: background var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease); }
+    .cur-switch button:hover { border-color: var(--c-primary-100); color: var(--c-primary); }
+    .cur-switch button.is-active { background: var(--c-primary); border-color: var(--c-primary); color: #fff; box-shadow: var(--shadow-sm); }
+
+    /* ---------- Modales ---------- */
+    .backdrop { position: fixed; inset: 0; z-index: 50; background: rgba(15,23,42,0.5); backdrop-filter: blur(3px); display: flex; align-items: center; justify-content: center; padding: 18px; opacity: 0; pointer-events: none; transition: opacity var(--dur) var(--ease); }
     .backdrop.show { opacity: 1; pointer-events: auto; }
-    .modal {
-      width: 100%; max-width: 580px; background: #fff; border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-lg); overflow: hidden;
-      transform: translateY(10px) scale(0.98); transition: transform var(--dur) var(--ease);
-    }
+    .modal { width: 100%; max-width: 580px; background: #fff; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); overflow: hidden; transform: translateY(10px) scale(0.98); transition: transform var(--dur) var(--ease); max-height: calc(100vh - 36px); overflow-y: auto; }
+    .modal.modal-sm { max-width: 440px; }
     .backdrop.show .modal { transform: none; }
-
     .modal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 18px 20px; border-bottom: 1px solid var(--c-border); }
     .modal-date { font-size: 17px; font-weight: 800; text-transform: capitalize; }
     .modal-sub { font-size: 12px; color: var(--c-text-soft); margin-top: 2px; }
-    .modal-close { width: 32px; height: 32px; border-radius: 8px; color: var(--c-text-soft); font-size: 20px; display: inline-flex; align-items: center; justify-content: center; }
+    .modal-close { width: 32px; height: 32px; border-radius: 8px; color: var(--c-text-soft); font-size: 20px; display: inline-flex; align-items: center; justify-content: center; flex: none; }
     .modal-close:hover { background: var(--c-bg-alt); color: var(--c-text); }
+    .linkbtn { color: var(--c-primary); font-weight: 700; font-size: 12px; text-decoration: underline; }
 
+    .modal-single { padding: 18px 20px 20px; }
+
+    /* Paso 1: selección de producto */
+    .prod-pick { display: flex; flex-direction: column; gap: 8px; }
+    .prod-chip { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--c-border); border-radius: 12px; background: #fff; text-align: left; transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease); }
+    .prod-chip:hover { border-color: var(--c-primary-100); background: var(--c-bg-alt); }
+    .prod-chip.is-sel { border-color: var(--c-primary); box-shadow: 0 0 0 3px var(--c-primary-soft); }
+    .prod-chip-name { flex: 1; font-weight: 600; font-size: 14px; }
+    .prod-chip-check { color: var(--c-primary); font-weight: 800; }
+    .prod-chip-new { justify-content: center; color: var(--c-primary); font-weight: 700; border-style: dashed; }
+
+    /* Paso 2: datos del día */
     .modal-body { display: grid; grid-template-columns: 1fr 1fr; }
     @media (max-width: 520px) { .modal-body { grid-template-columns: 1fr; } }
     .msec { padding: 18px 20px 20px; }
     .msec + .msec { border-left: 1px solid var(--c-border); }
     @media (max-width: 520px) { .msec + .msec { border-left: 0; border-top: 1px solid var(--c-border); } }
-    .msec-title {
-      display: flex; align-items: center; gap: 8px;
-      font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
-      color: var(--c-primary); margin-bottom: 14px;
-    }
+    .msec-title { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--c-primary); margin-bottom: 14px; }
     .msec-title svg { width: 15px; height: 15px; }
     .msec-ganancias .msec-title { color: var(--c-green); }
-
     .mfield { margin-bottom: 12px; }
     .mfield label { display: block; font-size: 12.5px; color: var(--c-text-soft); font-weight: 500; margin-bottom: 5px; }
-    .input-wrap {
-      display: flex; align-items: center; border: 1px solid var(--c-border);
-      border-radius: var(--radius-sm); background: var(--c-bg-alt); overflow: hidden;
-      transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease), background var(--dur) var(--ease);
-    }
+    .input-wrap { display: flex; align-items: center; border: 1px solid var(--c-border); border-radius: var(--radius-sm); background: var(--c-bg-alt); overflow: hidden; transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease), background var(--dur) var(--ease); }
     .input-wrap:focus-within { border-color: var(--c-primary); background: #fff; box-shadow: 0 0 0 3px var(--c-primary-soft); }
     .msec-ganancias .input-wrap:focus-within { border-color: var(--c-green); box-shadow: 0 0 0 3px var(--c-green-soft); }
     .input-wrap .cur { padding: 0 11px; font-size: 13px; font-weight: 600; color: var(--c-text-soft); border-right: 1px solid var(--c-border); }
-    .input-wrap input {
-      flex: 1; width: 100%; min-width: 0; border: 0; outline: 0; background: transparent;
-      padding: 11px 12px; font-size: 15px; font-weight: 700; color: var(--c-text); -moz-appearance: textfield;
-    }
+    .input-wrap input { flex: 1; width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; padding: 11px 12px; font-size: 15px; font-weight: 700; color: var(--c-text); -moz-appearance: textfield; }
     .input-wrap input::-webkit-outer-spin-button, .input-wrap input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     .msec-ganancias .input-wrap input { font-size: 22px; }
-
-    .msec-auto {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 11px 13px; border: 1px dashed var(--c-border); border-radius: var(--radius-sm);
-      background: var(--c-bg-alt); font-size: 12.5px; font-weight: 600; color: var(--c-text-soft);
-    }
-    .msec-auto b { font-size: 15px; font-weight: 800; color: var(--c-text); font-variant-numeric: tabular-nums; }
     .msec-hint { margin-top: 10px; font-size: 11.5px; color: var(--c-text-soft); line-height: 1.45; }
-
     .modal-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 14px 20px; background: var(--c-bg-alt); border-top: 1px solid var(--c-border); }
     .mfoot-stats { font-size: 12.5px; color: var(--c-text-soft); display: flex; flex-wrap: wrap; gap: 4px 14px; }
     .mfoot-stats b { color: var(--c-text); font-weight: 800; font-variant-numeric: tabular-nums; }
     .mfoot-actions { display: inline-flex; gap: 10px; }
 
-    .btn {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 10px 18px; border-radius: var(--radius-sm); font-weight: 600; font-size: 14px;
-      transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease), background var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease);
-    }
-    .btn-primary { background: var(--c-primary); color: #fff; box-shadow: var(--shadow-md); }
-    .btn-primary:hover { background: var(--c-primary-dark); transform: translateY(-2px); }
-    .btn-ghost { background: #fff; color: var(--c-text-soft); border: 1px solid var(--c-border); }
-    .btn-ghost:hover { color: var(--c-primary); border-color: var(--c-primary-100); }
+    /* Crear producto */
+    .photo-row { display: flex; align-items: center; gap: 14px; }
+    .photo-preview { width: 72px; height: 72px; border-radius: 12px; background: var(--c-bg-alt); border: 1px solid var(--c-border); background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; color: var(--c-text-soft); flex: none; }
 
     .foot-legal { text-align: center; padding: 8px 0 40px; color: var(--c-text-soft); font-size: 12px; }
   </style>
@@ -286,23 +243,43 @@
     <div class="head">
       <span class="eyebrow"><span class="dot"></span> Tracker de Ads</span>
       <h1>Calendario de Beneficio</h1>
-      <p>Haz clic en un día para apuntar tus gastos y ganancias. Cada casilla te muestra el beneficio: verde si ganas, rojo si pierdes.</p>
+      <p>Registra cada día por producto. Cada casilla muestra el beneficio: verde si ganas, rojo si pierdes.</p>
     </div>
 
-    <!-- Barra superior -->
-    <div class="cal-top">
-      <div class="month-nav">
-        <button type="button" class="nav-btn" id="prevMonth" aria-label="Mes anterior">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-        </button>
-        <div class="month-label" id="monthLabel">—</div>
-        <button type="button" class="nav-btn" id="nextMonth" aria-label="Mes siguiente">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-        </button>
-        <button type="button" class="today-btn" id="todayBtn">Hoy</button>
+    <!-- Tabs de vista -->
+    <div class="view-tabs">
+      <div class="seg">
+        <button type="button" data-view="calendario" class="is-active">Calendario</button>
+        <button type="button" data-view="productos">Productos</button>
       </div>
-      <div class="cal-spacer"></div>
-      <div class="cal-settings">
+    </div>
+
+    <!-- ======= VISTA CALENDARIO ======= -->
+    <section id="viewCalendario">
+
+      <div class="cal-hint" id="calHint" hidden>
+        <span>Crea tu primer producto para empezar a registrar días.</span>
+        <button type="button" class="btn btn-primary" id="hintCreate">Crear producto</button>
+      </div>
+
+      <div class="cal-top">
+        <div class="prod-dd" id="prodDD">
+          <button type="button" class="prod-dd-btn" id="prodDDBtn" aria-haspopup="true" aria-expanded="false">
+            <span id="prodDDThumb"></span>
+            <span class="prod-dd-cur" id="prodDDCur">Todos los productos</span>
+            <svg class="prod-dd-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="prod-dd-menu" id="prodDDMenu" hidden></div>
+        </div>
+
+        <div class="month-nav">
+          <button type="button" class="nav-btn" id="prevMonth" aria-label="Mes anterior"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+          <div class="month-label" id="monthLabel">—</div>
+          <button type="button" class="nav-btn" id="nextMonth" aria-label="Mes siguiente"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+          <button type="button" class="today-btn" id="todayBtn">Hoy</button>
+        </div>
+
+        <div class="cal-spacer"></div>
         <div class="cur-switch" role="group" aria-label="Elegir moneda">
           <button type="button" data-cur="EUR">€</button>
           <button type="button" data-cur="USD">$</button>
@@ -310,83 +287,130 @@
           <button type="button" data-cur="RON">RON</button>
         </div>
       </div>
-    </div>
 
-    <!-- Estadísticas del mes -->
-    <div class="stats">
-      <div class="stat"><div class="sk">Ganancias</div><div class="sv" id="sEarn">—</div></div>
-      <div class="stat"><div class="sk">Costes</div><div class="sv" id="sCost">—</div></div>
-      <div class="stat accent"><div class="sk">Beneficio del mes</div><div class="sv" id="sProfit">—</div></div>
-      <div class="stat"><div class="sk">Margen medio</div><div class="sv" id="sMargin">—</div></div>
-      <div class="stat"><div class="sk">Días con datos</div><div class="sv" id="sDays">—</div></div>
-    </div>
-
-    <!-- Calendario -->
-    <div class="cal-card">
-      <div class="cal-weekdays">
-        <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
+      <div class="stats">
+        <div class="stat"><div class="sk">Ganancias</div><div class="sv" id="sEarn">—</div></div>
+        <div class="stat"><div class="sk">Costes</div><div class="sv" id="sCost">—</div></div>
+        <div class="stat accent"><div class="sk">Beneficio del mes</div><div class="sv" id="sProfit">—</div></div>
+        <div class="stat"><div class="sk">Margen medio</div><div class="sv" id="sMargin">—</div></div>
+        <div class="stat"><div class="sk">Días con datos</div><div class="sv" id="sDays">—</div></div>
       </div>
-      <div class="cal-grid" id="calGrid"></div>
-    </div>
 
-    <p class="foot-legal">Zonga Elements · Réplica de tu hoja de seguimiento de beneficio. Tus datos se guardan en este navegador.</p>
+      <div class="cal-card">
+        <div class="cal-weekdays"><span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span></div>
+        <div class="cal-grid" id="calGrid"></div>
+      </div>
+    </section>
+
+    <!-- ======= VISTA PRODUCTOS ======= -->
+    <section id="viewProductos" hidden>
+      <div class="prod-view-head">
+        <div><h2>Productos testeados</h2><span class="count" id="prodCount">—</span></div>
+        <button type="button" class="btn btn-primary" id="newProdBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Nuevo producto
+        </button>
+      </div>
+      <div class="prod-grid" id="prodGrid"></div>
+      <div class="empty-box" id="prodEmpty" hidden>
+        <p>Aún no has creado ningún producto.</p>
+        <button type="button" class="btn btn-primary" id="emptyCreate">Crear mi primer producto</button>
+      </div>
+    </section>
+
+    <p class="foot-legal">Zonga Elements · Seguimiento de beneficio por producto. Tus datos se guardan en este navegador.</p>
   </main>
 
-  <!-- ======= MODAL DÍA ======= -->
-  <div class="backdrop" id="backdrop" aria-hidden="true">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mDate">
+  <!-- ======= MODAL DÍA (2 pasos) ======= -->
+  <div class="backdrop" id="dayBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true">
+
+      <!-- Paso 1: seleccionar producto -->
+      <div class="mstep" id="stepProduct">
+        <div class="modal-head">
+          <div><div class="modal-date" id="mDate1">—</div><div class="modal-sub">¿Para qué producto es este día?</div></div>
+          <button type="button" class="modal-close" data-dayclose aria-label="Cerrar">&times;</button>
+        </div>
+        <div class="modal-single"><div class="prod-pick" id="prodPick"></div></div>
+      </div>
+
+      <!-- Paso 2: datos del día -->
+      <div class="mstep" id="stepData" hidden>
+        <div class="modal-head">
+          <div>
+            <div class="modal-date" id="mDate2">—</div>
+            <div class="modal-sub"><span id="mProdName">—</span> · <button type="button" class="linkbtn" id="changeProd">cambiar producto</button></div>
+          </div>
+          <button type="button" class="modal-close" data-dayclose aria-label="Cerrar">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="msec msec-gastos">
+            <div class="msec-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              Gastos
+            </div>
+            <div class="mfield"><label for="mProduct">Coste del Producto</label><div class="input-wrap"><span class="cur">€</span><input type="number" id="mProduct" step="0.01" min="0" inputmode="decimal" placeholder="0"></div></div>
+            <div class="mfield"><label for="mAd">Coste de Anuncios</label><div class="input-wrap"><span class="cur">€</span><input type="number" id="mAd" step="0.01" min="0" inputmode="decimal" placeholder="0"></div></div>
+            <div class="mfield"><label for="mCommission">Comisiones</label><div class="input-wrap"><span class="cur">€</span><input type="number" id="mCommission" step="0.01" min="0" inputmode="decimal" placeholder="0"></div></div>
+          </div>
+          <div class="msec msec-ganancias">
+            <div class="msec-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+              Ganancias
+            </div>
+            <div class="mfield"><label for="mEarn">Ganancias del día</label><div class="input-wrap"><span class="cur">€</span><input type="number" id="mEarn" step="0.01" min="0" inputmode="decimal" placeholder="0"></div></div>
+            <p class="msec-hint">Ingresos totales generados ese día (antes de gastos).</p>
+          </div>
+        </div>
+
+        <div class="modal-foot">
+          <div class="mfoot-stats">
+            <span>Costes <b id="mCosts">€0,00</b></span>
+            <span>Beneficio <b id="mProfit">€0,00</b></span>
+            <span>Margen <b id="mMargin">—</b></span>
+          </div>
+          <div class="mfoot-actions">
+            <button type="button" class="btn btn-ghost" id="mClear">Vaciar día</button>
+            <button type="button" class="btn btn-primary" data-dayclose>Hecho</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ======= MODAL CREAR PRODUCTO ======= -->
+  <div class="backdrop" id="prodBackdrop" aria-hidden="true">
+    <div class="modal modal-sm" role="dialog" aria-modal="true">
       <div class="modal-head">
-        <div>
-          <div class="modal-date" id="mDate">—</div>
-          <div class="modal-sub">Rellena los gastos y las ganancias del día</div>
-        </div>
-        <button type="button" class="modal-close" id="mClose" aria-label="Cerrar">&times;</button>
+        <div><div class="modal-date">Nuevo producto</div><div class="modal-sub">Ponle un nombre y una foto</div></div>
+        <button type="button" class="modal-close" id="pClose" aria-label="Cerrar">&times;</button>
       </div>
-
-      <div class="modal-body">
-        <!-- Sección 1: Gastos -->
-        <div class="msec msec-gastos">
-          <div class="msec-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-            Gastos
-          </div>
-          <div class="mfield">
-            <label for="mProduct">Coste del Producto</label>
-            <div class="input-wrap"><span class="cur">€</span><input type="number" id="mProduct" step="0.01" min="0" inputmode="decimal" placeholder="0"></div>
-          </div>
-          <div class="mfield">
-            <label for="mAd">Coste de Anuncios</label>
-            <div class="input-wrap"><span class="cur">€</span><input type="number" id="mAd" step="0.01" min="0" inputmode="decimal" placeholder="0"></div>
-          </div>
-          <div class="mfield">
-            <label for="mCommission">Comisiones</label>
-            <div class="input-wrap"><span class="cur">€</span><input type="number" id="mCommission" step="0.01" min="0" inputmode="decimal" placeholder="0"></div>
-          </div>
+      <div class="modal-single">
+        <div class="mfield">
+          <label for="pName">Nombre del producto</label>
+          <div class="input-wrap"><input type="text" id="pName" placeholder="Ej. Lámpara de resina"></div>
         </div>
-
-        <!-- Sección 2: Ganancias -->
-        <div class="msec msec-ganancias">
-          <div class="msec-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-            Ganancias
+        <div class="mfield">
+          <label>Foto</label>
+          <div class="photo-row">
+            <div class="photo-preview" id="photoPreview">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5-11 11"/></svg>
+            </div>
+            <div>
+              <input type="file" id="pPhoto" accept="image/*" hidden>
+              <button type="button" class="btn btn-ghost" id="photoBtn">Subir foto</button>
+              <button type="button" class="btn btn-ghost" id="photoClear" hidden>Quitar</button>
+            </div>
           </div>
-          <div class="mfield">
-            <label for="mEarn">Ganancias del día</label>
-            <div class="input-wrap"><span class="cur">€</span><input type="number" id="mEarn" step="0.01" min="0" inputmode="decimal" placeholder="0"></div>
-          </div>
-          <p class="msec-hint">Ingresos totales generados ese día (antes de gastos).</p>
         </div>
       </div>
-
       <div class="modal-foot">
-        <div class="mfoot-stats">
-          <span>Costes <b id="mCosts">€0,00</b></span>
-          <span>Beneficio <b id="mProfit">€0,00</b></span>
-          <span>Margen <b id="mMargin">—</b></span>
-        </div>
+        <div></div>
         <div class="mfoot-actions">
-          <button type="button" class="btn btn-ghost" id="mClear">Vaciar día</button>
-          <button type="button" class="btn btn-primary" id="mDone">Hecho</button>
+          <button type="button" class="btn btn-ghost" id="pCancel">Cancelar</button>
+          <button type="button" class="btn btn-primary" id="pCreate">Crear producto</button>
         </div>
       </div>
     </div>
@@ -397,18 +421,22 @@
       'use strict';
 
       const CUR = { EUR: '€', USD: '$', GBP: '£', RON: 'RON' };
-      const STORE_KEY = 'zonga_tracker_beneficio_v2';
-      const OLD_KEY = 'zonga_tracker_beneficio_v1';
+      const STORE_KEY = 'zonga_tracker_beneficio_v3';
       const WD = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
-
       const $ = (id) => document.getElementById(id);
 
       /* Estado */
-      let currency = 'EUR';        // Moneda por defecto EUR
-      let entries = {};            // { 'YYYY-MM-DD': { product, ad, commission, earnings } }
-      let view = new Date();       // mes visible
-      view.setDate(1);
-      let openDate = null;         // fecha abierta en el modal
+      let currency = 'EUR';
+      let products = [];                 // [{ id, name, photo }]
+      let data = {};                     // { productId: { 'YYYY-MM-DD': {product,ad,commission,earnings} } }
+      let selectedProductId = 'all';     // filtro del calendario
+      let view = new Date(); view.setDate(1);
+
+      /* Estado modales */
+      let currentDate = null;            // día abierto
+      let modalProduct = null;           // producto elegido en el modal de día
+      let createReturn = 'grid';         // 'grid' | 'day'
+      let tempPhoto = '';                // foto en el modal de crear
 
       /* ---------- Utilidades ---------- */
       function symbol() { return CUR[currency] || '€'; }
@@ -419,9 +447,21 @@
       function pad(x) { return String(x).padStart(2, '0'); }
       function keyOf(y, m, d) { return y + '-' + pad(m + 1) + '-' + pad(d); }
       function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+      function uid() { return 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+      function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+      function productById(id) { return products.find(p => p.id === id) || null; }
 
-      /* ---------- Cálculo de un día ---------- */
-      function calc(e) {
+      function thumbHTML(p, sizeCls) {
+        if (p && p.photo) return '<span class="thumb ' + sizeCls + '" style="background-image:url(' + p.photo + ')"></span>';
+        const letter = (p && p.name ? p.name.trim().charAt(0) : '?').toUpperCase();
+        return '<span class="thumb thumb-ph ' + sizeCls + '">' + esc(letter) + '</span>';
+      }
+      function allThumb(sizeCls) {
+        return '<span class="thumb thumb-all ' + sizeCls + '"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>';
+      }
+
+      /* ---------- Cálculo ---------- */
+      function calcEntry(e) {
         const E = n(e && e.earnings), P = n(e && e.product), A = n(e && e.ad), C = n(e && e.commission);
         const costs = P + A + C;
         const profit = E - costs;
@@ -430,19 +470,47 @@
         const has = !!(filled && (E || P || A || C));
         return { E, P, A, C, costs, profit, margin, has };
       }
+      // Agrega un día según el filtro (producto concreto o 'all')
+      function dayAgg(dateKey) {
+        if (selectedProductId === 'all') {
+          let E = 0, costs = 0, profit = 0, any = false;
+          products.forEach(p => {
+            const c = calcEntry((data[p.id] || {})[dateKey]);
+            if (c.has) { any = true; E += c.E; costs += c.costs; profit += c.profit; }
+          });
+          return { E, costs, profit, has: any };
+        }
+        const c = calcEntry((data[selectedProductId] || {})[dateKey]);
+        return { E: c.E, costs: c.costs, profit: c.profit, has: c.has };
+      }
+      // Estadísticas totales de un producto (todo el tiempo)
+      function productStats(id) {
+        const d = data[id] || {};
+        let E = 0, costs = 0, profit = 0, days = 0;
+        Object.keys(d).forEach(k => { const c = calcEntry(d[k]); if (c.has) { E += c.E; costs += c.costs; profit += c.profit; days++; } });
+        return { E, costs, profit, margin: E > 0 ? (profit / E) * 100 : NaN, days };
+      }
 
       /* ---------- Persistencia ---------- */
       function save() {
-        try { localStorage.setItem(STORE_KEY, JSON.stringify({ currency, entries })); } catch (e) {}
+        try { localStorage.setItem(STORE_KEY, JSON.stringify({ currency, products, data })); } catch (e) {}
       }
-      function migrateOld() {
+      function migrate() {
         try {
-          const old = JSON.parse(localStorage.getItem(OLD_KEY) || 'null');
-          if (old) {
-            if (CUR[old.currency]) currency = old.currency;
-            if (Array.isArray(old.rows)) old.rows.forEach(r => {
-              if (r && r.date) entries[r.date] = { product: r.product ?? '', ad: r.ad ?? '', commission: '', earnings: r.earnings ?? '' };
-            });
+          const v2 = JSON.parse(localStorage.getItem('zonga_tracker_beneficio_v2') || 'null');
+          if (v2) {
+            if (CUR[v2.currency]) currency = v2.currency;
+            if (v2.entries && Object.keys(v2.entries).length) { const id = uid(); products.push({ id, name: 'Producto 1', photo: '' }); data[id] = v2.entries; }
+            return;
+          }
+          const v1 = JSON.parse(localStorage.getItem('zonga_tracker_beneficio_v1') || 'null');
+          if (v1) {
+            if (CUR[v1.currency]) currency = v1.currency;
+            if (Array.isArray(v1.rows) && v1.rows.length) {
+              const id = uid(); products.push({ id, name: 'Producto 1', photo: '' }); const e = {};
+              v1.rows.forEach(r => { if (r && r.date) e[r.date] = { product: r.product ?? '', ad: r.ad ?? '', commission: '', earnings: r.earnings ?? '' }; });
+              data[id] = e;
+            }
           }
         } catch (e) {}
       }
@@ -451,149 +519,326 @@
         try { s = JSON.parse(localStorage.getItem(STORE_KEY) || 'null'); } catch (e) {}
         if (s) {
           if (CUR[s.currency]) currency = s.currency;
-          if (s.entries && typeof s.entries === 'object') entries = s.entries;
+          if (Array.isArray(s.products)) products = s.products;
+          if (s.data && typeof s.data === 'object') data = s.data;
         } else {
-          migrateOld();
+          migrate();
         }
+      }
+
+      /* ---------- Dropdown de producto ---------- */
+      function renderDropdown() {
+        const cur = selectedProductId === 'all' ? null : productById(selectedProductId);
+        if (selectedProductId === 'all' || !cur) {
+          selectedProductId = 'all';
+          $('prodDDThumb').innerHTML = allThumb('t26');
+          $('prodDDCur').textContent = 'Todos los productos';
+        } else {
+          $('prodDDThumb').innerHTML = thumbHTML(cur, 't26');
+          $('prodDDCur').textContent = cur.name;
+        }
+        let html = '<button type="button" class="prod-opt' + (selectedProductId === 'all' ? ' is-sel' : '') + '" data-pid="all">' +
+                     allThumb('t26') + '<span class="prod-opt-name">Todos los productos</span>' +
+                     (selectedProductId === 'all' ? '<span class="prod-opt-check">✓</span>' : '') + '</button>';
+        products.forEach(p => {
+          html += '<button type="button" class="prod-opt' + (selectedProductId === p.id ? ' is-sel' : '') + '" data-pid="' + p.id + '">' +
+                    thumbHTML(p, 't26') + '<span class="prod-opt-name">' + esc(p.name) + '</span>' +
+                    (selectedProductId === p.id ? '<span class="prod-opt-check">✓</span>' : '') + '</button>';
+        });
+        html += '<div class="dd-sep"></div><button type="button" class="prod-opt dd-new" data-pid="__new">＋ Crear nuevo producto</button>';
+        $('prodDDMenu').innerHTML = html;
+      }
+      function toggleDD(open) {
+        const dd = $('prodDD');
+        const show = open === undefined ? $('prodDDMenu').hidden : open;
+        $('prodDDMenu').hidden = !show;
+        dd.classList.toggle('open', show);
+        $('prodDDBtn').setAttribute('aria-expanded', show ? 'true' : 'false');
       }
 
       /* ---------- Estadísticas del mes ---------- */
       function renderStats() {
         const y = view.getFullYear(), m = view.getMonth();
-        const prefix = y + '-' + pad(m + 1) + '-';
-        let TE = 0, TC = 0, TPr = 0, days = 0;
-        Object.keys(entries).forEach(k => {
-          if (k.indexOf(prefix) !== 0) return;
-          const c = calc(entries[k]);
-          if (!c.has) return;
-          TE += c.E; TC += c.costs; TPr += c.profit; days++;
-        });
+        const days = new Date(y, m + 1, 0).getDate();
+        let TE = 0, TC = 0, TPr = 0, nDays = 0;
+        for (let d = 1; d <= days; d++) {
+          const a = dayAgg(keyOf(y, m, d));
+          if (a.has) { TE += a.E; TC += a.costs; TPr += a.profit; nDays++; }
+        }
         const margin = TE > 0 ? (TPr / TE) * 100 : NaN;
         $('sEarn').textContent = money(TE);
         $('sCost').textContent = money(TC);
         $('sProfit').textContent = money(TPr);
         $('sMargin').textContent = isFinite(margin) ? pct(margin) : '—';
-        $('sDays').textContent = days;
+        $('sDays').textContent = nDays;
       }
 
       /* ---------- Render del calendario ---------- */
       function renderCalendar() {
+        $('calHint').hidden = products.length > 0;
         const y = view.getFullYear(), m = view.getMonth();
         $('monthLabel').textContent = cap(view.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }));
-
-        const first = new Date(y, m, 1);
-        const offset = (first.getDay() + 6) % 7;   // 0 = lunes
+        const offset = (new Date(y, m, 1).getDay() + 6) % 7;
         const daysInMonth = new Date(y, m + 1, 0).getDate();
-        const todayKey = keyOf(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
+        const t = new Date();
+        const todayKey = keyOf(t.getFullYear(), t.getMonth(), t.getDate());
 
         let html = '';
         for (let i = 0; i < offset; i++) html += '<div class="day empty"></div>';
-
         for (let d = 1; d <= daysInMonth; d++) {
           const key = keyOf(y, m, d);
-          const c = calc(entries[key]);
-          const isToday = key === todayKey;
+          const a = dayAgg(key);
           let cls = 'day';
-          if (isToday) cls += ' today';
+          if (key === todayKey) cls += ' today';
           let profitHTML = '';
-          if (c.has) {
-            const sign = c.profit > 0 ? 'pos' : (c.profit < 0 ? 'neg' : 'zero');
-            cls += ' has-data ' + (c.profit > 0 ? 'pos-bg' : (c.profit < 0 ? 'neg-bg' : ''));
-            profitHTML = '<span class="dprofit ' + sign + '">' + money(c.profit) + '</span>';
+          if (a.has) {
+            const sign = a.profit > 0 ? 'pos' : (a.profit < 0 ? 'neg' : 'zero');
+            cls += ' has-data ' + (a.profit > 0 ? 'pos-bg' : (a.profit < 0 ? 'neg-bg' : ''));
+            profitHTML = '<span class="dprofit ' + sign + '">' + money(a.profit) + '</span>';
           }
-          html += '<button type="button" class="' + cls + '" data-date="' + key + '">' +
-                    '<span class="ddot"></span>' +
-                    '<span class="dnum">' + d + '</span>' +
-                    profitHTML +
-                  '</button>';
+          html += '<button type="button" class="' + cls + '" data-date="' + key + '"><span class="ddot"></span><span class="dnum">' + d + '</span>' + profitHTML + '</button>';
         }
         $('calGrid').innerHTML = html;
         renderStats();
       }
 
-      /* ---------- Modal ---------- */
-      function openModal(key) {
-        openDate = key;
-        const e = entries[key] || { product: '', ad: '', commission: '', earnings: '' };
+      /* ---------- Vista productos ---------- */
+      function renderProducts() {
+        $('prodCount').textContent = products.length + (products.length === 1 ? ' producto' : ' productos');
+        $('prodEmpty').hidden = products.length > 0;
+        $('prodGrid').innerHTML = products.map(p => {
+          const s = productStats(p.id);
+          const sign = s.profit > 0 ? 'pos' : (s.profit < 0 ? 'neg' : '');
+          return '<div class="prod-card" data-pid="' + p.id + '">' +
+            '<div class="prod-card-top">' + thumbHTML(p, 't48') +
+              '<div><h3>' + esc(p.name) + '</h3><div class="prod-card-sub">' + s.days + (s.days === 1 ? ' día con datos' : ' días con datos') + '</div></div>' +
+              '<button type="button" class="prod-del" data-del="' + p.id + '" aria-label="Eliminar producto"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/></svg></button>' +
+            '</div>' +
+            '<div class="prod-card-stats">' +
+              '<div><span>Ingresos</span><b>' + money(s.E) + '</b></div>' +
+              '<div><span>Gastos</span><b>' + money(s.costs) + '</b></div>' +
+              '<div><span>Beneficio</span><b class="' + sign + '">' + money(s.profit) + '</b></div>' +
+              '<div><span>Margen</span><b>' + (isFinite(s.margin) ? pct(s.margin) : '—') + '</b></div>' +
+            '</div>' +
+            '<span class="prod-open">Ver calendario <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>' +
+          '</div>';
+        }).join('');
+      }
+
+      /* ---------- Cambio de vista ---------- */
+      function setView(v) {
+        document.querySelectorAll('.view-tabs button').forEach(b => b.classList.toggle('is-active', b.dataset.view === v));
+        $('viewCalendario').hidden = v !== 'calendario';
+        $('viewProductos').hidden = v !== 'productos';
+        if (v === 'productos') renderProducts(); else renderCalendar();
+      }
+
+      /* ---------- Modal día ---------- */
+      function openDay(key) {
+        currentDate = key;
+        const dt = new Date(key + 'T00:00:00');
+        const label = cap(dt.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }));
+        $('mDate1').textContent = label;
+        $('mDate2').textContent = label;
+        modalProduct = (selectedProductId !== 'all' && productById(selectedProductId)) ? selectedProductId : null;
+        showStep('product');
+        renderProductPick();
+        openBackdrop('dayBackdrop');
+      }
+      function showStep(step) {
+        $('stepProduct').hidden = step !== 'product';
+        $('stepData').hidden = step !== 'data';
+      }
+      function renderProductPick() {
+        let html = products.map(p =>
+          '<button type="button" class="prod-chip' + (modalProduct === p.id ? ' is-sel' : '') + '" data-pick="' + p.id + '">' +
+            thumbHTML(p, 't34') + '<span class="prod-chip-name">' + esc(p.name) + '</span>' +
+            (modalProduct === p.id ? '<span class="prod-chip-check">✓</span>' : '') + '</button>'
+        ).join('');
+        html += '<button type="button" class="prod-chip prod-chip-new" data-pick="__new">＋ Crear nuevo producto</button>';
+        $('prodPick').innerHTML = html;
+      }
+      function goStepData() {
+        if (!modalProduct) return;
+        const p = productById(modalProduct);
+        $('mProdName').textContent = p ? p.name : '';
+        const e = (data[modalProduct] || {})[currentDate] || { product: '', ad: '', commission: '', earnings: '' };
         $('mProduct').value = e.product ?? '';
         $('mAd').value = e.ad ?? '';
         $('mCommission').value = e.commission ?? '';
         $('mEarn').value = e.earnings ?? '';
-
-        const dt = new Date(key + 'T00:00:00');
-        $('mDate').textContent = cap(dt.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }));
-
-        refreshModal();
-        const bd = $('backdrop');
-        bd.classList.add('show'); bd.setAttribute('aria-hidden', 'false');
-        setTimeout(() => $('mEarn').focus(), 60);
+        refreshDay();
+        showStep('data');
+        setTimeout(() => $('mEarn').focus(), 50);
       }
-      function closeModal() {
-        const bd = $('backdrop');
-        bd.classList.remove('show'); bd.setAttribute('aria-hidden', 'true');
-        openDate = null;
-        renderCalendar();
-      }
-      function readModalToEntry() {
-        if (!openDate) return;
-        const product = $('mProduct').value;
-        const ad = $('mAd').value;
-        const commission = $('mCommission').value;
-        const earnings = $('mEarn').value;
-        if (product === '' && ad === '' && commission === '' && earnings === '') {
-          delete entries[openDate];
-        } else {
-          entries[openDate] = { product, ad, commission, earnings };
-        }
+      function readDayToEntry() {
+        if (!currentDate || !modalProduct) return;
+        const product = $('mProduct').value, ad = $('mAd').value, commission = $('mCommission').value, earnings = $('mEarn').value;
+        if (!data[modalProduct]) data[modalProduct] = {};
+        if (product === '' && ad === '' && commission === '' && earnings === '') delete data[modalProduct][currentDate];
+        else data[modalProduct][currentDate] = { product, ad, commission, earnings };
         save();
       }
-      function refreshModal() {
-        const c = calc({ product: $('mProduct').value, ad: $('mAd').value, commission: $('mCommission').value, earnings: $('mEarn').value });
+      function refreshDay() {
+        const c = calcEntry({ product: $('mProduct').value, ad: $('mAd').value, commission: $('mCommission').value, earnings: $('mEarn').value });
         $('mCosts').textContent = money(c.costs);
-        const pEl = $('mProfit');
-        pEl.textContent = money(c.profit);
+        const pEl = $('mProfit'); pEl.textContent = money(c.profit);
         pEl.classList.remove('pos', 'neg');
         if (c.profit > 0) pEl.classList.add('pos'); else if (c.profit < 0) pEl.classList.add('neg');
         $('mMargin').textContent = isFinite(c.margin) ? pct(c.margin) : '—';
       }
+      function closeDay() {
+        closeBackdrop('dayBackdrop');
+        currentDate = null; modalProduct = null;
+        renderCalendar();
+      }
+
+      /* ---------- Modal crear producto ---------- */
+      function openCreate(returnTo) {
+        createReturn = returnTo;
+        tempPhoto = '';
+        $('pName').value = '';
+        setPhotoPreview('');
+        openBackdrop('prodBackdrop');
+        setTimeout(() => $('pName').focus(), 50);
+      }
+      function setPhotoPreview(dataUrl) {
+        const pv = $('photoPreview');
+        if (dataUrl) { pv.style.backgroundImage = 'url(' + dataUrl + ')'; pv.innerHTML = ''; $('photoClear').hidden = false; }
+        else { pv.style.backgroundImage = ''; pv.innerHTML = '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5-11 11"/></svg>'; $('photoClear').hidden = true; }
+      }
+      function handlePhotoFile(file) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = ev => {
+          const img = new Image();
+          img.onload = () => {
+            const max = 320, scale = Math.min(1, max / Math.max(img.width, img.height));
+            const w = Math.max(1, Math.round(img.width * scale)), h = Math.max(1, Math.round(img.height * scale));
+            const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+            cv.getContext('2d').drawImage(img, 0, 0, w, h);
+            try { tempPhoto = cv.toDataURL('image/jpeg', 0.72); } catch (e) { tempPhoto = ''; }
+            setPhotoPreview(tempPhoto);
+          };
+          img.src = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+      function createProduct() {
+        const name = $('pName').value.trim();
+        if (!name) { $('pName').focus(); return; }
+        const id = uid();
+        products.push({ id, name, photo: tempPhoto || '' });
+        save();
+        closeBackdrop('prodBackdrop');
+        renderDropdown();
+        if (createReturn === 'day') {
+          modalProduct = id;
+          selectedProductId = id;
+          renderDropdown();
+          renderProductPick();
+          goStepData();
+        } else {
+          renderProducts();
+        }
+      }
+
+      /* ---------- Backdrops ---------- */
+      function openBackdrop(id) { const b = $(id); b.classList.add('show'); b.setAttribute('aria-hidden', 'false'); }
+      function closeBackdrop(id) { const b = $(id); b.classList.remove('show'); b.setAttribute('aria-hidden', 'true'); }
 
       /* ---------- Eventos ---------- */
-      $('calGrid').addEventListener('click', (ev) => {
-        const cell = ev.target.closest('.day');
-        if (!cell || cell.classList.contains('empty')) return;
-        openModal(cell.dataset.date);
-      });
+      // Tabs
+      document.querySelectorAll('.view-tabs button').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
 
-      ['mProduct', 'mAd', 'mCommission', 'mEarn'].forEach(id => {
-        $(id).addEventListener('input', () => { readModalToEntry(); refreshModal(); });
+      // Dropdown
+      $('prodDDBtn').addEventListener('click', () => toggleDD());
+      $('prodDDMenu').addEventListener('click', (e) => {
+        const opt = e.target.closest('[data-pid]'); if (!opt) return;
+        const pid = opt.dataset.pid;
+        toggleDD(false);
+        if (pid === '__new') { openCreate('grid'); return; }
+        selectedProductId = pid; renderDropdown(); renderCalendar();
       });
-      $('mClose').addEventListener('click', closeModal);
-      $('mDone').addEventListener('click', closeModal);
-      $('mClear').addEventListener('click', () => {
-        $('mProduct').value = ''; $('mAd').value = ''; $('mCommission').value = ''; $('mEarn').value = '';
-        readModalToEntry(); refreshModal();
-      });
-      $('backdrop').addEventListener('click', (ev) => { if (ev.target === $('backdrop')) closeModal(); });
-      document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && $('backdrop').classList.contains('show')) closeModal(); });
+      document.addEventListener('click', (e) => { if (!$('prodDD').contains(e.target)) toggleDD(false); });
 
+      // Navegación mes
       $('prevMonth').addEventListener('click', () => { view.setMonth(view.getMonth() - 1); renderCalendar(); });
       $('nextMonth').addEventListener('click', () => { view.setMonth(view.getMonth() + 1); renderCalendar(); });
       $('todayBtn').addEventListener('click', () => { view = new Date(); view.setDate(1); renderCalendar(); });
 
-      document.querySelectorAll('.cur-switch button').forEach(b => {
-        b.addEventListener('click', () => {
-          currency = b.dataset.cur; save();
-          document.querySelectorAll('.cur-switch button').forEach(x => x.classList.toggle('is-active', x.dataset.cur === currency));
-          document.querySelectorAll('.input-wrap .cur').forEach(u => u.textContent = symbol());
-          if (openDate) refreshModal();
-          renderCalendar();
-        });
+      // Moneda
+      document.querySelectorAll('.cur-switch button').forEach(b => b.addEventListener('click', () => {
+        currency = b.dataset.cur; save();
+        document.querySelectorAll('.cur-switch button').forEach(x => x.classList.toggle('is-active', x.dataset.cur === currency));
+        document.querySelectorAll('.input-wrap .cur').forEach(u => u.textContent = symbol());
+        renderDropdown();
+        if (!$('viewProductos').hidden) renderProducts(); else renderCalendar();
+        if (currentDate && modalProduct) refreshDay();
+      }));
+
+      // Calendario: clic en día
+      $('calGrid').addEventListener('click', (e) => {
+        const cell = e.target.closest('.day'); if (!cell || cell.classList.contains('empty')) return;
+        openDay(cell.dataset.date);
+      });
+      $('hintCreate').addEventListener('click', () => openCreate('grid'));
+
+      // Modal día: elegir producto
+      $('prodPick').addEventListener('click', (e) => {
+        const chip = e.target.closest('[data-pick]'); if (!chip) return;
+        const pid = chip.dataset.pick;
+        if (pid === '__new') { openCreate('day'); return; }
+        modalProduct = pid; goStepData();
+      });
+      $('changeProd').addEventListener('click', () => { renderProductPick(); showStep('product'); });
+      ['mProduct', 'mAd', 'mCommission', 'mEarn'].forEach(id => $(id).addEventListener('input', () => { readDayToEntry(); refreshDay(); }));
+      $('mClear').addEventListener('click', () => { $('mProduct').value = ''; $('mAd').value = ''; $('mCommission').value = ''; $('mEarn').value = ''; readDayToEntry(); refreshDay(); });
+      document.querySelectorAll('[data-dayclose]').forEach(b => b.addEventListener('click', closeDay));
+      $('dayBackdrop').addEventListener('click', (e) => { if (e.target === $('dayBackdrop')) closeDay(); });
+
+      // Vista productos
+      $('newProdBtn').addEventListener('click', () => openCreate('grid'));
+      $('emptyCreate').addEventListener('click', () => openCreate('grid'));
+      $('prodGrid').addEventListener('click', (e) => {
+        const del = e.target.closest('[data-del]');
+        if (del) {
+          e.stopPropagation();
+          const p = productById(del.dataset.del);
+          if (p && confirm('¿Eliminar "' + p.name + '" y todos sus días registrados? No se puede deshacer.')) {
+            products = products.filter(x => x.id !== p.id);
+            delete data[p.id];
+            if (selectedProductId === p.id) selectedProductId = 'all';
+            save(); renderProducts(); renderDropdown();
+          }
+          return;
+        }
+        const card = e.target.closest('[data-pid]');
+        if (card) { selectedProductId = card.dataset.pid; renderDropdown(); setView('calendario'); }
+      });
+
+      // Modal crear producto
+      $('photoBtn').addEventListener('click', () => $('pPhoto').click());
+      $('pPhoto').addEventListener('change', (e) => handlePhotoFile(e.target.files && e.target.files[0]));
+      $('photoClear').addEventListener('click', () => { tempPhoto = ''; $('pPhoto').value = ''; setPhotoPreview(''); });
+      $('pCreate').addEventListener('click', createProduct);
+      $('pName').addEventListener('keydown', (e) => { if (e.key === 'Enter') createProduct(); });
+      $('pCancel').addEventListener('click', () => closeBackdrop('prodBackdrop'));
+      $('pClose').addEventListener('click', () => closeBackdrop('prodBackdrop'));
+      $('prodBackdrop').addEventListener('click', (e) => { if (e.target === $('prodBackdrop')) closeBackdrop('prodBackdrop'); });
+
+      // Esc cierra el modal visible
+      document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape') return;
+        if ($('prodBackdrop').classList.contains('show')) closeBackdrop('prodBackdrop');
+        else if ($('dayBackdrop').classList.contains('show')) closeDay();
       });
 
       /* ---------- Init ---------- */
       loadState();
       document.querySelectorAll('.cur-switch button').forEach(x => x.classList.toggle('is-active', x.dataset.cur === currency));
       document.querySelectorAll('.input-wrap .cur').forEach(u => u.textContent = symbol());
+      renderDropdown();
       renderCalendar();
     })();
   </script>

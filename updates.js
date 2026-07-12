@@ -5,6 +5,13 @@
 */
 const UPDATES = [
   {
+    id: '2026-07-12-tracker-productos',
+    title: 'Calendario de beneficio: ahora por productos',
+    items: [
+      'El Calendario de beneficio de la sección Ads pasa a organizarse por productos. Al abrir un día, lo primero que eliges es el producto (o creas uno nuevo con su nombre y foto, que se guarda para no tener que crearlo cada día); después rellenas gastos y ganancias como hasta ahora. Arriba del calendario tienes un desplegable para filtrar por producto: eliges «Producto 1» y ves su calendario, eliges «Producto 2» y ves el suyo, o «Todos los productos» para el total. Y hay una nueva pestaña «Productos» donde ves todos los productos testeados con sus estadísticas resumidas (ingresos, gastos, beneficio y margen). Tus días anteriores se conservan dentro de un producto llamado «Producto 1».',
+    ],
+  },
+  {
     id: '2026-07-12-tracker-comisiones-editable',
     title: 'Calendario de beneficio: comisiones editables',
     items: [

@@ -479,11 +479,11 @@
       </a>
 
       <nav class="nav-links" aria-label="Navegación principal">
-        <a href="#herramientas">Herramientas</a>
-        <a href="#guarda-info">Backup</a>
+        <a href="#organico" class="nav-tab is-active" data-tab="organico">Orgánico</a>
+        <a href="#ads" class="nav-tab" data-tab="ads">Ads</a>
       </nav>
 
-      <a href="#herramientas" class="btn btn-primary btn-sm">Herramientas</a>
+      <a href="#guarda-info" class="btn btn-primary btn-sm">Backup</a>
 
       <button class="nav-toggle" id="navToggle" aria-label="Abrir menú" aria-expanded="false">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
@@ -493,8 +493,16 @@
 
   <main>
 
-    <!-- ======= HERRAMIENTAS ======= -->
-    <section class="section section-tools" id="herramientas">
+    <!-- ======= HERO ======= -->
+    <section class="home-hero">
+      <div class="container">
+        <h1 class="home-hero-title">Zonga Elements</h1>
+        <p class="home-hero-sub">Tu arsenal de herramientas de orgánico: todo lo que necesitas para llevar cada producto de la idea a la venta, en un mismo sitio.</p>
+      </div>
+    </section>
+
+    <!-- ======= ORGÁNICO ======= -->
+    <section class="section section-tools tab-panel is-active" id="organico" role="region" aria-label="Herramientas de orgánico">
       <div class="container">
         <div class="tools-toolbar reveal">
           <div class="tools-search">
@@ -522,6 +530,17 @@
         <p class="tools-empty" id="toolsEmpty" hidden>
           No hay herramientas que coincidan con tu búsqueda.
         </p>
+      </div>
+    </section>
+
+    <!-- ======= ADS ======= -->
+    <section class="section tab-panel" id="ads" role="region" aria-label="Herramientas de Ads" hidden>
+      <div class="container">
+        <div class="ads-empty">
+          <div class="ads-empty-icon" aria-hidden="true">📣</div>
+          <h2>Ads</h2>
+          <p>Aquí vivirán tus herramientas de publicidad de pago. Todavía no hay ninguna: pronto.</p>
+        </div>
       </div>
     </section>
 

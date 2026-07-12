@@ -1410,9 +1410,66 @@ button:focus-visible {
 }
 
 /* ============================================
+   HOME HERO + TABS (Orgánico / Ads)
+   ============================================ */
+.home-hero {
+  position: relative;
+  overflow: hidden;
+  padding: 72px 0 12px;
+  text-align: center;
+  background:
+    radial-gradient(1000px 520px at 50% -240px, var(--c-primary-soft) 0%, transparent 60%),
+    var(--c-bg);
+}
+.home-hero-title {
+  font-size: clamp(40px, 7vw, 72px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  background: linear-gradient(90deg, var(--c-primary) 0%, var(--c-primary-100) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  margin-bottom: 16px;
+}
+.home-hero-sub {
+  max-width: 580px;
+  margin: 0 auto;
+  color: var(--c-text-soft);
+  font-size: 17px;
+}
+
+/* Tabs en el navbar */
+.nav-tab.is-active { color: var(--c-text); font-weight: 600; }
+@media (min-width: 640px) {
+  .nav-tab { position: relative; }
+  .nav-tab.is-active::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; bottom: -6px;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--c-primary);
+  }
+}
+
+/* Paneles */
+.tab-panel[hidden] { display: none; }
+
+/* Estado vacío de Ads */
+.ads-empty {
+  max-width: 520px;
+  margin: 0 auto;
+  text-align: center;
+  padding: 56px 24px 24px;
+}
+.ads-empty-icon { font-size: 46px; margin-bottom: 16px; }
+.ads-empty h2 { font-size: 28px; margin-bottom: 10px; }
+.ads-empty p { color: var(--c-text-soft); font-size: 16px; }
+
+/* ============================================
    TOOLS — versión cockpit
    ============================================ */
-.section-tools { padding-top: 56px; }
+.section-tools { padding-top: 40px; }
 .section-head-left {
   max-width: none;
   margin: 0 0 32px;

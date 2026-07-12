@@ -1165,6 +1165,44 @@ function initMobileMenu() {
   });
 }
 
+/* ----- Tabs Orgánico / Ads (navbar) ----- */
+function initTabs() {
+  const tabs = Array.from(document.querySelectorAll('.nav-tab'));
+  if (!tabs.length) return;
+
+  const panels = {
+    organico: document.getElementById('organico'),
+    ads: document.getElementById('ads'),
+  };
+
+  function activate(name) {
+    if (!panels[name]) name = 'organico';
+    tabs.forEach(t => {
+      const on = t.dataset.tab === name;
+      t.classList.toggle('is-active', on);
+      if (on) t.setAttribute('aria-current', 'page');
+      else t.removeAttribute('aria-current');
+    });
+    Object.entries(panels).forEach(([key, el]) => {
+      if (el) el.hidden = key !== name;
+    });
+    // El panel recién mostrado puede tener elementos .reveal sin observar
+    observeReveals();
+  }
+
+  tabs.forEach(t => {
+    t.addEventListener('click', (e) => {
+      e.preventDefault();
+      const name = t.dataset.tab;
+      activate(name);
+      history.replaceState(null, '', '#' + name);
+    });
+  });
+
+  const initial = (location.hash || '').replace('#', '');
+  activate(panels[initial] ? initial : 'organico');
+}
+
 /* ----- Año dinámico ----- */
 function setYear() {
   const y = document.getElementById('year');
@@ -1181,5 +1219,6 @@ document.addEventListener('DOMContentLoaded', () => {
   observeReveals();
   initNavbarScroll();
   initMobileMenu();
+  initTabs();
   setYear();
 });

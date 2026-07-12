@@ -5,6 +5,13 @@
 */
 const UPDATES = [
   {
+    id: '2026-07-12-secciones-organico-ads',
+    title: 'Nuevas secciones: Orgánico y Ads',
+    items: [
+      'La portada estrena cabecera: arriba del todo se ve en grande «Zonga Elements» con una breve descripción, y justo debajo tus herramientas. En el menú de arriba ahora hay dos pestañas: «Orgánico» (donde está TODO lo que ya tenías: todas las herramientas actuales, sin cambios) y «Ads», una sección nueva para tus futuras herramientas de publicidad de pago, que de momento está vacía. La opción de Backup sigue disponible, ahora en el botón azul de la esquina del menú.',
+    ],
+  },
+  {
     id: '2026-07-12-inicio-limpio',
     title: 'Inicio más limpio: directo a las herramientas',
     items: [

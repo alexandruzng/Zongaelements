@@ -129,16 +129,6 @@
 
     .cal-spacer { flex: 1; }
     .cal-settings { display: inline-flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-    .fee-field { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 600; color: var(--c-text-soft); }
-    .mini-wrap {
-      display: inline-flex; align-items: center; border: 1px solid var(--c-border);
-      border-radius: var(--radius-sm); background: #fff; overflow: hidden;
-      transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
-    }
-    .mini-wrap:focus-within { border-color: var(--c-primary); box-shadow: 0 0 0 3px var(--c-primary-soft); }
-    .mini-wrap input { width: 54px; border: 0; outline: 0; background: transparent; padding: 8px 8px; font-size: 13px; font-weight: 700; text-align: right; -moz-appearance: textfield; }
-    .mini-wrap input::-webkit-outer-spin-button, .mini-wrap input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-    .mini-wrap .unit { padding: 0 9px; font-size: 12px; font-weight: 600; color: var(--c-text-soft); border-left: 1px solid var(--c-border); }
 
     .cur-switch { display: inline-flex; gap: 5px; }
     .cur-switch button {
@@ -313,9 +303,6 @@
       </div>
       <div class="cal-spacer"></div>
       <div class="cal-settings">
-        <span class="fee-field">Comisión
-          <span class="mini-wrap"><input type="number" id="fee" step="0.1" min="0" inputmode="decimal"><span class="unit">%</span></span>
-        </span>
         <div class="cur-switch" role="group" aria-label="Elegir moneda">
           <button type="button" data-cur="EUR">€</button>
           <button type="button" data-cur="USD">$</button>
@@ -371,11 +358,10 @@
             <label for="mAd">Coste de Anuncios</label>
             <div class="input-wrap"><span class="cur">€</span><input type="number" id="mAd" step="0.01" min="0" inputmode="decimal" placeholder="0"></div>
           </div>
-          <div class="msec-auto">
-            <span>Comisiones (<span id="mFeePct">7</span>%)</span>
-            <b id="mComm">€0,00</b>
+          <div class="mfield">
+            <label for="mCommission">Comisiones</label>
+            <div class="input-wrap"><span class="cur">€</span><input type="number" id="mCommission" step="0.01" min="0" inputmode="decimal" placeholder="0"></div>
           </div>
-          <p class="msec-hint">Las comisiones se calculan solas sobre tus ganancias.</p>
         </div>
 
         <!-- Sección 2: Ganancias -->
@@ -418,9 +404,8 @@
       const $ = (id) => document.getElementById(id);
 
       /* Estado */
-      let fee = 7;                 // Comisión (7%) por defecto
       let currency = 'EUR';        // Moneda por defecto EUR
-      let entries = {};            // { 'YYYY-MM-DD': { product, ad, earnings } }
+      let entries = {};            // { 'YYYY-MM-DD': { product, ad, commission, earnings } }
       let view = new Date();       // mes visible
       view.setDate(1);
       let openDate = null;         // fecha abierta en el modal
@@ -437,27 +422,26 @@
 
       /* ---------- Cálculo de un día ---------- */
       function calc(e) {
-        const E = n(e && e.earnings), P = n(e && e.product), A = n(e && e.ad);
-        const commission = E * fee / 100;
-        const costs = P + A + commission;
+        const E = n(e && e.earnings), P = n(e && e.product), A = n(e && e.ad), C = n(e && e.commission);
+        const costs = P + A + C;
         const profit = E - costs;
         const margin = E > 0 ? (profit / E) * 100 : NaN;
-        const has = !!(e && (e.earnings !== '' || e.product !== '' || e.ad !== '') && (E || P || A));
-        return { E, P, A, commission, costs, profit, margin, has };
+        const filled = e && (e.earnings || e.product || e.ad || e.commission);
+        const has = !!(filled && (E || P || A || C));
+        return { E, P, A, C, costs, profit, margin, has };
       }
 
       /* ---------- Persistencia ---------- */
       function save() {
-        try { localStorage.setItem(STORE_KEY, JSON.stringify({ fee, currency, entries })); } catch (e) {}
+        try { localStorage.setItem(STORE_KEY, JSON.stringify({ currency, entries })); } catch (e) {}
       }
       function migrateOld() {
         try {
           const old = JSON.parse(localStorage.getItem(OLD_KEY) || 'null');
           if (old) {
-            if (isFinite(parseFloat(old.fee))) fee = parseFloat(old.fee);
             if (CUR[old.currency]) currency = old.currency;
             if (Array.isArray(old.rows)) old.rows.forEach(r => {
-              if (r && r.date) entries[r.date] = { product: r.product ?? '', ad: r.ad ?? '', earnings: r.earnings ?? '' };
+              if (r && r.date) entries[r.date] = { product: r.product ?? '', ad: r.ad ?? '', commission: '', earnings: r.earnings ?? '' };
             });
           }
         } catch (e) {}
@@ -466,7 +450,6 @@
         let s = null;
         try { s = JSON.parse(localStorage.getItem(STORE_KEY) || 'null'); } catch (e) {}
         if (s) {
-          if (isFinite(parseFloat(s.fee))) fee = parseFloat(s.fee);
           if (CUR[s.currency]) currency = s.currency;
           if (s.entries && typeof s.entries === 'object') entries = s.entries;
         } else {
@@ -531,11 +514,11 @@
       /* ---------- Modal ---------- */
       function openModal(key) {
         openDate = key;
-        const e = entries[key] || { product: '', ad: '', earnings: '' };
+        const e = entries[key] || { product: '', ad: '', commission: '', earnings: '' };
         $('mProduct').value = e.product ?? '';
         $('mAd').value = e.ad ?? '';
+        $('mCommission').value = e.commission ?? '';
         $('mEarn').value = e.earnings ?? '';
-        $('mFeePct').textContent = fee.toLocaleString('es-ES', { maximumFractionDigits: 2 });
 
         const dt = new Date(key + 'T00:00:00');
         $('mDate').textContent = cap(dt.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }));
@@ -555,17 +538,17 @@
         if (!openDate) return;
         const product = $('mProduct').value;
         const ad = $('mAd').value;
+        const commission = $('mCommission').value;
         const earnings = $('mEarn').value;
-        if (product === '' && ad === '' && earnings === '') {
+        if (product === '' && ad === '' && commission === '' && earnings === '') {
           delete entries[openDate];
         } else {
-          entries[openDate] = { product, ad, earnings };
+          entries[openDate] = { product, ad, commission, earnings };
         }
         save();
       }
       function refreshModal() {
-        const c = calc({ product: $('mProduct').value, ad: $('mAd').value, earnings: $('mEarn').value });
-        $('mComm').textContent = money(c.commission);
+        const c = calc({ product: $('mProduct').value, ad: $('mAd').value, commission: $('mCommission').value, earnings: $('mEarn').value });
         $('mCosts').textContent = money(c.costs);
         const pEl = $('mProfit');
         pEl.textContent = money(c.profit);
@@ -581,13 +564,13 @@
         openModal(cell.dataset.date);
       });
 
-      ['mProduct', 'mAd', 'mEarn'].forEach(id => {
+      ['mProduct', 'mAd', 'mCommission', 'mEarn'].forEach(id => {
         $(id).addEventListener('input', () => { readModalToEntry(); refreshModal(); });
       });
       $('mClose').addEventListener('click', closeModal);
       $('mDone').addEventListener('click', closeModal);
       $('mClear').addEventListener('click', () => {
-        $('mProduct').value = ''; $('mAd').value = ''; $('mEarn').value = '';
+        $('mProduct').value = ''; $('mAd').value = ''; $('mCommission').value = ''; $('mEarn').value = '';
         readModalToEntry(); refreshModal();
       });
       $('backdrop').addEventListener('click', (ev) => { if (ev.target === $('backdrop')) closeModal(); });
@@ -597,11 +580,6 @@
       $('nextMonth').addEventListener('click', () => { view.setMonth(view.getMonth() + 1); renderCalendar(); });
       $('todayBtn').addEventListener('click', () => { view = new Date(); view.setDate(1); renderCalendar(); });
 
-      $('fee').addEventListener('input', () => {
-        fee = n($('fee').value); save();
-        if (openDate) { $('mFeePct').textContent = fee.toLocaleString('es-ES', { maximumFractionDigits: 2 }); refreshModal(); }
-        renderCalendar();
-      });
       document.querySelectorAll('.cur-switch button').forEach(b => {
         b.addEventListener('click', () => {
           currency = b.dataset.cur; save();
@@ -614,7 +592,6 @@
 
       /* ---------- Init ---------- */
       loadState();
-      $('fee').value = fee;
       document.querySelectorAll('.cur-switch button').forEach(x => x.classList.toggle('is-active', x.dataset.cur === currency));
       document.querySelectorAll('.input-wrap .cur').forEach(u => u.textContent = symbol());
       renderCalendar();

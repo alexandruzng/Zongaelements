@@ -5,6 +5,13 @@
 */
 const UPDATES = [
   {
+    id: '2026-07-12-tracker-comisiones-editable',
+    title: 'Calendario de beneficio: comisiones editables',
+    items: [
+      'En el panel de cada día del Calendario de beneficio, las Comisiones ya no se calculan solas: ahora son un tercer campo de gasto que rellenas a mano, igual que el Coste del Producto y el Coste de Anuncios. Así controlas tú el importe exacto. El beneficio del día se calcula restando a tus ganancias esos tres gastos (producto + anuncios + comisiones).',
+    ],
+  },
+  {
     id: '2026-07-12-tracker-beneficio-calendario',
     title: 'Beneficio diario, ahora en formato calendario',
     items: [

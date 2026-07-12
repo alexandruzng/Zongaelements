@@ -260,8 +260,8 @@ const adsTools = [
   },
   {
     id: 'tracker-beneficio-ads',
-    name: 'Tracker de beneficio diario',
-    description: 'Registra día a día tus ganancias y tus costes de producto y de ads. Calcula sola la comisión, los costes, el beneficio, el margen y el beneficio acumulado, con gráfico de evolución. Réplica de tu hoja de seguimiento.',
+    name: 'Calendario de beneficio diario',
+    description: 'Un calendario mensual para apuntar cada día tus gastos (producto, anuncios, comisiones) y tus ganancias. Cada casilla muestra el beneficio en verde o rojo, con las estadísticas del mes arriba. Réplica de tu hoja de seguimiento.',
     url: 'tracker-beneficio-ads/index.html',
     status: 'available',
     icon: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="21" x2="21" y2="21"/><rect x="5" y="12" width="3.5" height="7"/><rect x="10.25" y="8" width="3.5" height="11"/><rect x="15.5" y="4" width="3.5" height="15"/></svg>`

@@ -5,10 +5,10 @@
 */
 const UPDATES = [
   {
-    id: '2026-07-12-tracker-beneficio-ads',
-    title: 'Nueva herramienta en Ads: Tracker de beneficio diario',
+    id: '2026-07-12-tracker-beneficio-calendario',
+    title: 'Beneficio diario, ahora en formato calendario',
     items: [
-      'La sección Ads suma una segunda herramienta que reproduce tu hoja de seguimiento diario. Apuntas cada día tus ganancias y tus costes de producto y de ads, y te calcula automáticamente la comisión (7% por defecto, editable), los costes totales, el beneficio, el margen y el beneficio acumulado. Incluye tarjetas de resumen (ganancias, costes, beneficio, margen y días), un gráfico de evolución del beneficio acumulado y un selector de moneda (EUR por defecto). Puedes añadir y borrar días libremente y todo se guarda en tu navegador. Ábrela desde la pestaña «Ads».',
+      'La herramienta de seguimiento de beneficio de la sección Ads pasa a ser un calendario mensual, mucho más limpio y pensado para rellenar día a día. Cada casilla del calendario muestra el beneficio de ese día en verde (si ganas) o rojo (si pierdes). Al hacer clic en un día se abre un panel partido en dos: a la izquierda los gastos (Coste del Producto, Coste de Anuncios y las Comisiones, que se calculan solas) y a la derecha las Ganancias. Puedes moverte entre meses con las flechas y arriba del calendario ves las estadísticas del mes (ganancias, costes, beneficio, margen y días con datos). Sigue teniendo la comisión editable (7% por defecto) y el selector de moneda (EUR). Todo se guarda en tu navegador.',
     ],
   },
   {

@@ -5,6 +5,13 @@
 */
 const UPDATES = [
   {
+    id: '2026-07-12-analizador-metricas-ads',
+    title: 'Nueva herramienta en Ads: Analizador de métricas',
+    items: [
+      'La sección Ads suma un analizador de métricas basado en el módulo de iniciación a Meta Ads. Metes tus datos del producto (ROAS y coste por compra de equilibrio) y, por cada anuncio, sus métricas (CTR, CPC, CPM, ROAS, Hook Rate, Hold Rate, añadidos al carrito, checkouts, compras y conversión). La herramienta analiza cada métrica y te dice si está bien o mal y por qué, aplicando los umbrales del módulo (CTR ≥2%, CPC <1, CPM <15, Hook >50%, Hold >25%, etc.) y las reglas de media buying para decidir. Puedes añadir tantos anuncios como quieras, ponerle un título a cada uno, y al final te da un veredicto claro: «Apaga «Métrica 1» porque…», «Escala…», «Mantén…». Toda la lógica sale del PDF del módulo.',
+    ],
+  },
+  {
     id: '2026-07-12-tracker-productos',
     title: 'Calendario de beneficio: ahora por productos',
     items: [

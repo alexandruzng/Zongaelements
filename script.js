@@ -265,6 +265,14 @@ const adsTools = [
     url: 'tracker-beneficio-ads/index.html',
     status: 'available',
     icon: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="21" x2="21" y2="21"/><rect x="5" y="12" width="3.5" height="7"/><rect x="10.25" y="8" width="3.5" height="11"/><rect x="15.5" y="4" width="3.5" height="15"/></svg>`
+  },
+  {
+    id: 'analizador-metricas-ads',
+    name: 'Analizador de métricas de Ads',
+    description: 'Mete las métricas de cada anuncio (CTR, CPC, CPM, ROAS, Hook/Hold Rate, ventas…) y te dice qué está bien, qué está mal y por qué, con un veredicto final de apagar, mantener o escalar cada uno. Todos los criterios salen del módulo de iniciación a Meta Ads.',
+    url: 'analizador-metricas-ads/index.html',
+    status: 'available',
+    icon: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>`
   }
 ];
 

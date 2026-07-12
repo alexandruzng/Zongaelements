@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Analizador de Métricas de Ads · Zonga Elements</title>
+  <meta name="description" content="Introduce las métricas de tus anuncios y obtén un análisis (apagar, mantener o escalar) basado en el módulo de iniciación a Meta Ads." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23DC2626'/%3E%3Ctext x='50' y='68' font-size='60' text-anchor='middle' fill='white' font-family='Inter,sans-serif' font-weight='800'%3EZ%3C/text%3E%3C/svg%3E" />
+
+  <style>
+    /* ============================================
+       Analizador de Métricas de Ads — Zonga Elements
+       Criterios extraídos del módulo de iniciación a Meta Ads
+       ============================================ */
+    :root {
+      --c-primary: #DC2626; --c-primary-dark: #991B1B; --c-primary-soft: #FEE2E2; --c-primary-100: #F87171;
+      --c-green: #059669; --c-green-soft: #D1FAE5;
+      --c-amber: #D97706; --c-amber-soft: #FEF3C7;
+      --c-red: #DC2626; --c-red-soft: #FEE2E2;
+      --c-slate: #475569; --c-slate-soft: #EEF2F6;
+      --c-bg: #FFFFFF; --c-bg-alt: #F8FAFC; --c-text: #0F172A; --c-text-soft: #64748B; --c-border: #E2E8F0;
+      --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px;
+      --shadow-sm: 0 1px 3px rgba(15,23,42,0.05);
+      --shadow-md: 0 10px 30px -10px rgba(220,38,38,0.18);
+      --shadow-lg: 0 20px 50px -20px rgba(220,38,38,0.3);
+      --ease: cubic-bezier(0.4,0,0.2,1); --dur: 180ms; --max-w: 1060px;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body { margin:0; font-family:'Inter',system-ui,-apple-system,sans-serif; font-size:14px; line-height:1.6; color:var(--c-text);
+      background: radial-gradient(1100px 520px at 50% -260px, var(--c-primary-soft) 0%, transparent 60%), var(--c-bg-alt);
+      -webkit-font-smoothing:antialiased; min-height:100vh; }
+    h1,h2,h3 { margin:0; letter-spacing:-0.02em; font-weight:700; line-height:1.2; }
+    p { margin:0; }
+    svg { display:block; }
+    input { font-family:inherit; }
+    button { font-family:inherit; cursor:pointer; border:0; background:none; }
+    [hidden] { display:none !important; }
+    .container { width:100%; max-width:var(--max-w); margin:0 auto; padding:0 20px; }
+
+    /* Topbar */
+    .topbar { position:sticky; top:0; z-index:20; backdrop-filter:saturate(180%) blur(10px); background:rgba(255,255,255,0.82); border-bottom:1px solid var(--c-border); }
+    .topbar-inner { display:flex; align-items:center; justify-content:space-between; height:62px; gap:12px; }
+    .brand { display:inline-flex; align-items:center; gap:10px; font-weight:700; text-decoration:none; color:inherit; }
+    .brand .logo-badge { width:30px; height:30px; border-radius:9px; background:linear-gradient(135deg,var(--c-primary),var(--c-primary-100)); display:inline-flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:16px; box-shadow:var(--shadow-sm); }
+    .brand .brand-sub { color:var(--c-text-soft); font-weight:500; font-size:12px; }
+    .back-link { display:inline-flex; align-items:center; gap:7px; font-size:13px; font-weight:600; color:var(--c-text-soft); padding:8px 14px; border-radius:var(--radius-sm); border:1px solid var(--c-border); background:#fff; text-decoration:none; transition:color var(--dur) var(--ease), border-color var(--dur) var(--ease), transform var(--dur) var(--ease); }
+    .back-link:hover { color:var(--c-primary); border-color:var(--c-primary-100); transform:translateX(-2px); }
+
+    /* Header */
+    .head { text-align:center; padding:40px 0 22px; }
+    .eyebrow { display:inline-flex; align-items:center; gap:8px; font-size:12px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--c-primary); margin-bottom:14px; padding:6px 14px; border-radius:999px; background:#fff; border:1px solid var(--c-primary-soft); box-shadow:var(--shadow-sm); }
+    .eyebrow .dot { width:7px; height:7px; border-radius:50%; background:var(--c-primary); }
+    .head h1 { font-size:clamp(28px,5vw,44px); font-weight:800; background:linear-gradient(90deg,var(--c-primary),var(--c-primary-100)); -webkit-background-clip:text; background-clip:text; color:transparent; margin-bottom:12px; }
+    .head p { color:var(--c-text-soft); font-size:16px; max-width:640px; margin:0 auto; }
+
+    /* Cards */
+    .card { background:#fff; border:1px solid var(--c-border); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); margin-bottom:20px; }
+    .card-head { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:16px 20px; border-bottom:1px solid var(--c-border); }
+    .card-head h2 { font-size:15px; display:flex; align-items:center; gap:9px; }
+    .card-head .badge-n { display:inline-flex; align-items:center; justify-content:center; min-width:22px; height:22px; padding:0 7px; border-radius:999px; background:var(--c-primary-soft); color:var(--c-primary-dark); font-size:12px; font-weight:800; }
+    .card-body { padding:18px 20px 20px; }
+
+    /* Inputs */
+    .field { margin-bottom:12px; }
+    .field > label { display:block; font-size:12.5px; font-weight:500; color:var(--c-text-soft); margin-bottom:5px; }
+    .input-wrap { display:flex; align-items:center; border:1px solid var(--c-border); border-radius:var(--radius-sm); background:var(--c-bg-alt); overflow:hidden; transition:border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease), background var(--dur) var(--ease); }
+    .input-wrap:focus-within { border-color:var(--c-primary); background:#fff; box-shadow:0 0 0 3px var(--c-primary-soft); }
+    .input-wrap .unit { padding:0 10px; font-size:12.5px; font-weight:600; color:var(--c-text-soft); white-space:nowrap; }
+    .input-wrap .unit.left { border-right:1px solid var(--c-border); }
+    .input-wrap .unit.right { border-left:1px solid var(--c-border); }
+    .input-wrap input { flex:1; width:100%; min-width:0; border:0; outline:0; background:transparent; padding:10px 11px; font-size:14.5px; font-weight:600; color:var(--c-text); -moz-appearance:textfield; }
+    .input-wrap input::-webkit-outer-spin-button, .input-wrap input::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+
+    .ctx-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    @media (max-width:560px){ .ctx-grid { grid-template-columns:1fr; } }
+    .ctx-note { margin-top:14px; font-size:12.5px; color:var(--c-text-soft); line-height:1.5; background:var(--c-bg-alt); border:1px solid var(--c-border); border-radius:var(--radius-sm); padding:11px 13px; }
+    .ctx-note b { color:var(--c-text); }
+    .bench-pill { display:inline-flex; align-items:center; gap:7px; font-size:12.5px; font-weight:700; color:var(--c-primary-dark); background:var(--c-primary-soft); border-radius:999px; padding:5px 12px; margin-top:12px; }
+
+    /* Bloque de métricas por anuncio */
+    .ad-block { border:1px solid var(--c-border); border-radius:var(--radius-md); background:#fff; margin-bottom:14px; overflow:hidden; }
+    .ad-block-head { display:flex; align-items:center; gap:10px; padding:12px 14px; background:var(--c-bg-alt); border-bottom:1px solid var(--c-border); }
+    .ad-idx { width:26px; height:26px; border-radius:8px; background:var(--c-primary); color:#fff; font-weight:800; font-size:13px; display:inline-flex; align-items:center; justify-content:center; flex:none; }
+    .ad-title { flex:1; border:1px solid transparent; background:transparent; border-radius:7px; padding:7px 9px; font-size:14px; font-weight:700; color:var(--c-text); transition:border-color var(--dur) var(--ease), background var(--dur) var(--ease); }
+    .ad-title:focus { outline:0; border-color:var(--c-primary); background:#fff; box-shadow:0 0 0 3px var(--c-primary-soft); }
+    .ad-del { width:30px; height:30px; border-radius:8px; color:var(--c-text-soft); display:inline-flex; align-items:center; justify-content:center; font-size:18px; flex:none; transition:background var(--dur) var(--ease), color var(--dur) var(--ease); }
+    .ad-del:hover { background:var(--c-red-soft); color:var(--c-red); }
+    .metric-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; padding:14px; }
+    @media (max-width:620px){ .metric-grid { grid-template-columns:repeat(2,1fr); } }
+    @media (max-width:400px){ .metric-grid { grid-template-columns:1fr; } }
+    .metric-grid .field { margin:0; }
+    .metric-grid label { font-size:11.5px; }
+
+    /* Botones */
+    .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:11px 20px; border-radius:var(--radius-sm); font-weight:600; font-size:14px; transition:transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease), background var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease); }
+    .btn-primary { background:var(--c-primary); color:#fff; box-shadow:var(--shadow-md); }
+    .btn-primary:hover { background:var(--c-primary-dark); transform:translateY(-2px); box-shadow:var(--shadow-lg); }
+    .btn-ghost { background:#fff; color:var(--c-text-soft); border:1px solid var(--c-border); }
+    .btn-ghost:hover { color:var(--c-primary); border-color:var(--c-primary-100); }
+    .btn-lg { padding:14px 26px; font-size:15px; }
+    .btn-block { width:100%; }
+    .actions-row { display:flex; gap:12px; flex-wrap:wrap; margin:4px 0 30px; }
+
+    /* Resultados */
+    .report { margin-bottom:36px; }
+    .res-card { border:1px solid var(--c-border); border-radius:var(--radius-lg); background:#fff; box-shadow:var(--shadow-sm); margin-bottom:16px; overflow:hidden; }
+    .res-head { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:15px 18px; border-bottom:1px solid var(--c-border); }
+    .res-title { font-size:16px; font-weight:800; display:flex; align-items:center; gap:9px; min-width:0; }
+    .res-title .rt { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .verdict { display:inline-flex; align-items:center; gap:7px; padding:6px 13px; border-radius:999px; font-size:12.5px; font-weight:800; letter-spacing:0.02em; white-space:nowrap; flex:none; }
+    .verdict .vd { width:8px; height:8px; border-radius:50%; background:currentColor; }
+    .v-kill { background:var(--c-red-soft); color:var(--c-red); }
+    .v-keep { background:var(--c-amber-soft); color:var(--c-amber); }
+    .v-scale { background:var(--c-green-soft); color:var(--c-green); }
+    .v-wait { background:var(--c-slate-soft); color:var(--c-slate); }
+
+    .res-body { padding:8px 18px 16px; }
+    .m-row { display:flex; gap:11px; padding:10px 0; border-bottom:1px solid var(--c-border); }
+    .m-row:last-child { border-bottom:0; }
+    .m-dot { width:10px; height:10px; border-radius:50%; margin-top:5px; flex:none; }
+    .m-good { background:var(--c-green); } .m-warn { background:var(--c-amber); } .m-bad { background:var(--c-red); }
+    .m-info { flex:1; min-width:0; }
+    .m-name { font-size:13px; font-weight:700; }
+    .m-name .m-val { color:var(--c-text-soft); font-weight:600; }
+    .m-text { font-size:12.5px; color:var(--c-text-soft); line-height:1.5; margin-top:2px; }
+
+    .reasons { margin-top:14px; padding:13px 15px; border-radius:var(--radius-sm); background:var(--c-bg-alt); border:1px solid var(--c-border); }
+    .reasons h4 { font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--c-text-soft); margin-bottom:8px; }
+    .reasons ul { margin:0; padding-left:18px; }
+    .reasons li { font-size:13px; margin-bottom:5px; line-height:1.5; }
+    .recs { margin-top:10px; }
+    .recs h4 { color:var(--c-primary); }
+
+    /* Veredicto final */
+    .final { border:2px solid var(--c-primary); border-radius:var(--radius-lg); background:linear-gradient(180deg,#fff, var(--c-primary-soft) 320%); box-shadow:var(--shadow-md); }
+    .final .card-head { border-bottom:1px solid var(--c-primary-soft); }
+    .final-item { display:flex; gap:11px; padding:12px 0; border-bottom:1px solid var(--c-border); }
+    .final-item:last-child { border-bottom:0; }
+    .final-item .fi-badge { flex:none; margin-top:1px; }
+    .final-item p { font-size:13.5px; line-height:1.55; }
+    .final-item p b { font-weight:800; }
+    .final-note { margin-top:14px; font-size:12.5px; color:var(--c-text-soft); background:var(--c-amber-soft); color:#92400E; border-radius:var(--radius-sm); padding:11px 13px; font-weight:500; }
+
+    .foot-legal { text-align:center; padding:8px 0 40px; color:var(--c-text-soft); font-size:12px; }
+    .empty-note { text-align:center; color:var(--c-text-soft); font-size:14px; padding:22px; }
+  </style>
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <a class="brand" href="../index.html#ads"><span class="logo-badge">Z</span><span>Zonga Elements <span class="brand-sub">· Ads</span></span></a>
+      <a class="back-link" href="../index.html#ads">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Volver
+      </a>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <div class="head">
+      <span class="eyebrow"><span class="dot"></span> Analizador de Ads</span>
+      <h1>Analiza tus Métricas</h1>
+      <p>Mete las métricas de cada anuncio y te digo, según el módulo de iniciación a Meta Ads, qué está bien, qué está mal y si hay que apagar, mantener o escalar cada uno.</p>
+    </div>
+
+    <!-- Contexto del producto -->
+    <div class="card">
+      <div class="card-head"><h2>1 · Datos de tu producto</h2></div>
+      <div class="card-body">
+        <div class="ctx-grid">
+          <div class="field">
+            <label for="beRoas">ROAS de equilibrio (BE ROAS)</label>
+            <div class="input-wrap"><input type="number" id="beRoas" step="0.01" min="0" inputmode="decimal" placeholder="Ej. 1.7"><span class="unit right">x</span></div>
+          </div>
+          <div class="field">
+            <label for="beCpa">Coste por compra de equilibrio (BE CPA)</label>
+            <div class="input-wrap"><span class="unit left">$</span><input type="number" id="beCpa" step="0.01" min="0" inputmode="decimal" placeholder="Ej. 26.50"></div>
+          </div>
+        </div>
+        <div class="bench-pill" id="benchPill" hidden></div>
+        <p class="ctx-note">Estos dos números salen de tu <b>Calculadora de KPIs</b>. El módulo los usa para decidir: por encima del <b>ROAS de equilibrio</b> ganas dinero, y el objetivo es el <b>benchmark ROAS (BE ROAS + 20%)</b>. El <b>BE CPA</b> es lo máximo que puedes pagar por compra sin perder.</p>
+      </div>
+    </div>
+
+    <!-- Métricas por anuncio -->
+    <div class="card">
+      <div class="card-head"><h2>2 · Métricas de tus anuncios <span class="badge-n" id="adsCount">0</span></h2></div>
+      <div class="card-body">
+        <div id="adsWrap"></div>
+        <button type="button" class="btn btn-ghost btn-block" id="addAd">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Añadir métrica
+        </button>
+      </div>
+    </div>
+
+    <div class="actions-row">
+      <button type="button" class="btn btn-primary btn-lg" id="analyzeBtn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+        Analizar campaña
+      </button>
+      <button type="button" class="btn btn-ghost btn-lg" id="clearBtn">Vaciar</button>
+    </div>
+
+    <div class="report" id="report" hidden></div>
+
+    <p class="foot-legal">Todos los criterios provienen del módulo de iniciación a Meta Ads. Tus datos se guardan en este navegador.</p>
+  </main>
+
+  <script>
+    (function () {
+      'use strict';
+
+      const STORE_KEY = 'zonga_ads_analyzer_v1';
+      const $ = (id) => document.getElementById(id);
+
+      const METRICS = [
+        { k:'spend',   label:'Gasto',              unit:'$',  side:'left'  },
+        { k:'compras', label:'Compras',            unit:'nº', side:'right' },
+        { k:'roas',    label:'ROAS',               unit:'x',  side:'right' },
+        { k:'cpm',     label:'CPM',                unit:'$',  side:'left'  },
+        { k:'ctr',     label:'CTR',                unit:'%',  side:'right' },
+        { k:'cpc',     label:'CPC',                unit:'$',  side:'left'  },
+        { k:'atc',     label:'Añadidos al carrito',unit:'nº', side:'right' },
+        { k:'ic',      label:'Inicios de pago',    unit:'nº', side:'right' },
+        { k:'hook',    label:'Hook Rate',          unit:'%',  side:'right' },
+        { k:'hold',    label:'Hold Rate',          unit:'%',  side:'right' },
+        { k:'cvr',     label:'Conversión',         unit:'%',  side:'right' }
+      ];
+
+      let ads = [];   // [{id,title,spend,...}]
+
+      const uid = () => 'a' + Date.now().toString(36) + Math.random().toString(36).slice(2,5);
+      const num = (v) => { const x = parseFloat(v); return isFinite(x) ? x : null; };
+      const esc = (s) => String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+      const fmt = (x) => (x==null||!isFinite(x)) ? '—' : x.toLocaleString('es-ES',{maximumFractionDigits:2});
+
+      /* ---------- Persistencia ---------- */
+      function save() {
+        try { localStorage.setItem(STORE_KEY, JSON.stringify({ beRoas:$('beRoas').value, beCpa:$('beCpa').value, ads })); } catch(e){}
+      }
+      function load() {
+        let s=null; try { s = JSON.parse(localStorage.getItem(STORE_KEY)||'null'); } catch(e){}
+        if (s) {
+          $('beRoas').value = s.beRoas ?? '';
+          $('beCpa').value = s.beCpa ?? '';
+          if (Array.isArray(s.ads) && s.ads.length) ads = s.ads;
+        }
+        if (!ads.length) ads = [ newAd(1) ];
+      }
+      function newAd(n) { const a = { id:uid(), title:'Métrica ' + n }; METRICS.forEach(m => a[m.k]=''); return a; }
+
+      /* ---------- Render de bloques ---------- */
+      function renderAds() {
+        $('adsCount').textContent = ads.length;
+        $('adsWrap').innerHTML = ads.map((a, i) => `
+          <div class="ad-block" data-id="${a.id}">
+            <div class="ad-block-head">
+              <span class="ad-idx">${i+1}</span>
+              <input class="ad-title" data-k="title" value="${esc(a.title)}" placeholder="Título del anuncio">
+              <button type="button" class="ad-del" aria-label="Eliminar">&times;</button>
+            </div>
+            <div class="metric-grid">
+              ${METRICS.map(m => `
+                <div class="field">
+                  <label>${m.label}</label>
+                  <div class="input-wrap">
+                    ${m.side==='left' ? `<span class="unit left">${m.unit}</span>` : ''}
+                    <input type="number" step="0.01" min="0" inputmode="decimal" data-k="${m.k}" value="${esc(a[m.k])}" placeholder="—">
+                    ${m.side==='right' ? `<span class="unit right">${m.unit}</span>` : ''}
+                  </div>
+                </div>`).join('')}
+            </div>
+          </div>`).join('');
+      }
+      function readAds() {
+        ads = Array.from($('adsWrap').querySelectorAll('.ad-block')).map(bl => {
+          const a = { id: bl.dataset.id };
+          bl.querySelectorAll('[data-k]').forEach(inp => a[inp.dataset.k] = inp.value);
+          return a;
+        });
+      }
+
+      /* ---------- Benchmark ROAS ---------- */
+      function updateBench() {
+        const be = num($('beRoas').value);
+        const pill = $('benchPill');
+        if (be == null || be <= 0) { pill.hidden = true; return; }
+        const bench = Math.round(be * 1.2 * 100) / 100;
+        pill.hidden = false;
+        pill.innerHTML = 'Objetivo (benchmark ROAS = BE ROAS + 20%): <strong>' + fmt(bench) + 'x</strong>';
+      }
+
+      /* ============================================================
+         MOTOR DE ANÁLISIS — todos los umbrales salen del módulo (PDF)
+         ============================================================ */
+      function evalMetric(k, v, ctx) {
+        if (v == null) return null;
+        switch (k) {
+          case 'ctr':
+            if (v > 3)  return good('CTR', v+'%', 'Excelente: los anuncios ganadores suelen tener un CTR de más del 3%.');
+            if (v >= 2) return good('CTR', v+'%', 'Bien: el módulo pide un CTR de al menos 2%.');
+            return bad('CTR', v+'%', 'Bajo: el módulo pide mínimo 2%. Un CTR bajo indica mal creativo; revisa primero el Hook Rate y crea creativos nuevos.');
+          case 'cpc':
+            if (v < 1)   return good('CPC', '$'+fmt(v), 'Bien: el módulo dice que todo lo que está por debajo de 1 está bien (apunta a ~$1).');
+            if (v <= 2.5) return warn('CPC', '$'+fmt(v), 'Alto: el ideal es ~$1. Aún puede ser rentable si el tráfico es más "caliente", pero vigílalo.');
+            return bad('CPC', '$'+fmt(v), 'Muy alto: supera los $2.5 de la regla 1 de media buying (con >$10 gastados, se apaga).');
+          case 'cpm':
+            if (v < 15)   return good('CPM', '$'+fmt(v), 'Muy bien: el módulo considera muy bueno un CPM por debajo de 15.');
+            if (v <= 100) return warn('CPM', '$'+fmt(v), 'Depende del mercado y del nicho (no hay estándar fijo). Si te cuesta ser rentable por el CPM, prueba otros mercados, otras categorías o Foto Ads.');
+            return bad('CPM', '$'+fmt(v), 'Muy malo: el módulo dice que más de 100 está muy mal. Prueba mercados con menos competencia.');
+          case 'roas': {
+            const be = ctx.beRoas, bench = ctx.bench;
+            if (be == null) return warn('ROAS', fmt(v)+'x', 'Introduce tu ROAS de equilibrio arriba para saber si es rentable.');
+            if (bench != null && v >= bench) return good('ROAS', fmt(v)+'x', 'Excelente: supera tu benchmark ('+fmt(bench)+'x = BE ROAS + 20%). Señal de escalar.');
+            if (v >= be) return good('ROAS', fmt(v)+'x', 'Rentable: por encima de tu ROAS de equilibrio ('+fmt(be)+'x). Todo lo que supera el BE ROAS genera dinero; apunta al benchmark ('+fmt(bench)+'x).');
+            return bad('ROAS', fmt(v)+'x', 'Por debajo de tu ROAS de equilibrio ('+fmt(be)+'x): estás perdiendo dinero.');
+          }
+          case 'hook':
+            if (v >= 50) return good('Hook Rate', v+'%', 'Excelente: el módulo pide estar por encima del 50% (ideal 40-50%+).');
+            if (v >= 40) return good('Hook Rate', v+'%', 'Bien: dentro del rango ideal (40-50%).');
+            if (v >= 35) return warn('Hook Rate', v+'%', 'Justo: el mínimo es 30% e ideal 40-50%. Por debajo del 30% difícilmente es rentable.');
+            if (v >= 30) return warn('Hook Rate', v+'%', 'Flojo: con menos del 35% el módulo manda rehacer el mismo creativo con 3 hooks nuevos (mismos intereses).');
+            return bad('Hook Rate', v+'%', 'Bajo: por debajo del 30% mínimo (difícilmente rentable). Haz el mismo creativo con 3 hooks nuevos, mismos intereses.');
+          case 'hold':
+            if (v >= 30) return good('Hold Rate', v+'%', 'Ideal: el módulo marca el 30% como valor ideal.');
+            if (v >= 25) return good('Hold Rate', v+'%', 'Bien: por encima del 25% que pide el módulo.');
+            if (v >= 20) return warn('Hold Rate', v+'%', 'Flojo: apunta a más del 25% (ideal 30%). Mejora los segundos 4-7 del vídeo.');
+            return bad('Hold Rate', v+'%', 'Bajo: por debajo del 20%. Mantén el hook y cambia el resto del vídeo (más dinámico, cambia visuales, genera curiosidad).');
+          case 'cvr':
+            if (v > 4)  return good('Conversión', v+'%', 'Excelente: por encima del rango objetivo (2-4%).');
+            if (v >= 2) return good('Conversión', v+'%', 'Bien: dentro del objetivo del 2-4%.');
+            if (v >= 1) return warn('Conversión', v+'%', 'Justa: el mínimo del módulo es 1-2%. Mejora la oferta, la velocidad de la tienda y los creativos.');
+            return bad('Conversión', v+'%', 'Baja: por debajo del 1-2% mínimo. Revisa oferta, página de producto y creativos.');
+          default: return null;
+        }
+      }
+      function good(n,v,t){ return { status:'good', name:n, val:v, text:t }; }
+      function warn(n,v,t){ return { status:'warn', name:n, val:v, text:t }; }
+      function bad(n,v,t){ return { status:'bad', name:n, val:v, text:t }; }
+
+      /* Veredicto (reglas de media buying + fase de testeo del módulo) */
+      function verdict(a, ctx) {
+        const S = num(a.spend) || 0;
+        const cpc = num(a.cpc);
+        const atc = num(a.atc) || 0;
+        const ic = num(a.ic) || 0;
+        const p = num(a.compras) || 0;
+        const roas = num(a.roas);
+        const beCpa = ctx.beCpa, beRoas = ctx.beRoas, bench = ctx.bench;
+        const reasons = [], recs = [], notes = [];
+
+        // ---- Reglas de apagado (KILL) ----
+        const kills = [];
+        if (cpc != null && S > 10 && cpc > 2.5)
+          kills.push('Regla 1 de media buying: con más de $10 gastados y un CPC de $'+fmt(cpc)+' (por encima de $2.5), se apaga.');
+        if (beCpa != null && S >= 0.5 * beCpa && atc === 0 && ic === 0)
+          kills.push('Regla 2: has gastado medio coste de compra de equilibrio ($'+fmt(0.5*beCpa)+') con 0 añadidos al carrito y 0 inicios de pago.');
+        if (beCpa != null && S >= beCpa && p === 0)
+          kills.push('Regla 3: has gastado un coste de compra de equilibrio completo ($'+fmt(beCpa)+') sin ninguna compra.');
+        if (beRoas != null && S >= 100 && roas != null && roas < beRoas)
+          kills.push('Regla 4: más de $100 gastados con un ROAS ('+fmt(roas)+'x) por debajo de tu ROAS de equilibrio ('+fmt(beRoas)+'x).');
+        if (beCpa == null && S >= 100 && atc === 0 && ic === 0 && p === 0)
+          kills.push('Con más de $100 gastados y cero añadidos al carrito, cero checkouts y cero ventas no hay intención de compra: apaga y prueba otro producto.');
+
+        // Recomendaciones diagnósticas (soft metrics)
+        addRecs(a, recs);
+
+        if (kills.length) {
+          return { type:'kill', label:'APAGAR', reasons:kills, recs, notes:missingCtxNotes(ctx) };
+        }
+
+        // ---- Sin apagado: mantener / escalar / observar ----
+        const intent = atc > 0 || ic > 0;
+        if (p >= 1) {
+          if (beRoas != null && bench != null && roas != null && roas >= bench && S >= 100) {
+            reasons.push('Rentable y por encima de tu benchmark ('+fmt(bench)+'x) con más de $100 gastados: toca escalar subiendo el presupuesto un 20-25%.');
+            return { type:'scale', label:'ESCALAR', reasons, recs:[], notes:missingCtxNotes(ctx) };
+          }
+          if (beRoas != null && roas != null && roas >= beRoas) {
+            reasons.push('Tiene ventas y el ROAS ('+fmt(roas)+'x) está por encima del equilibrio ('+fmt(beRoas)+'x): es rentable. Mantenlo, sigue testeando variaciones y, al llegar a ~$100 de gasto (o 3 días) por encima del benchmark, escala.');
+            return { type:'keep', label:'MANTENER', reasons, recs, notes:missingCtxNotes(ctx) };
+          }
+          reasons.push('Tiene ventas pero aún no es rentable. Es lo más común la primera semana: apaga los creativos que no den ni añadidos al carrito, haz variaciones de lo que funciona y mejora el funnel.');
+          return { type:'keep', label:'MANTENER Y OPTIMIZAR', reasons, recs, notes:missingCtxNotes(ctx) };
+        }
+
+        // 0 ventas
+        if (intent) {
+          reasons.push('0 ventas pero con intención de compra ('+atc+' añadidos al carrito, '+ic+' checkouts): no lo apagues aún. Apaga los anuncios sin intención, hazle variaciones a este y úsalo en la próxima ronda de creativos.');
+          return { type:'keep', label:'MANTENER Y OPTIMIZAR', reasons, recs, notes:missingCtxNotes(ctx) };
+        }
+        // 0 ventas, 0 intención, pero todavía sin gasto suficiente para apagar
+        reasons.push('Todavía sin ventas ni intención de compra, pero aún no has gastado lo suficiente para decidir (las reglas apagan al llegar a 0.5×BE CPA con 0 intención, o a BE CPA con 0 compras). Sigue recopilando datos hasta ese umbral.');
+        return { type:'wait', label:'SEGUIR OBSERVANDO', reasons, recs, notes:missingCtxNotes(ctx) };
+      }
+
+      function addRecs(a, recs) {
+        const ctr = num(a.ctr), hook = num(a.hook), hold = num(a.hold), cvr = num(a.cvr), cpm = num(a.cpm);
+        if (hook != null && hook < 35) recs.push('Hook Rate por debajo del 35%: haz el mismo creativo con 3 hooks nuevos (mismos intereses).');
+        if (ctr != null && ctr < 2)   recs.push('CTR bajo: crea creativos completamente nuevos (puedes usar los mismos intereses).');
+        if (hold != null && hold < 20) recs.push('Hold Rate por debajo del 20%: mantén el hook y cambia el resto del vídeo.');
+        if (cvr != null && cvr < 2)   recs.push('Conversión baja: cambia la oferta (precio, BOGO, descuentos por cantidad) y mejora la parte de arriba de la página de producto.');
+        if (cpm != null && cpm > 100) recs.push('CPM muy alto: prueba otro mercado con menos competencia o Foto Ads (suelen tener CPM más bajo).');
+      }
+      function missingCtxNotes(ctx) {
+        const n = [];
+        if (ctx.beRoas == null) n.push('Falta tu ROAS de equilibrio: sin él no se aplica la regla del ROAS.');
+        if (ctx.beCpa == null) n.push('Falta tu coste por compra de equilibrio (BE CPA): sin él no se aplican las reglas de gasto por compra.');
+        return n;
+      }
+
+      /* ---------- Render del informe ---------- */
+      function analyze() {
+        readAds();
+        const ctx = { beRoas: num($('beRoas').value), beCpa: num($('beCpa').value) };
+        ctx.bench = ctx.beRoas != null ? Math.round(ctx.beRoas * 1.2 * 100) / 100 : null;
+
+        const results = ads.map(a => {
+          const metrics = METRICS.map(m => evalMetric(m.k, num(a[m.k]), ctx)).filter(Boolean);
+          const v = verdict(a, ctx);
+          return { title: (a.title || '').trim() || 'Sin título', metrics, v };
+        });
+
+        const vClass = { kill:'v-kill', keep:'v-keep', scale:'v-scale', wait:'v-wait' };
+
+        let html = '';
+        results.forEach(r => {
+          const metricsHTML = r.metrics.length ? r.metrics.map(m => `
+            <div class="m-row">
+              <span class="m-dot m-${m.status}"></span>
+              <div class="m-info">
+                <div class="m-name">${esc(m.name)} <span class="m-val">· ${esc(m.val)}</span></div>
+                <div class="m-text">${esc(m.text)}</div>
+              </div>
+            </div>`).join('') : '<p class="empty-note">No has rellenado métricas en este anuncio.</p>';
+
+          const reasonsHTML = r.v.reasons.length ? `
+            <div class="reasons"><h4>Por qué</h4><ul>${r.v.reasons.map(x => '<li>'+esc(x)+'</li>').join('')}</ul></div>` : '';
+          const recsHTML = r.v.recs.length ? `
+            <div class="reasons recs"><h4>Qué mejorar</h4><ul>${r.v.recs.map(x => '<li>'+esc(x)+'</li>').join('')}</ul></div>` : '';
+          const notesHTML = r.v.notes.length ? `
+            <div class="reasons"><h4>Para un análisis completo</h4><ul>${r.v.notes.map(x => '<li>'+esc(x)+'</li>').join('')}</ul></div>` : '';
+
+          html += `
+            <div class="res-card">
+              <div class="res-head">
+                <div class="res-title"><span class="rt">${esc(r.title)}</span></div>
+                <span class="verdict ${vClass[r.v.type]}"><span class="vd"></span> ${esc(r.v.label)}</span>
+              </div>
+              <div class="res-body">${metricsHTML}${reasonsHTML}${recsHTML}${notesHTML}</div>
+            </div>`;
+        });
+
+        // Veredicto final
+        let finalHTML = '';
+        results.forEach(r => {
+          const t = esc(r.title);
+          const why = r.v.reasons.length ? r.v.reasons[0] : '';
+          let sentence = '';
+          if (r.v.type === 'kill')  sentence = '<b>Apaga «'+t+'»</b> porque ' + lower(esc(why));
+          else if (r.v.type === 'scale') sentence = '<b>Escala «'+t+'»</b>: ' + esc(why);
+          else if (r.v.type === 'keep')  sentence = '<b>Mantén «'+t+'»</b>: ' + esc(why);
+          else sentence = '<b>«'+t+'» → sigue observando</b>: ' + esc(why);
+          finalHTML += `<div class="final-item"><span class="verdict ${vClass[r.v.type]} fi-badge"><span class="vd"></span></span><p>${sentence}</p></div>`;
+        });
+
+        html += `
+          <div class="card final">
+            <div class="card-head"><h2>Veredicto final</h2></div>
+            <div class="card-body">
+              ${finalHTML}
+              <p class="final-note">Recuerda: nunca pierdas más de $500 por producto, y toma las decisiones al final del día (deja correr los anuncios el día completo).</p>
+            </div>
+          </div>`;
+
+        const rep = $('report');
+        rep.innerHTML = html;
+        rep.hidden = false;
+        rep.scrollIntoView({ behavior:'smooth', block:'start' });
+        save();
+      }
+      function lower(s){ return s.charAt(0).toLowerCase() + s.slice(1); }
+
+      /* ---------- Eventos ---------- */
+      $('adsWrap').addEventListener('input', (e) => {
+        const bl = e.target.closest('.ad-block'); if (!bl) return;
+        const a = ads.find(x => x.id === bl.dataset.id);
+        if (a && e.target.dataset.k) a[e.target.dataset.k] = e.target.value;
+        save();
+      });
+      $('adsWrap').addEventListener('click', (e) => {
+        const del = e.target.closest('.ad-del'); if (!del) return;
+        readAds();
+        const bl = del.closest('.ad-block');
+        ads = ads.filter(x => x.id !== bl.dataset.id);
+        if (!ads.length) ads = [ newAd(1) ];
+        renderAds(); save();
+      });
+      $('addAd').addEventListener('click', () => {
+        readAds();
+        ads.push(newAd(ads.length + 1));
+        renderAds(); save();
+        $('adsWrap').lastElementChild.querySelector('.ad-title').focus();
+      });
+      $('analyzeBtn').addEventListener('click', analyze);
+      $('clearBtn').addEventListener('click', () => {
+        if (!confirm('¿Vaciar todas las métricas introducidas?')) return;
+        ads = [ newAd(1) ]; renderAds();
+        $('report').hidden = true; $('report').innerHTML = '';
+        save();
+      });
+      ['beRoas','beCpa'].forEach(id => $(id).addEventListener('input', () => { updateBench(); save(); }));
+
+      /* ---------- Init ---------- */
+      load();
+      renderAds();
+      updateBench();
+    })();
+  </script>
+</body>
+</html>

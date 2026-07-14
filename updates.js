@@ -5,6 +5,13 @@
 */
 const UPDATES = [
   {
+    id: '2026-07-13-tracker-ver-editar-dia',
+    title: 'Calendario de beneficio: ver y editar un día al instante',
+    items: [
+      'En el Calendario de beneficio, si tienes un producto seleccionado en el desplegable, al hacer clic en un día ya registrado se abre directamente el panel con lo que rellenaste (Coste del Producto, Coste de Anuncios, Comisiones y Ganancias) para verlo y editarlo, sin pedirte antes elegir el producto. Y en la vista «Todos los productos», al pulsar un día cada producto muestra su beneficio de ese día para que veas de un vistazo lo que habías apuntado. Tus datos registrados no se han tocado.',
+    ],
+  },
+  {
     id: '2026-07-12-analizador-metricas-ads',
     title: 'Nueva herramienta en Ads: Analizador de métricas',
     items: [

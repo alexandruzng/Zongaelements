@@ -262,7 +262,7 @@ const adsTools = [
     id: 'tracker-beneficio-ads',
     name: 'Calendario de beneficio por producto',
     description: 'Crea tus productos (con nombre y foto) y lleva un calendario de beneficio para cada uno: apunta día a día gastos (producto, anuncios, comisiones) y ganancias. Cada casilla muestra el beneficio en verde o rojo, filtras el calendario por producto y tienes una vista de Productos con las estadísticas resumidas de cada uno.',
-    url: 'tracker-beneficio-ads/index.html',
+    url: 'tracker-beneficio-ads/index.html?v=2',
     status: 'available',
     icon: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="21" x2="21" y2="21"/><rect x="5" y="12" width="3.5" height="7"/><rect x="10.25" y="8" width="3.5" height="11"/><rect x="15.5" y="4" width="3.5" height="15"/></svg>`
   },

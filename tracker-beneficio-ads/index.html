@@ -188,6 +188,10 @@
     .prod-chip:hover { border-color: var(--c-primary-100); background: var(--c-bg-alt); }
     .prod-chip.is-sel { border-color: var(--c-primary); box-shadow: 0 0 0 3px var(--c-primary-soft); }
     .prod-chip-name { flex: 1; font-weight: 600; font-size: 14px; }
+    .prod-chip-profit { font-weight: 800; font-size: 13px; font-variant-numeric: tabular-nums; }
+    .prod-chip-profit.pos { color: var(--c-green); }
+    .prod-chip-profit.neg { color: var(--c-red); }
+    .prod-chip-profit.zero { color: var(--c-text-soft); }
     .prod-chip-check { color: var(--c-primary); font-weight: 800; }
     .prod-chip-new { justify-content: center; color: var(--c-primary); font-weight: 700; border-style: dashed; }
 
@@ -641,20 +645,29 @@
         $('mDate1').textContent = label;
         $('mDate2').textContent = label;
         modalProduct = (selectedProductId !== 'all' && productById(selectedProductId)) ? selectedProductId : null;
-        showStep('product');
         renderProductPick();
         openBackdrop('dayBackdrop');
+        // Con un producto ya elegido en el filtro, abrimos directo el panel de datos
+        // (ver y editar lo registrado). En "Todos los productos" se elige primero.
+        if (modalProduct) goStepData();
+        else showStep('product');
       }
       function showStep(step) {
         $('stepProduct').hidden = step !== 'product';
         $('stepData').hidden = step !== 'data';
       }
       function renderProductPick() {
-        let html = products.map(p =>
-          '<button type="button" class="prod-chip' + (modalProduct === p.id ? ' is-sel' : '') + '" data-pick="' + p.id + '">' +
-            thumbHTML(p, 't34') + '<span class="prod-chip-name">' + esc(p.name) + '</span>' +
-            (modalProduct === p.id ? '<span class="prod-chip-check">✓</span>' : '') + '</button>'
-        ).join('');
+        let html = products.map(p => {
+          const c = calcEntry((data[p.id] || {})[currentDate]);
+          let badge = '';
+          if (c.has) {
+            const sign = c.profit > 0 ? 'pos' : (c.profit < 0 ? 'neg' : 'zero');
+            badge = '<span class="prod-chip-profit ' + sign + '">' + money(c.profit) + '</span>';
+          }
+          return '<button type="button" class="prod-chip' + (modalProduct === p.id ? ' is-sel' : '') + '" data-pick="' + p.id + '">' +
+            thumbHTML(p, 't34') + '<span class="prod-chip-name">' + esc(p.name) + '</span>' + badge +
+            (modalProduct === p.id ? '<span class="prod-chip-check">✓</span>' : '') + '</button>';
+        }).join('');
         html += '<button type="button" class="prod-chip prod-chip-new" data-pick="__new">＋ Crear nuevo producto</button>';
         $('prodPick').innerHTML = html;
       }

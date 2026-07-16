@@ -76,7 +76,7 @@ const RING_TINTS = [
   "#8e7a96",
   "#9c7385"
 ];
-function Wheel({ habits, marks, onCellClick, onCellHover, hoveredDay, selectedCell, todayDay }) {
+function Wheel({ habits, marks, onCellClick, onCellHover, hoveredDay, selectedCell, todayDay, offMode, offPending }) {
   const cells = [];
   const numberLabels = [];
   for (let h = 0; h < 9; h++) {
@@ -90,6 +90,7 @@ function Wheel({ habits, marks, onCellClick, onCellHover, hoveredDay, selectedCe
       const mark = marks[key];
       const isSelected = selectedCell === key;
       const isHoveredDay = hoveredDay === d;
+      const isPending = !!(offMode && active && offPending && offPending[key]);
       let fill = active ? "#fbfaf5" : "#efeadd";
       let cls = "wheel-cell";
       if (mark === "done") {
@@ -98,6 +99,14 @@ function Wheel({ habits, marks, onCellClick, onCellHover, hoveredDay, selectedCe
       } else if (mark === "miss") {
         fill = "var(--miss)";
         cls += " wheel-cell-miss";
+      } else if (mark === "off") {
+        fill = "var(--off)";
+        cls += " wheel-cell-off";
+      }
+      // En modo selección, lo pendiente se previsualiza ya en negro.
+      if (isPending) {
+        fill = "var(--off)";
+        cls = "wheel-cell wheel-cell-off pending";
       }
       cells.push(
         /* @__PURE__ */ React.createElement(
@@ -107,8 +116,8 @@ function Wheel({ habits, marks, onCellClick, onCellHover, hoveredDay, selectedCe
             d: path,
             className: cls + (isSelected ? " sel" : "") + (isHoveredDay ? " col-hover" : ""),
             fill,
-            stroke: isSelected ? "#14130e" : isHoveredDay ? "#14130e" : "#9b9580",
-            strokeWidth: isSelected ? 2 : isHoveredDay ? 1.1 : 0.55,
+            stroke: isPending ? "var(--highlight)" : isSelected ? "#14130e" : isHoveredDay ? "#14130e" : "#9b9580",
+            strokeWidth: isPending ? 2.2 : isSelected ? 2 : isHoveredDay ? 1.1 : 0.55,
             style: {
               cursor: active ? "pointer" : "not-allowed",
               opacity: active ? 1 : 0.55,
@@ -718,11 +727,24 @@ function MainScreen({ state, setState, onEditHabits, onChangeMonth, onReset }) {
   });
   const [hoveredDay, setHoveredDay] = useState(null);
   const [popover, setPopover] = useState(null);
+  // Modo "Días que no toca": seleccionas varias celdas y al finalizar se ponen en negro.
+  const [offMode, setOffMode] = useState(false);
+  const [offPending, setOffPending] = useState({});
   const wheelHostRef = useRef(null);
   const today = /* @__PURE__ */ new Date();
   const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month0;
   const todayDay = isCurrentMonth ? today.getDate() : -1;
   const onCellClick = (h, d, evt) => {
+    const cell = `${h}_${d}`;
+    if (offMode) {
+      setOffPending((p) => {
+        const next = __spreadValues({}, p);
+        if (next[cell]) delete next[cell];
+        else next[cell] = true;
+        return next;
+      });
+      return;
+    }
     const rect = wheelHostRef.current.getBoundingClientRect();
     const x = evt.clientX - rect.left;
     const y = evt.clientY - rect.top;
@@ -740,7 +762,45 @@ function MainScreen({ state, setState, onEditHabits, onChangeMonth, onReset }) {
     setPopover(null);
   };
   const activeHabits = habits.map((h, i) => h && h.trim() ? i : -1).filter((i) => i >= 0);
-  const totalCells = activeHabits.length * dim;
+  // Arranca la selección con los días que ya están en negro, para poder quitarlos también.
+  const startOffMode = () => {
+    const init = {};
+    Object.entries(marks).forEach(([k, v]) => {
+      if (v === "off") init[k] = true;
+    });
+    setOffPending(init);
+    setPopover(null);
+    setOffMode(true);
+  };
+  const cancelOffMode = () => {
+    setOffMode(false);
+    setOffPending({});
+  };
+  const finishOffMode = () => {
+    setState((s) => {
+      const next = __spreadValues({}, s.marks);
+      activeHabits.forEach((h) => {
+        for (let d = 1; d <= dim; d++) {
+          const cell = `${h}_${d}`;
+          const key = `${monthKey}|${cell}`;
+          if (offPending[cell]) next[key] = "off";
+          else if (next[key] === "off") delete next[key];
+        }
+      });
+      const habitsByMonth = s.habitsByMonth[monthKey] ? s.habitsByMonth : __spreadProps(__spreadValues({}, s.habitsByMonth), { [monthKey]: [...habits] });
+      return __spreadProps(__spreadValues({}, s), { marks: next, habitsByMonth });
+    });
+    setOffMode(false);
+    setOffPending({});
+  };
+  const offPendingCount = Object.keys(offPending).length;
+  // Los días "no toca" salen del total: no cuentan como fallo ni penalizan el porcentaje.
+  const offCount = activeHabits.reduce((n, h) => {
+    let c = 0;
+    for (let d = 1; d <= dim; d++) if (marks[`${h}_${d}`] === "off") c++;
+    return n + c;
+  }, 0);
+  const totalCells = activeHabits.length * dim - offCount;
   const doneCount = Object.values(marks).filter((v) => v === "done").length;
   const missCount = Object.values(marks).filter((v) => v === "miss").length;
   const pct = totalCells > 0 ? Math.round(doneCount / totalCells * 100) : 0;
@@ -749,7 +809,10 @@ function MainScreen({ state, setState, onEditHabits, onChangeMonth, onReset }) {
     let startDay = isCurrentMonth ? todayDay : dim;
     let s = 0;
     for (let d = startDay; d >= 1; d--) {
-      const allDone = activeHabits.every((h) => marks[`${h}_${d}`] === "done");
+      // Los hábitos marcados "no toca" ese día no se exigen.
+      const due = activeHabits.filter((h) => marks[`${h}_${d}`] !== "off");
+      if (due.length === 0) continue;
+      const allDone = due.every((h) => marks[`${h}_${d}`] === "done");
       if (allDone) s++;
       else if (s > 0) break;
       else continue;
@@ -760,7 +823,8 @@ function MainScreen({ state, setState, onEditHabits, onChangeMonth, onReset }) {
     if (!d) return null;
     const done = activeHabits.filter((h) => marks[`${h}_${d}`] === "done").length;
     const miss = activeHabits.filter((h) => marks[`${h}_${d}`] === "miss").length;
-    return { done, miss, total: activeHabits.length };
+    const off = activeHabits.filter((h) => marks[`${h}_${d}`] === "off").length;
+    return { done, miss, off, total: activeHabits.length };
   };
   const formatDate = (d) => `${String(d).padStart(2, "0")} \xB7 ${MONTH_NAMES[month0]} ${year}`;
   const print = () => window.print();
@@ -779,6 +843,11 @@ function MainScreen({ state, setState, onEditHabits, onChangeMonth, onReset }) {
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
   }, [popover]);
+  // Cambiar de mes o de pestaña descarta una selección a medias.
+  useEffect(() => {
+    setOffMode(false);
+    setOffPending({});
+  }, [monthKey, tab]);
   return /* @__PURE__ */ React.createElement("div", { className: "main" }, /* @__PURE__ */ React.createElement("style", null, `
         .main { min-height: 100vh; padding: 24px 28px 80px; max-width: 1680px; margin: 0 auto; }
         .topbar { display: flex; align-items: center; gap: 16px; justify-content: space-between; padding-bottom: 16px; border-bottom: 1px solid var(--rule); }
@@ -820,6 +889,28 @@ function MainScreen({ state, setState, onEditHabits, onChangeMonth, onReset }) {
         .swatch { width: 12px; height: 12px; border-radius: 2px; border: 1px solid rgba(0,0,0,0.08); }
         .swatch.done { background: var(--done); }
         .swatch.miss { background: var(--miss); }
+        .swatch.off { background: var(--off); }
+
+        /* Apartado "D\xEDas que no toca" */
+        .off-sec { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--rule); }
+        .off-sec-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+        .off-sec-title { font-weight: 600; font-size: 13px; color: var(--ink); }
+        .off-sec-desc { font-size: 11.5px; line-height: 1.45; color: var(--ink-soft); margin: 0 0 10px; }
+        .off-sec-btn { width: 100%; background: var(--ink); color: #fff; border: 0; padding: 10px 12px; font-size: 12.5px; font-weight: 600; border-radius: 2px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; transition: background 0.15s, transform 0.15s; }
+        .off-sec-btn:hover { background: #000; transform: translateY(-1px); }
+        .off-sec-active { display: flex; gap: 8px; align-items: center; padding: 9px 10px; background: var(--off-soft); border: 1px dashed var(--ink-soft); border-radius: 2px; font-size: 11.5px; color: var(--ink); line-height: 1.4; }
+
+        /* Barra flotante del modo selecci\xF3n */
+        .off-bar { position: absolute; top: 6px; left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 9px 9px 9px 16px; border-radius: 3px; display: flex; align-items: center; gap: 14px; z-index: 7; box-shadow: 0 10px 30px -8px rgba(0,0,0,0.45); animation: pop-in-bar 0.16s ease-out; max-width: 94%; }
+        @keyframes pop-in-bar { from { opacity: 0; transform: translateX(-50%) translateY(-6px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+        .off-bar-txt { font-size: 12.5px; line-height: 1.35; }
+        .off-bar-txt .count { font-family: "JetBrains Mono"; font-size: 11px; color: rgba(255,255,255,0.6); letter-spacing: 0.06em; display: block; }
+        .off-bar-btn { border: 0; padding: 9px 16px; font-size: 12.5px; font-weight: 600; border-radius: 2px; transition: background 0.12s, transform 0.12s; white-space: nowrap; }
+        .off-bar-btn.finish { background: #fff; color: var(--ink); }
+        .off-bar-btn.finish:hover { transform: translateY(-1px); }
+        .off-bar-btn.cancel { background: transparent; color: rgba(255,255,255,0.65); padding: 9px 10px; }
+        .off-bar-btn.cancel:hover { color: #fff; background: rgba(255,255,255,0.1); }
+        path.wheel-cell.pending { opacity: 0.9; }
         .legend-inherit { display: flex; gap: 8px; align-items: center; padding: 8px 10px; background: oklch(0.94 0.03 80); border: 1px solid oklch(0.82 0.06 80); border-radius: 2px; margin-bottom: 14px; font-size: 11px; color: var(--accent); cursor: pointer; line-height: 1.35; }
         .legend-inherit:hover { background: oklch(0.92 0.04 80); }
         .legend-inherit u { color: var(--ink); }
@@ -844,6 +935,7 @@ function MainScreen({ state, setState, onEditHabits, onChangeMonth, onReset }) {
         .hover-info .pill { background: rgba(255,255,255,0.15); padding: 2px 8px; border-radius: 999px; font-family: "JetBrains Mono"; letter-spacing: 0.04em; font-size: 11px; }
         .hover-info .pill.green { color: oklch(0.85 0.13 145); }
         .hover-info .pill.red { color: oklch(0.78 0.13 28); }
+        .hover-info .pill.black { color: rgba(255,255,255,0.78); }
 
         /* Cell popover */
         .cell-popover { position: absolute; background: var(--ink); color: #fff; padding: 6px; border-radius: 4px; display: flex; gap: 4px; box-shadow: 0 10px 30px -8px rgba(0,0,0,0.4); transform: translate(-50%, -130%); z-index: 10; animation: pop-in 0.16s ease-out; }
@@ -871,6 +963,7 @@ function MainScreen({ state, setState, onEditHabits, onChangeMonth, onReset }) {
 
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .stat-cell { background: var(--paper-2); border: 1px solid var(--rule-soft); padding: 12px 14px; border-radius: 2px; }
+        .stat-cell.wide { grid-column: 1 / -1; }
         .stat-num { font-family: "Instrument Serif"; font-style: italic; font-size: 28px; line-height: 1; color: var(--ink); font-weight: 500; }
         .stat-num .small { font-size: 14px; color: var(--ink-muted); font-style: normal; font-family: "JetBrains Mono"; }
         .stat-lbl { font-family: "JetBrains Mono"; font-size: 9.5px; letter-spacing: 0.18em; color: var(--ink-muted); text-transform: uppercase; margin-top: 6px; }
@@ -900,10 +993,11 @@ function MainScreen({ state, setState, onEditHabits, onChangeMonth, onReset }) {
       `), /* @__PURE__ */ React.createElement("div", { className: "topbar no-print" }, /* @__PURE__ */ React.createElement("div", { className: "brand" }, /* @__PURE__ */ React.createElement("span", { className: "brand-eyebrow" }, "Mes en curso"), /* @__PURE__ */ React.createElement("span", { className: "brand-mark" }, MONTH_NAMES[month0], " ", year)), tab === "rueda" && /* @__PURE__ */ React.createElement("div", { className: "month-nav" }, /* @__PURE__ */ React.createElement("button", { onClick: () => navMonth(-1), "aria-label": "Mes anterior" }, "\u2039"), /* @__PURE__ */ React.createElement("span", { className: "label" }, MONTH_NAMES[month0], /* @__PURE__ */ React.createElement("span", { className: "y" }, year)), /* @__PURE__ */ React.createElement("button", { onClick: () => navMonth(1), "aria-label": "Mes siguiente" }, "\u203A")), tab === "rueda" && /* @__PURE__ */ React.createElement("div", { className: "top-actions" }, /* @__PURE__ */ React.createElement("button", { onClick: onEditHabits }, /* @__PURE__ */ React.createElement("svg", { width: "13", height: "13", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2" }, /* @__PURE__ */ React.createElement("path", { d: "M12 20h9M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z" })), "Editar h\xE1bitos"), /* @__PURE__ */ React.createElement("button", { onClick: print }, /* @__PURE__ */ React.createElement("svg", { width: "13", height: "13", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2" }, /* @__PURE__ */ React.createElement("path", { d: "M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z" })), "Imprimir"), /* @__PURE__ */ React.createElement("button", { className: "danger", onClick: onReset }, "Reiniciar"))), /* @__PURE__ */ React.createElement(TabBar, { tab, setTab }), /* @__PURE__ */ React.createElement("div", { className: "hero-title" }, /* @__PURE__ */ React.createElement("div", { className: "eyebrow no-print" }, tab === "rueda" ? `Planificaci\xF3n \xB7 ${dim} d\xEDas` : "Listas de control"), /* @__PURE__ */ React.createElement("h1", null, "Tracker ", /* @__PURE__ */ React.createElement("span", { className: "italic" }, "H\xE1bitos"))), tab === "rueda" && /* @__PURE__ */ React.createElement("div", { className: "stage" }, /* @__PURE__ */ React.createElement("div", { className: "legend no-print" }, /* @__PURE__ */ React.createElement("div", { className: "legend-title" }, /* @__PURE__ */ React.createElement("span", null, "Leyenda"), /* @__PURE__ */ React.createElement("span", null, activeHabits.length, " activos")), isInherited && /* @__PURE__ */ React.createElement("div", { className: "legend-inherit", onClick: onEditHabits, role: "button", title: "Personalizar h\xE1bitos para este mes" }, /* @__PURE__ */ React.createElement("span", null, "Heredados del mes anterior. ", /* @__PURE__ */ React.createElement("u", null, "Editar para ", MONTH_NAMES[month0]))), /* @__PURE__ */ React.createElement("ul", { className: "legend-list" }, habits.map((h, i) => {
     const active = !!(h && h.trim());
     const habitDone = activeHabits.includes(i) ? Object.entries(marks).filter(([k, v]) => v === "done" && k.startsWith(`${i}_`)).length : 0;
-    return /* @__PURE__ */ React.createElement("li", { key: i, className: "legend-item" + (active ? "" : " inactive") }, /* @__PURE__ */ React.createElement("span", { className: "ring-no" }, i + 1), /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("span", { className: "ring-dot", style: { background: window.RING_TINTS[i] } }), /* @__PURE__ */ React.createElement("span", { className: "legend-name" + (active ? "" : " placeholder") }, active ? h : "\u2014")), /* @__PURE__ */ React.createElement("span", { className: "legend-prog" }, active ? `${habitDone}/${dim}` : "\u2014"));
-  })), /* @__PURE__ */ React.createElement("div", { className: "legend-state" }, /* @__PURE__ */ React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement("span", { className: "swatch done" }), "Cumplido"), /* @__PURE__ */ React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement("span", { className: "swatch miss" }), "No hecho"))), /* @__PURE__ */ React.createElement("div", { className: "wheel-host", ref: wheelHostRef }, /* @__PURE__ */ React.createElement("div", { className: "hover-info no-print" + (hoveredDay ? " show" : "") }, hoveredDay && (() => {
+    const habitOff = activeHabits.includes(i) ? Object.entries(marks).filter(([k, v]) => v === "off" && k.startsWith(`${i}_`)).length : 0;
+    return /* @__PURE__ */ React.createElement("li", { key: i, className: "legend-item" + (active ? "" : " inactive") }, /* @__PURE__ */ React.createElement("span", { className: "ring-no" }, i + 1), /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("span", { className: "ring-dot", style: { background: window.RING_TINTS[i] } }), /* @__PURE__ */ React.createElement("span", { className: "legend-name" + (active ? "" : " placeholder") }, active ? h : "\u2014")), /* @__PURE__ */ React.createElement("span", { className: "legend-prog", title: habitOff ? `${habitOff} d\xEDas no tocan` : void 0 }, active ? `${habitDone}/${dim - habitOff}` : "\u2014"));
+  })), /* @__PURE__ */ React.createElement("div", { className: "legend-state" }, /* @__PURE__ */ React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement("span", { className: "swatch done" }), "Cumplido"), /* @__PURE__ */ React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement("span", { className: "swatch miss" }), "No hecho"), /* @__PURE__ */ React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement("span", { className: "swatch off" }), "No toca")), /* @__PURE__ */ React.createElement("div", { className: "off-sec" }, /* @__PURE__ */ React.createElement("div", { className: "off-sec-head" }, /* @__PURE__ */ React.createElement("span", { className: "swatch off" }), /* @__PURE__ */ React.createElement("span", { className: "off-sec-title" }, "D\xEDas que no toca")), /* @__PURE__ */ React.createElement("p", { className: "off-sec-desc" }, "Para h\xE1bitos que no haces todos los d\xEDas. Pinta en negro los d\xEDas que no te tocan: no cuentan como fallo ni bajan tu porcentaje."), offMode ? /* @__PURE__ */ React.createElement("div", { className: "off-sec-active" }, /* @__PURE__ */ React.createElement("span", null, "Selecciona en la rueda las casillas que quieres en negro y pulsa ", /* @__PURE__ */ React.createElement("strong", null, "Finalizar"), ".")) : /* @__PURE__ */ React.createElement("button", { className: "off-sec-btn", onClick: startOffMode, disabled: activeHabits.length === 0 }, /* @__PURE__ */ React.createElement("svg", { width: "13", height: "13", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2" }, /* @__PURE__ */ React.createElement("path", { d: "M9 11l3 3L22 4" }), /* @__PURE__ */ React.createElement("path", { d: "M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" })), "Seleccionar d\xEDas"))), /* @__PURE__ */ React.createElement("div", { className: "wheel-host", ref: wheelHostRef }, offMode && /* @__PURE__ */ React.createElement("div", { className: "off-bar no-print" }, /* @__PURE__ */ React.createElement("div", { className: "off-bar-txt" }, "Toca las casillas que no te tocan", /* @__PURE__ */ React.createElement("span", { className: "count" }, offPendingCount, offPendingCount === 1 ? " casilla en negro" : " casillas en negro")), /* @__PURE__ */ React.createElement("button", { className: "off-bar-btn finish", onClick: finishOffMode }, "Finalizar"), /* @__PURE__ */ React.createElement("button", { className: "off-bar-btn cancel", onClick: cancelOffMode }, "Cancelar")), /* @__PURE__ */ React.createElement("div", { className: "hover-info no-print" + (hoveredDay && !offMode ? " show" : "") }, hoveredDay && (() => {
     const info = dayInfo(hoveredDay);
-    return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("span", { className: "date" }, formatDate(hoveredDay)), /* @__PURE__ */ React.createElement("span", { className: "pill green" }, "\u25CF ", info.done, " cumplidos"), /* @__PURE__ */ React.createElement("span", { className: "pill red" }, "\u25CF ", info.miss, " no hechos"), /* @__PURE__ */ React.createElement("span", { style: { color: "rgba(255,255,255,0.5)", fontSize: 11 } }, info.total - info.done - info.miss, " sin marcar"));
+    return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("span", { className: "date" }, formatDate(hoveredDay)), /* @__PURE__ */ React.createElement("span", { className: "pill green" }, "\u25CF ", info.done, " cumplidos"), /* @__PURE__ */ React.createElement("span", { className: "pill red" }, "\u25CF ", info.miss, " no hechos"), info.off > 0 && /* @__PURE__ */ React.createElement("span", { className: "pill black" }, "\u25CF ", info.off, " no toca"), /* @__PURE__ */ React.createElement("span", { style: { color: "rgba(255,255,255,0.5)", fontSize: 11 } }, info.total - info.done - info.miss - info.off, " sin marcar"));
   })()), /* @__PURE__ */ React.createElement(
     Wheel,
     {
@@ -912,6 +1006,8 @@ function MainScreen({ state, setState, onEditHabits, onChangeMonth, onReset }) {
       todayDay,
       hoveredDay,
       selectedCell: popover ? `${popover.h}_${popover.d}` : null,
+      offMode,
+      offPending,
       onCellClick,
       onCellHover: setHoveredDay
     }
@@ -920,7 +1016,7 @@ function MainScreen({ state, setState, onEditHabits, onChangeMonth, onReset }) {
     const cellKey = `${popover.h}_${popover.d}`;
     const currentMark = marks[cellKey];
     return /* @__PURE__ */ React.createElement("div", { className: "cell-popover no-print", style: { left: popover.x, top: popover.y } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "cell-popover-meta" }, "D\xEDa ", String(popover.d).padStart(2, "0"), " \xB7 ", habitName.length > 22 ? habitName.slice(0, 22) + "\u2026" : habitName), /* @__PURE__ */ React.createElement("div", { className: "cell-popover-row" }, /* @__PURE__ */ React.createElement("button", { className: "pop-btn done", onClick: () => applyMark(popover.h, popover.d, "done") }, /* @__PURE__ */ React.createElement("span", { className: "pop-dot done" }), "Cumplido"), /* @__PURE__ */ React.createElement("button", { className: "pop-btn miss", onClick: () => applyMark(popover.h, popover.d, "miss") }, /* @__PURE__ */ React.createElement("span", { className: "pop-dot miss" }), "No hecho"), currentMark && /* @__PURE__ */ React.createElement("button", { className: "pop-btn clear", onClick: () => applyMark(popover.h, popover.d, null) }, "Limpiar"))));
-  })()), /* @__PURE__ */ React.createElement("div", { className: "side-stack no-print" }, /* @__PURE__ */ React.createElement("div", { className: "panel" }, /* @__PURE__ */ React.createElement("div", { className: "panel-head" }, /* @__PURE__ */ React.createElement("span", { className: "panel-title" }, "Resumen"), /* @__PURE__ */ React.createElement("span", { className: "panel-meta" }, MONTH_NAMES[month0].slice(0, 3), " \xB7 ", year)), /* @__PURE__ */ React.createElement("div", { className: "stats-grid" }, /* @__PURE__ */ React.createElement("div", { className: "stat-cell" }, /* @__PURE__ */ React.createElement("div", { className: "stat-num" }, doneCount, /* @__PURE__ */ React.createElement("span", { className: "small" }, "/", totalCells)), /* @__PURE__ */ React.createElement("div", { className: "stat-lbl" }, "Cumplidos")), /* @__PURE__ */ React.createElement("div", { className: "stat-cell" }, /* @__PURE__ */ React.createElement("div", { className: "stat-num" }, missCount), /* @__PURE__ */ React.createElement("div", { className: "stat-lbl" }, "No hechos")), /* @__PURE__ */ React.createElement("div", { className: "stat-cell" }, /* @__PURE__ */ React.createElement("div", { className: "stat-num" }, streak), /* @__PURE__ */ React.createElement("div", { className: "stat-lbl" }, "Racha actual")), /* @__PURE__ */ React.createElement("div", { className: "stat-cell" }, /* @__PURE__ */ React.createElement("div", { className: "stat-num" }, activeHabits.length, /* @__PURE__ */ React.createElement("span", { className: "small" }, "/9")), /* @__PURE__ */ React.createElement("div", { className: "stat-lbl" }, "H\xE1bitos activos")))), /* @__PURE__ */ React.createElement("div", { className: "panel" }, /* @__PURE__ */ React.createElement("div", { className: "panel-head" }, /* @__PURE__ */ React.createElement("span", { className: "panel-title" }, "Observaciones"), /* @__PURE__ */ React.createElement("span", { className: "panel-meta" }, "notas del mes")), /* @__PURE__ */ React.createElement(
+  })()), /* @__PURE__ */ React.createElement("div", { className: "side-stack no-print" }, /* @__PURE__ */ React.createElement("div", { className: "panel" }, /* @__PURE__ */ React.createElement("div", { className: "panel-head" }, /* @__PURE__ */ React.createElement("span", { className: "panel-title" }, "Resumen"), /* @__PURE__ */ React.createElement("span", { className: "panel-meta" }, MONTH_NAMES[month0].slice(0, 3), " \xB7 ", year)), /* @__PURE__ */ React.createElement("div", { className: "stats-grid" }, /* @__PURE__ */ React.createElement("div", { className: "stat-cell" }, /* @__PURE__ */ React.createElement("div", { className: "stat-num" }, doneCount, /* @__PURE__ */ React.createElement("span", { className: "small" }, "/", totalCells)), /* @__PURE__ */ React.createElement("div", { className: "stat-lbl" }, "Cumplidos")), /* @__PURE__ */ React.createElement("div", { className: "stat-cell" }, /* @__PURE__ */ React.createElement("div", { className: "stat-num" }, missCount), /* @__PURE__ */ React.createElement("div", { className: "stat-lbl" }, "No hechos")), /* @__PURE__ */ React.createElement("div", { className: "stat-cell" }, /* @__PURE__ */ React.createElement("div", { className: "stat-num" }, streak), /* @__PURE__ */ React.createElement("div", { className: "stat-lbl" }, "Racha actual")), /* @__PURE__ */ React.createElement("div", { className: "stat-cell" }, /* @__PURE__ */ React.createElement("div", { className: "stat-num" }, activeHabits.length, /* @__PURE__ */ React.createElement("span", { className: "small" }, "/9")), /* @__PURE__ */ React.createElement("div", { className: "stat-lbl" }, "H\xE1bitos activos")), offCount > 0 && /* @__PURE__ */ React.createElement("div", { className: "stat-cell wide" }, /* @__PURE__ */ React.createElement("div", { className: "stat-num" }, offCount), /* @__PURE__ */ React.createElement("div", { className: "stat-lbl" }, "D\xEDas que no tocan (no cuentan)")))), /* @__PURE__ */ React.createElement("div", { className: "panel" }, /* @__PURE__ */ React.createElement("div", { className: "panel-head" }, /* @__PURE__ */ React.createElement("span", { className: "panel-title" }, "Observaciones"), /* @__PURE__ */ React.createElement("span", { className: "panel-meta" }, "notas del mes")), /* @__PURE__ */ React.createElement(
     "textarea",
     {
       className: "obs-textarea",

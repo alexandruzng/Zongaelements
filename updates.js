@@ -5,6 +5,13 @@
 */
 const UPDATES = [
   {
+    id: '2026-07-16-habitos-dias-no-toca',
+    title: 'Tracker de hábitos: nuevo color negro para los días que no toca',
+    items: [
+      'Para los hábitos que no haces todos los días, ahora puedes pintar en negro los días que no te tocan. En la leyenda tienes un apartado nuevo, «Días que no toca»: pulsas «Seleccionar días», tocas en la rueda todas las casillas que quieras marcar (se van poniendo en negro sobre la marcha) y al pulsar «Finalizar» se guardan. Si vuelves a entrar, los negros salen ya seleccionados, así que puedes quitarlos deseleccionándolos y finalizando otra vez. Lo importante: los días en negro no cuentan como fallo, no bajan tu porcentaje y no te rompen la racha — salen del total, así que si un hábito sólo toca 3 días a la semana tu porcentaje será justo. Tus marcas actuales no se han tocado.',
+    ],
+  },
+  {
     id: '2026-07-16-tracker-guardado-fiable',
     title: 'Calendario de beneficio: guardado más fiable',
     items: [

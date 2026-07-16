@@ -116,7 +116,8 @@
     "diario_letters_v2", "diario_objectives_v2",
     "fz:transactions", "fz:goals", "fz:budgets",
     "fz:categories", "fz:categoryOverrides",
-    "tracker_habitos_v1"
+    "tracker_habitos_v1",
+    "zonga_tracker_beneficio_v3"
   ];
   function compact() {
     if (!hasLZ()) return;

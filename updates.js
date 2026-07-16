@@ -5,6 +5,13 @@
 */
 const UPDATES = [
   {
+    id: '2026-07-16-tracker-guardado-fiable',
+    title: 'Calendario de beneficio: guardado más fiable',
+    items: [
+      'Arreglado un fallo por el que, si el almacenamiento del navegador estaba lleno, un día que rellenabas en el Calendario de beneficio podía no guardarse sin avisarte. Ahora los datos se guardan comprimidos (ocupan mucho menos) y, si aun así el dispositivo está lleno, sale un aviso claro en vez de perder el cambio en silencio. Tus días ya registrados se conservan.',
+    ],
+  },
+  {
     id: '2026-07-13-tracker-ver-editar-dia',
     title: 'Calendario de beneficio: ver y editar un día al instante',
     items: [

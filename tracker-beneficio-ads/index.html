@@ -420,6 +420,9 @@
     </div>
   </div>
 
+  <!-- Almacenamiento compartido con compresión + aviso de cuota llena -->
+  <script src="/lz-string.min.js"></script>
+  <script src="/zonga-storage.js"></script>
   <script>
     (function () {
       'use strict';
@@ -497,7 +500,12 @@
 
       /* ---------- Persistencia ---------- */
       function save() {
-        try { localStorage.setItem(STORE_KEY, JSON.stringify({ currency, products, data })); } catch (e) {}
+        const json = JSON.stringify({ currency, products, data });
+        // ZongaLS comprime (~7-10x) y avisa con un banner si la cuota está llena,
+        // en vez de tragarse el error y perder el día en silencio.
+        if (window.ZongaLS) { ZongaLS.save(STORE_KEY, json); return; }
+        try { localStorage.setItem(STORE_KEY, json); }
+        catch (e) { alert('No se pudo guardar: el almacenamiento del dispositivo está lleno.'); }
       }
       function migrate() {
         try {
@@ -520,7 +528,10 @@
       }
       function loadState() {
         let s = null;
-        try { s = JSON.parse(localStorage.getItem(STORE_KEY) || 'null'); } catch (e) {}
+        try {
+          const raw = window.ZongaLS ? ZongaLS.load(STORE_KEY) : localStorage.getItem(STORE_KEY);
+          s = JSON.parse(raw || 'null');
+        } catch (e) {}
         if (s) {
           if (CUR[s.currency]) currency = s.currency;
           if (Array.isArray(s.products)) products = s.products;

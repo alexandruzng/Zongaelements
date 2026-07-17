@@ -5,6 +5,15 @@
 */
 const UPDATES = [
   {
+    id: '2026-07-18-guardado-a-prueba-de-perdidas',
+    title: 'Tus datos ya no se pierden: guardado a prueba de fallos en toda la web',
+    items: [
+      'Arreglado de raíz el problema por el que se perdía información (finanzas, calendario/diario, trackers y el resto de herramientas), sobre todo en el móvil. Pasaba esto: cada vez que abrías una herramienta, tu dispositivo se marcaba a sí mismo como «el más reciente» solo por abrirla; si el navegador del móvil había vaciado el almacenamiento durante la noche (algo que iOS/Safari hace de forma agresiva), la herramienta arrancaba vacía y subía ese vacío a la nube encima de tus datos buenos, borrándolos. Por eso perdías lo de los últimos días, un día tras otro.',
+      'Ahora la nube manda: al abrir cualquier herramienta, primero se traen tus datos guardados en la nube y solo entonces se puede escribir. Abrir una herramienta ya no cuenta como «he editado algo», y un dispositivo que arranca vacío nunca puede machacar lo que hay guardado. Además, herramientas que antes solo guardaban en el móvil (Calendario de beneficio y los dos calculadores de Ads) ahora también hacen copia de seguridad en la nube y se sincronizan entre tus dispositivos.',
+      'Consejo: aun así, de vez en cuando pulsa «Descargar mi información» en la página principal para tener una copia local. Es la red de seguridad definitiva.',
+    ],
+  },
+  {
     id: '2026-07-16-habitos-dias-no-toca',
     title: 'Tracker de hábitos: nuevo color negro para los días que no toca',
     items: [

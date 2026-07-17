@@ -43,6 +43,7 @@ let pushInFlight = false;
 let pushPendingAfter = false;
 
 const origSet = localStorage.setItem.bind(localStorage);
+const origGet = localStorage.getItem.bind(localStorage);
 const origRemove = localStorage.removeItem.bind(localStorage);
 const origClear = localStorage.clear.bind(localStorage);
 
@@ -146,7 +147,7 @@ async function pushNow(uid) {
 }
 
 function schedulePush() {
-  if (!currentUid || suppressPush) return;
+  if (!currentUid || suppressPush || !initialPullDone) return;
   clearTimeout(pushTimer);
   pushTimer = setTimeout(() => pushNow(currentUid), PUSH_DEBOUNCE_MS);
 }
@@ -256,21 +257,37 @@ function hidePushErrorToast() {
   if (pushErrorEl) { pushErrorEl.remove(); pushErrorEl = null; }
 }
 
-// ── Patch de localStorage para detectar escrituras y empujar ──
+// ── Patch de localStorage para detectar escrituras REALES y empujar ──
+// Solo cuenta como "actividad" un cambio de valor real hecho DESPUÉS de la
+// reconciliación inicial con la nube. Así:
+//  - Abrir una herramienta (que reescribe tema, vista y el mismo estado ya
+//    cargado) no marca este dispositivo como "el más nuevo".
+//  - Arrancar con datos semilla porque el navegador vació el localStorage
+//    (típico en móvil) tampoco sube ese estado vacío encima de la nube.
+// Ese doble efecto era el origen de la pérdida de datos diaria.
 function bumpLocalTs() { try { origSet(LOCAL_TS_KEY, String(Date.now())); } catch {} }
 
+function noteWrite(k, changed) {
+  if (skipKey(k)) return;
+  if (!changed) return;          // valor idéntico: no es una edición
+  if (!initialPullDone) return;  // ruido de arranque / semilla: ignorar hasta reconciliar
+  bumpLocalTs();
+  schedulePush();
+}
+
 localStorage.setItem = function (k, v) {
+  const changed = origGet(k) !== v;
   origSet(k, v);
-  if (!skipKey(k)) { bumpLocalTs(); schedulePush(); }
+  noteWrite(k, changed);
 };
 localStorage.removeItem = function (k) {
+  const existed = origGet(k) !== null;
   origRemove(k);
-  if (!skipKey(k)) { bumpLocalTs(); schedulePush(); }
+  noteWrite(k, existed);
 };
 localStorage.clear = function () {
   origClear();
-  bumpLocalTs();
-  schedulePush();
+  if (initialPullDone) { bumpLocalTs(); schedulePush(); }
 };
 
 // ── Agregar chunks remotos en un solo objeto + metadata ──
@@ -297,11 +314,18 @@ onAuthStateChanged(auth, (user) => {
 
   unsubscribe = onSnapshot(
     collection(db, "users", user.uid, "chunks"),
+    { includeMetadataChanges: true },
     async (snap) => {
+      const fromCache = !!(snap.metadata && snap.metadata.fromCache);
       let { remote, latestTs, lastDev } = aggregateChunks(snap.docs);
 
-      // Sin chunks: o es un usuario nuevo o tiene datos en el formato antiguo.
+      // Sin chunks: usuario nuevo, formato antiguo, o solo la caché fría
+      // antes de que responda el servidor.
       if (snap.empty) {
+        // CLAVE: nunca subir lo local cuando el "vacío" viene solo de la
+        // caché. Podría ser estado semilla y machacaría los datos reales
+        // que ya hay en la nube. Esperamos a que confirme el servidor.
+        if (fromCache) return;
         try {
           const legacy = await getDoc(doc(db, "users", user.uid));
           const ld = legacy.exists() ? (legacy.data() || {}) : {};
@@ -310,7 +334,7 @@ onAuthStateChanged(auth, (user) => {
             latestTs = Number(ld.updatedAt || 0);
             lastDev = ld.lastDevice || null;
           } else {
-            // Primera vez del usuario: subir lo que haya local.
+            // El servidor confirma que el usuario es nuevo: subir lo local.
             if (!initialPullDone) { initialPullDone = true; pushNow(user.uid); }
             return;
           }
@@ -320,31 +344,44 @@ onAuthStateChanged(auth, (user) => {
         }
       }
 
-      // Ignorar el snapshot si fue causado por este mismo dispositivo
-      // (excepto la primera carga, donde sí queremos aplicar).
+      // Snapshot provocado por este mismo dispositivo (salvo en la carga inicial).
       if (initialPullDone && lastDev === deviceId) return;
 
-      // Si lo local es más reciente que lo remoto, NO sobrescribimos: subimos local.
-      const localTs = Number(localStorage.getItem(LOCAL_TS_KEY) || 0);
-      if (localTs > latestTs) {
+      const localTs = Number(origGet(LOCAL_TS_KEY) || 0);
+
+      // ── Reconciliación inicial ───────────────────────────────────────────
+      // Al abrir, el estado en memoria de la app ya se hidrató desde el
+      // localStorage local, que puede estar vacío/semilla (si el navegador
+      // vació el almacenamiento) o venir de una sesión anterior. La nube
+      // MANDA, salvo que este dispositivo tenga ediciones reales sin subir,
+      // lo cual solo es cierto si su marca de tiempo PERSISTIDA es más nueva.
+      if (!initialPullDone) {
+        if (latestTs >= localTs) {
+          const changed = applyRemote(remote);
+          try { origSet(LOCAL_TS_KEY, String(latestTs)); } catch {}
+          initialPullDone = true;
+          window.dispatchEvent(new CustomEvent("zonga:sync", {
+            detail: { initial: true, fromDevice: lastDev }
+          }));
+          // Re-hidratar la app con los datos recién traídos de la nube.
+          if (changed) location.reload();
+          return;
+        }
+        // Lo local persistido es genuinamente más nuevo: subirlo sin machacar.
         initialPullDone = true;
         pushNow(user.uid);
         return;
       }
 
+      // ── Cambios desde otro dispositivo (sesión ya reconciliada) ──────────
+      if (localTs > latestTs) { pushNow(user.uid); return; }
       const changed = applyRemote(remote);
-      const wasInitial = !initialPullDone;
-      initialPullDone = true;
-
       if (changed) {
         window.dispatchEvent(new CustomEvent("zonga:sync", {
-          detail: { initial: wasInitial, fromDevice: lastDev }
+          detail: { initial: false, fromDevice: lastDev }
         }));
-
-        if (!wasInitial) {
-          showSyncToast("☁ Datos actualizados desde otro dispositivo");
-          setTimeout(() => location.reload(), 900);
-        }
+        showSyncToast("☁ Datos actualizados desde otro dispositivo");
+        setTimeout(() => location.reload(), 900);
       }
     },
     (err) => {
@@ -354,14 +391,15 @@ onAuthStateChanged(auth, (user) => {
   );
 });
 
-// Forzar push antes de cerrar
+// Forzar push antes de cerrar (solo si ya reconciliamos con la nube; si no,
+// podríamos subir estado semilla y perder datos).
 window.addEventListener("beforeunload", () => {
-  if (currentUid) pushNow(currentUid);
+  if (currentUid && initialPullDone) pushNow(currentUid);
 });
 
 // API mínima
 window.__zongaSync = {
-  forcePush: () => currentUid && pushNow(currentUid),
+  forcePush: () => currentUid && initialPullDone && pushNow(currentUid),
   deviceId,
   // Útil para depurar desde la consola.
   inspect: () => ({

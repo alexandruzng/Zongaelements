@@ -5,6 +5,14 @@
 */
 const UPDATES = [
   {
+    id: '2026-07-21-finanzas-cambio-tiempo-real',
+    title: 'Finanzas: el cambio EUR↔RON se actualiza solo cada día',
+    items: [
+      'Hasta ahora el euro estaba fijado a mano en 4,97 RON y se quedaba desactualizado. Ahora la herramienta descarga el tipo de cambio real (datos del Banco Central Europeo) y lo actualiza automáticamente una vez al día, sin que tengas que hacer nada. Verás el cambio vigente y cuándo se actualizó en una etiqueta arriba a la derecha («1 € = X,XX RON · hoy») y también dentro del formulario de nueva transacción.',
+      'Importante: esto NO toca tus transacciones. Todo se guarda en euros; el RON solo es una conversión que se muestra encima. Cambiar la tasa solo cambia cómo se ven las cifras en RON, nunca los importes guardados. Si algún día no hay internet, se usa el último cambio conocido y se reintenta al día siguiente.',
+    ],
+  },
+  {
     id: '2026-07-18-guardado-a-prueba-de-perdidas',
     title: 'Tus datos ya no se pierden: guardado a prueba de fallos en toda la web',
     items: [

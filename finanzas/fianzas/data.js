@@ -1,7 +1,9 @@
 // ─── Fianzas: datos semilla ────────────────────────────────────────────────
 // 6+ meses de transacciones realistas en EUR. Tasa EUR↔RON.
 
-const EUR_TO_RON = 4.97;
+// Tasa EUR→RON: valor en vivo de fz-rate.js (cache diaria + descarga real).
+// 4.97 es solo el fallback duro si aún no hay dato descargado.
+const EUR_TO_RON = (window.FZ_RATE && window.FZ_RATE.value) || 4.97;
 
 const CATEGORIES = {
   // Gastos

@@ -3,7 +3,8 @@
 const { useState: useStateM, useEffect: useEffectM, useMemo: useMemoM } = React;
 const Ic = window.FZ_Icon;
 const { FIANZAS_DATA: FD_M } = window;
-const { EUR_TO_RON: E2R_M, CATEGORIES: CATS_M } = FD_M;
+const { CATEGORIES: CATS_M } = FD_M;
+// La tasa se lee en vivo vía FD_M.EUR_TO_RON (fz-rate.js la actualiza cada día).
 const { MONTH_NAMES: MN_M, DAY_NAMES: DN_M, daysInMonth: dim_M, parseISO: pISO_M, fmtEUR: fEUR_M, fmtRON: fRON_M } = window.FZ_UI;
 
 // ── Calendar picker ─────────────────────────────────────────────────────
@@ -244,8 +245,9 @@ function TxModal({
   const canSave = amountValid && conceptValid;
 
   // Currency conversion live
-  const amountEUR = currency === 'EUR' ? amountNum : amountNum / E2R_M;
-  const amountRON = currency === 'RON' ? amountNum : amountNum * E2R_M;
+  const rate = FD_M.EUR_TO_RON;
+  const amountEUR = currency === 'EUR' ? amountNum : amountNum / rate;
+  const amountRON = currency === 'RON' ? amountNum : amountNum * rate;
 
   const tint = isIncome
     ? { head: 'var(--pos-soft)', stroke: 'var(--pos)', ink: 'var(--pos-ink)' }
@@ -552,7 +554,10 @@ function TxModal({
             <div className="mt-2 flex items-center justify-between text-[11px] ink-3 num">
               <div className="flex items-center gap-1.5">
                 <Ic.refresh size={10}/>
-                <span>1 EUR = {E2R_M.toFixed(2)} RON</span>
+                <span>1 EUR = {rate.toFixed(2)} RON</span>
+                {window.FZ_RATE && window.FZ_RATE.dateLabel() && (
+                  <span className="ink-3" style={{opacity: .7}}>· {window.FZ_RATE.stale ? 'sin conexión' : window.FZ_RATE.dateLabel()}</span>
+                )}
               </div>
               <div className="flex items-center gap-3">
                 <span>{amountValid ? fEUR_M(amountEUR, {decimals: 2}) : '— €'}</span>

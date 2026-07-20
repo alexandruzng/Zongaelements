@@ -6,7 +6,8 @@
 const { useState: useStateQA, useEffect: useEffectQA, useMemo: useMemoQA, useRef: useRefQA } = React;
 const QA_Ic = window.FZ_Icon;
 const QA_FD = window.FIANZAS_DATA;
-const { CATEGORIES: QA_CATS, EUR_TO_RON: QA_E2R } = QA_FD;
+const { CATEGORIES: QA_CATS } = QA_FD;
+// La tasa se lee en vivo vía QA_FD.EUR_TO_RON (fz-rate.js la actualiza cada día).
 const QA_UI = window.FZ_UI;
 
 const QA_MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -106,7 +107,7 @@ function QuickAddModal({ open, onClose, onCommit, customCats = [] }) {
     const stamp = Date.now();
     const txs = rows.map((r, idx) => {
       const n = parseFloat(String(r.amountStr).replace(',', '.'));
-      const amountEUR = r.currency === 'EUR' ? n : n / QA_E2R;
+      const amountEUR = r.currency === 'EUR' ? n : n / QA_FD.EUR_TO_RON;
       return {
         id: `tx-${stamp}-${idx}`,
         type: r.type,

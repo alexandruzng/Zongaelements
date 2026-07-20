@@ -54,6 +54,16 @@ function App() {
   const [theme, setTheme] = useS(() => localStorage.getItem('fz:theme') || 'light');
   useE(() => {document.documentElement.setAttribute('data-theme', theme);localStorage.setItem('fz:theme', theme);}, [theme]);
 
+  // Tipo de cambio EUR→RON en vivo: descarga la tasa del día y re-renderiza
+  // cuando llega (los importes en RON se recalculan solos, EUR intacto).
+  const [, setRateTick] = useS(0);
+  useE(() => {
+    const onRate = () => setRateTick((n) => n + 1);
+    window.addEventListener('fz:rate-updated', onRate);
+    window.FZ_RATE?.refresh();
+    return () => window.removeEventListener('fz:rate-updated', onRate);
+  }, []);
+
   // Data state (persisted)
   // lee: ZongaLS descomprime y es compatible con datos antiguos sin comprimir.
   const readLS = (key) => (window.ZongaLS ? ZongaLS.load(key) : localStorage.getItem(key));
@@ -468,11 +478,29 @@ function Header({ view, onView, theme, onTheme, monthKeys, currentKey, onMonth, 
           </div>
         </div>
         <div className="flex items-center gap-3">
+          <RateBadge />
           <div className="text-[11px] ink-3 uppercase tracking-wider font-medium">Mes activo</div>
           <A_UI.MonthDropdown value={currentKey} options={monthKeys} onChange={onMonth} includeAll={includeAll} />
         </div>
       </div>
     </header>);
+
+}
+
+// ── Rate badge ──────────────────────────────────────────────────────────
+// Muestra el tipo de cambio EUR→RON vigente y cuándo se actualizó.
+function RateBadge() {
+  const rate = A_FD.EUR_TO_RON;
+  const R = window.FZ_RATE;
+  const label = R ? (R.stale ? 'sin conexión' : R.dateLabel()) : null;
+  return (
+    <div className="chip hidden sm:flex items-center gap-1.5"
+         title={R && R.source ? `Fuente: ${R.source}` : 'Tipo de cambio EUR↔RON'}
+         style={{ padding: '4px 10px' }}>
+      <A_I.refresh size={11} />
+      <span className="num text-[11px] ink-2">1&nbsp;€ = {rate.toFixed(2)} RON</span>
+      {label && <span className="text-[10px] ink-3">· {label}</span>}
+    </div>);
 
 }
 

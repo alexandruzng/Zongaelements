@@ -2,7 +2,8 @@
 
 const { useState, useEffect, useMemo, useRef, useCallback } = React;
 const { FIANZAS_DATA } = window;
-const { EUR_TO_RON, CATEGORIES } = FIANZAS_DATA;
+const { CATEGORIES } = FIANZAS_DATA;
+// EUR_TO_RON se lee en vivo vía FIANZAS_DATA.EUR_TO_RON (cambia cada día).
 const I = window.FZ_Icon;
 
 // ── Utils ───────────────────────────────────────────────────────────────
@@ -322,7 +323,7 @@ function TxRow({ tx, onDelete, onEdit }) {
           {isIncome ? '+' : '−'}{fmtEUR(tx.amount, {decimals: 2}).replace('−','')}
         </div>
         <div className="num text-[10px] ink-3 mt-0.5">
-          {fmtRON(tx.amount * EUR_TO_RON)}
+          {fmtRON(tx.amount * FIANZAS_DATA.EUR_TO_RON)}
         </div>
       </div>
       {onDelete && (

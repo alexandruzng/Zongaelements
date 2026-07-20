@@ -107,7 +107,9 @@ function QuickAddModal({ open, onClose, onCommit, customCats = [] }) {
     const stamp = Date.now();
     const txs = rows.map((r, idx) => {
       const n = parseFloat(String(r.amountStr).replace(',', '.'));
-      const amountEUR = r.currency === 'EUR' ? n : n / QA_FD.EUR_TO_RON;
+      // Tasa de la fecha de la fila (histórica si es pasada; en vivo si es hoy).
+      const r0 = window.FZ_RATE ? window.FZ_RATE.rateFor(r.date) : QA_FD.EUR_TO_RON;
+      const amountEUR = r.currency === 'EUR' ? n : n / r0;
       return {
         id: `tx-${stamp}-${idx}`,
         type: r.type,
@@ -115,6 +117,7 @@ function QuickAddModal({ open, onClose, onCommit, customCats = [] }) {
         concept: r.concept.trim(),
         amount: amountEUR,
         category: r.category,
+        rate: r0,
       };
     });
     onCommit(txs);

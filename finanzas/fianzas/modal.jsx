@@ -245,7 +245,11 @@ function TxModal({
   const canSave = amountValid && conceptValid;
 
   // Currency conversion live
-  const rate = FD_M.EUR_TO_RON;
+  // Tasa de la fecha elegida (histórica si es pasada; en vivo si es hoy/futuro).
+  const rate = window.FZ_RATE ? window.FZ_RATE.rateFor(date) : FD_M.EUR_TO_RON;
+  const _tNow = new Date();
+  const _todayISO = `${_tNow.getFullYear()}-${String(_tNow.getMonth() + 1).padStart(2, '0')}-${String(_tNow.getDate()).padStart(2, '0')}`;
+  const rateIsLive = date >= _todayISO; // hoy/futuro → cambio en vivo; pasado → histórico
   const amountEUR = currency === 'EUR' ? amountNum : amountNum / rate;
   const amountRON = currency === 'RON' ? amountNum : amountNum * rate;
 
@@ -262,6 +266,8 @@ function TxModal({
         type, date, concept: concept.trim(),
         amount: amountEUR,
         category,
+        // Congela la tasa de su fecha; al editar sin cambiar fecha, conserva la original.
+        rate: (isEdit && editingTx.date === date && editingTx.rate) ? editingTx.rate : rate,
       });
       setSaving(false);
       onClose();
@@ -555,9 +561,9 @@ function TxModal({
               <div className="flex items-center gap-1.5">
                 <Ic.refresh size={10}/>
                 <span>1 EUR = {rate.toFixed(2)} RON</span>
-                {window.FZ_RATE && window.FZ_RATE.dateLabel() && (
-                  <span className="ink-3" style={{opacity: .7}}>· {window.FZ_RATE.stale ? 'sin conexión' : window.FZ_RATE.dateLabel()}</span>
-                )}
+                <span className="ink-3" style={{opacity: .7}}>
+                  · {rateIsLive ? (window.FZ_RATE && window.FZ_RATE.stale ? 'sin conexión' : 'hoy') : 'cambio de ese día'}
+                </span>
               </div>
               <div className="flex items-center gap-3">
                 <span>{amountValid ? fEUR_M(amountEUR, {decimals: 2}) : '— €'}</span>

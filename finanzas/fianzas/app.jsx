@@ -80,6 +80,27 @@ function App() {
     } catch (e) {}
     return A_FD.SEED_TX;
   });
+
+  // Congelar el cambio EUR→RON de cada transacción a su fecha: las que aún no
+  // tienen `rate` se rellenan con el histórico real del BCE (una sola llamada).
+  // Solo AÑADE `rate`; el importe en EUR nunca se toca.
+  useE(() => {
+    if (!window.FZ_RATE || !window.FZ_RATE.backfill) return;
+    const pending = transactions.filter((t) => t && t.rate == null && t.date);
+    if (pending.length === 0) return;
+    const minDate = pending.reduce((m, t) => (t.date < m ? t.date : m), pending[0].date);
+    window.FZ_RATE.backfill(minDate).then(() => {
+      setTransactions((prev) => {
+        let changed = false;
+        const next = prev.map((t) => {
+          if (t && t.rate == null && t.date) { changed = true; return { ...t, rate: window.FZ_RATE.rateFor(t.date) }; }
+          return t;
+        });
+        return changed ? next : prev;
+      });
+    });
+  }, [transactions]);
+
   const [goals, setGoals] = useS(() => {
     try {
       const raw = readLS('fz:goals');
@@ -313,10 +334,11 @@ function App() {
   const addGoal = (goal) => setGoals((prev) => [...prev, goal]);
   const deleteGoal = (id) => setGoals((prev) => prev.filter((g) => g.id !== id));
   const exportCSV = () => {
-    const header = 'id,fecha,tipo,categoria,concepto,importe_eur,importe_ron\n';
-    const rows = transactions.map((t) =>
-    [t.id, t.date, t.type, t.category, `"${t.concept.replace(/"/g, '""')}"`, t.amount.toFixed(2), (t.amount * A_FD.EUR_TO_RON).toFixed(2)].join(',')
-    ).join('\n');
+    const header = 'id,fecha,tipo,categoria,concepto,importe_eur,importe_ron,tasa_eur_ron\n';
+    const rows = transactions.map((t) => {
+      const rate = t.rate || A_FD.EUR_TO_RON;
+      return [t.id, t.date, t.type, t.category, `"${t.concept.replace(/"/g, '""')}"`, t.amount.toFixed(2), (t.amount * rate).toFixed(2), rate.toFixed(4)].join(',');
+    }).join('\n');
     const blob = new Blob([header + rows], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');a.href = url;a.download = 'fianzas-transacciones.csv';a.click();

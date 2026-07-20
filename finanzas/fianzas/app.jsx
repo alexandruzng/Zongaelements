@@ -81,25 +81,18 @@ function App() {
     return A_FD.SEED_TX;
   });
 
-  // Congelar el cambio EUR→RON de cada transacción a su fecha: las que aún no
-  // tienen `rate` se rellenan con el histórico real del BCE (una sola llamada).
-  // Solo AÑADE `rate`; el importe en EUR nunca se toca.
+  // Cargar el histórico EUR→RON del BCE para poder MOSTRAR cada transacción a la
+  // tasa de su fecha. Importante: NO reescribe las transacciones (evita un bucle
+  // de recarga con sync). El histórico se guarda solo en la caché local de
+  // fz-rate.js (fz:eurRonHist, excluida del sync) y el RON se deriva al render.
   useE(() => {
     if (!window.FZ_RATE || !window.FZ_RATE.backfill) return;
-    const pending = transactions.filter((t) => t && t.rate == null && t.date);
-    if (pending.length === 0) return;
-    const minDate = pending.reduce((m, t) => (t.date < m ? t.date : m), pending[0].date);
-    window.FZ_RATE.backfill(minDate).then(() => {
-      setTransactions((prev) => {
-        let changed = false;
-        const next = prev.map((t) => {
-          if (t && t.rate == null && t.date) { changed = true; return { ...t, rate: window.FZ_RATE.rateFor(t.date) }; }
-          return t;
-        });
-        return changed ? next : prev;
-      });
-    });
-  }, [transactions]);
+    const dates = transactions.map((t) => t && t.date).filter(Boolean);
+    if (dates.length === 0) return;
+    const minDate = dates.reduce((m, d) => (d < m ? d : m), dates[0]);
+    window.FZ_RATE.backfill(minDate); // dispara 'fz:rate-updated' → re-render
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [goals, setGoals] = useS(() => {
     try {
@@ -336,7 +329,7 @@ function App() {
   const exportCSV = () => {
     const header = 'id,fecha,tipo,categoria,concepto,importe_eur,importe_ron,tasa_eur_ron\n';
     const rows = transactions.map((t) => {
-      const rate = t.rate || A_FD.EUR_TO_RON;
+      const rate = t.rate || (window.FZ_RATE ? window.FZ_RATE.rateFor(t.date) : A_FD.EUR_TO_RON);
       return [t.id, t.date, t.type, t.category, `"${t.concept.replace(/"/g, '""')}"`, t.amount.toFixed(2), (t.amount * rate).toFixed(2), rate.toFixed(4)].join(',');
     }).join('\n');
     const blob = new Blob([header + rows], { type: 'text/csv;charset=utf-8' });

@@ -8,8 +8,8 @@ const UPDATES = [
     id: '2026-07-21-finanzas-cambio-por-fecha',
     title: 'Finanzas: cada transacción usa el cambio EUR↔RON real de su fecha',
     items: [
-      'Antes cada movimiento mostraba su equivalente en RON multiplicando por el cambio de HOY, así que la cifra en RON de un gasto viejo bailaba cada día. Ahora cada transacción queda «congelada» al tipo de cambio real que había el día de su fecha (datos históricos del Banco Central Europeo): un gasto de octubre usa el cambio de octubre (~5,09), no el de hoy. Las transacciones que ya tenías se han rellenado automáticamente con el histórico real la primera vez que abras la herramienta.',
-      'Tus importes en euros NO se tocan: solo se añade a cada movimiento el dato de la tasa de su día para mostrar el RON correcto. En la cabecera sigues viendo el cambio de hoy como referencia y para lo que registres hoy. El export CSV incluye ahora una columna con la tasa usada en cada transacción.',
+      'Antes cada movimiento mostraba su equivalente en RON multiplicando por el cambio de HOY, así que la cifra en RON de un gasto viejo bailaba cada día. Ahora cada transacción se muestra con el tipo de cambio real que había el día de su fecha (datos históricos del Banco Central Europeo): un gasto de octubre usa el cambio de octubre (~5,09), no el de hoy.',
+      'Tus datos NO se tocan: los importes se guardan en euros y la tasa de cada día se calcula al mostrar el RON, sin modificar tus transacciones. En la cabecera sigues viendo el cambio de hoy como referencia y para lo que registres hoy. El export CSV incluye una columna con la tasa usada en cada transacción.',
     ],
   },
   {

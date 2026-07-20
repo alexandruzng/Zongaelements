@@ -323,7 +323,7 @@ function TxRow({ tx, onDelete, onEdit }) {
           {isIncome ? '+' : '−'}{fmtEUR(tx.amount, {decimals: 2}).replace('−','')}
         </div>
         <div className="num text-[10px] ink-3 mt-0.5">
-          {fmtRON(tx.amount * (tx.rate || FIANZAS_DATA.EUR_TO_RON))}
+          {fmtRON(tx.amount * (tx.rate || (window.FZ_RATE ? window.FZ_RATE.rateFor(tx.date) : FIANZAS_DATA.EUR_TO_RON)))}
         </div>
       </div>
       {onDelete && (

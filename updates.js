@@ -5,6 +5,14 @@
 */
 const UPDATES = [
   {
+    id: '2026-07-25-analizador-dias-corriendo',
+    title: 'Analizador de Ads: nuevo campo «Días corriendo» por anuncio',
+    items: [
+      'Cada anuncio tiene ahora una casilla «Días corriendo» (el primer campo del bloque) y el veredicto la tiene en cuenta siguiendo el módulo: si llevas menos de un día, no te deja decidir todavía y te recuerda dejar correr el anuncio el día completo (Meta necesita tiempo para optimizar y hay dos picos de compra al día). Con ventas y el ROAS sobre tu benchmark, ahora puede decir ESCALAR ya a los 3 días aunque no hayas llegado a $100 de gasto (regla «3 días o $100»). Y mientras mantienes un anuncio con menos de 7 días te avisa de que el módulo pide mínimo 7 días para juzgarlo bien y que es normal no ser rentable la primera semana.',
+      'Aclaración sobre el campo «Conversión»: se queda en porcentaje (%) a propósito. La Tasa de Conversión del módulo es un %, con referencia del 2-4%; el dato en dólares del Ads Manager es otra métrica distinta («Valor de conversión de compras») que ya queda reflejada en el ROAS y las compras.',
+    ],
+  },
+  {
     id: '2026-07-21-finanzas-cambio-por-fecha',
     title: 'Finanzas: cada transacción usa el cambio EUR↔RON real de su fecha',
     items: [

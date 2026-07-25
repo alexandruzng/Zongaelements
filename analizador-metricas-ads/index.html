@@ -223,6 +223,7 @@
       const $ = (id) => document.getElementById(id);
 
       const METRICS = [
+        { k:'days',    label:'Días corriendo',     unit:'días', side:'right' },
         { k:'spend',   label:'Gasto',              unit:'$',  side:'left'  },
         { k:'compras', label:'Compras',            unit:'nº', side:'right' },
         { k:'roas',    label:'ROAS',               unit:'x',  side:'right' },
@@ -355,8 +356,16 @@
         const ic = num(a.ic) || 0;
         const p = num(a.compras) || 0;
         const roas = num(a.roas);
+        const days = num(a.days);
         const beCpa = ctx.beCpa, beRoas = ctx.beRoas, bench = ctx.bench;
         const reasons = [], recs = [], notes = [];
+
+        // ---- Menos de un día: el módulo dice decidir al final del día ----
+        if (days != null && days < 1) {
+          reasons.push('Llevas menos de un día corriendo. El módulo dice tomar las decisiones al final del día: deja correr el anuncio el día completo (Meta necesita tiempo para optimizar y hay dos picos de compra, mañana y tarde/noche) antes de apagar o decidir.');
+          addRecs(a, recs);
+          return { type:'wait', label:'SEGUIR OBSERVANDO', reasons, recs, notes:missingCtxNotes(ctx) };
+        }
 
         // ---- Reglas de apagado (KILL) ----
         const kills = [];
@@ -381,22 +390,22 @@
         // ---- Sin apagado: mantener / escalar / observar ----
         const intent = atc > 0 || ic > 0;
         if (p >= 1) {
-          if (beRoas != null && bench != null && roas != null && roas >= bench && S >= 100) {
-            reasons.push('Rentable y por encima de tu benchmark ('+fmt(bench)+'x) con más de $100 gastados: toca escalar subiendo el presupuesto un 20-25%.');
+          if (beRoas != null && bench != null && roas != null && roas >= bench && (S >= 100 || (days != null && days >= 3))) {
+            reasons.push('Rentable y por encima de tu benchmark ('+fmt(bench)+'x) tras '+(days != null && days >= 3 ? fmt(days)+' días' : 'más de $100 gastados')+': el módulo escala después de 3 días o más de $100 de gasto con el ROAS sobre el benchmark. Toca escalar subiendo el presupuesto un 20-25%.');
             return { type:'scale', label:'ESCALAR', reasons, recs:[], notes:missingCtxNotes(ctx) };
           }
           if (beRoas != null && roas != null && roas >= beRoas) {
             reasons.push('Tiene ventas y el ROAS ('+fmt(roas)+'x) está por encima del equilibrio ('+fmt(beRoas)+'x): es rentable. Mantenlo, sigue testeando variaciones y, al llegar a ~$100 de gasto (o 3 días) por encima del benchmark, escala.');
-            return { type:'keep', label:'MANTENER', reasons, recs, notes:missingCtxNotes(ctx) };
+            return { type:'keep', label:'MANTENER', reasons, recs, notes:weekNotes(days, ctx) };
           }
           reasons.push('Tiene ventas pero aún no es rentable. Es lo más común la primera semana: apaga los creativos que no den ni añadidos al carrito, haz variaciones de lo que funciona y mejora el funnel.');
-          return { type:'keep', label:'MANTENER Y OPTIMIZAR', reasons, recs, notes:missingCtxNotes(ctx) };
+          return { type:'keep', label:'MANTENER Y OPTIMIZAR', reasons, recs, notes:weekNotes(days, ctx) };
         }
 
         // 0 ventas
         if (intent) {
           reasons.push('0 ventas pero con intención de compra ('+atc+' añadidos al carrito, '+ic+' checkouts): no lo apagues aún. Apaga los anuncios sin intención, hazle variaciones a este y úsalo en la próxima ronda de creativos.');
-          return { type:'keep', label:'MANTENER Y OPTIMIZAR', reasons, recs, notes:missingCtxNotes(ctx) };
+          return { type:'keep', label:'MANTENER Y OPTIMIZAR', reasons, recs, notes:weekNotes(days, ctx) };
         }
         // 0 ventas, 0 intención, pero todavía sin gasto suficiente para apagar
         reasons.push('Todavía sin ventas ni intención de compra, pero aún no has gastado lo suficiente para decidir (las reglas apagan al llegar a 0.5×BE CPA con 0 intención, o a BE CPA con 0 compras). Sigue recopilando datos hasta ese umbral.');
@@ -415,6 +424,12 @@
         const n = [];
         if (ctx.beRoas == null) n.push('Falta tu ROAS de equilibrio: sin él no se aplica la regla del ROAS.');
         if (ctx.beCpa == null) n.push('Falta tu coste por compra de equilibrio (BE CPA): sin él no se aplican las reglas de gasto por compra.');
+        return n;
+      }
+      function weekNotes(days, ctx) {
+        const n = missingCtxNotes(ctx);
+        if (days != null && days < 7)
+          n.push('Solo llevas '+fmt(days)+' día(s): el módulo pide mínimo 7 días corriendo para juzgar bien un anuncio, y es totalmente normal no ser rentable durante la primera semana.');
         return n;
       }
 

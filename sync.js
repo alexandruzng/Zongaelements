@@ -16,10 +16,10 @@ import {
   doc, collection, setDoc, deleteDoc, getDoc, getDocs, onSnapshot
 } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
 
-// `fz:eurRon` cubre fz:eurRon y fz:eurRonHist: caché de tipo de cambio derivada
-// (cada dispositivo la recalcula desde la API); NO debe sincronizarse ni provocar
-// recargas de reconciliación.
-const SKIP_PREFIXES = ["__zonga", "firebase:", "fz:eurRon"];
+// `fz:eurRon` (Finanzas) y `zr:` (zonga-rates.js) son cachés de tipo de cambio
+// derivadas: cada dispositivo las recalcula desde la API, así que NO deben
+// sincronizarse ni provocar recargas de reconciliación.
+const SKIP_PREFIXES = ["__zonga", "firebase:", "fz:eurRon", "zr:"];
 const skipKey = (k) => !k || SKIP_PREFIXES.some(p => k.startsWith(p));
 
 const DEVICE_KEY = "__zonga_device_id__";

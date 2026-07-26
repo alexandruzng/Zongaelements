@@ -5,6 +5,15 @@
 */
 const UPDATES = [
   {
+    id: '2026-07-26-ads-pedidos-y-cambio-real',
+    title: 'Calendario de beneficio: pedidos por día y conversión de moneda de verdad',
+    items: [
+      'Nuevo campo «¿Cuántos pedidos has tenido?» al rellenar un día, debajo de las Ganancias. Cada casilla del calendario cambia de aspecto: el beneficio pasa al centro y debajo aparecen los pedidos de ese día con un iconito de bolsa. Arriba, junto a Ganancias y Costes, tienes una tarjeta nueva «Pedidos» con el total del mes (respeta el producto que tengas seleccionado en el desplegable).',
+      'Arreglado el selector de moneda: antes solo cambiaba el símbolo, así que 1.200 € se mostraba como «RON 1.200». Ahora convierte de verdad con el tipo de cambio real del Banco Central Europeo, se actualiza solo una vez al día y vale para €, $, £ y RON. Cuando eliges una moneda distinta del euro, arriba a la derecha te sale el cambio usado («1 € = 5,09 RON · hoy»). Sin internet se usa el último cambio conocido y te lo indica.',
+      'Tus datos NO se han tocado: los días ya registrados siguen exactamente igual y los importes se siguen guardando en euros. Por eso las casillas del modal piden siempre € — la conversión es solo la forma de mostrarlos. Los días de antes saldrán sin pedidos hasta que los edites y los apuntes.',
+    ],
+  },
+  {
     id: '2026-07-25-analizador-dias-corriendo',
     title: 'Analizador de Ads: nuevo campo «Días corriendo» por anuncio',
     items: [

@@ -100,7 +100,8 @@
     .t48 { width: 48px; height: 48px; font-size: 20px; border-radius: 10px; }
 
     /* ---------- Estadísticas ---------- */
-    .stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 20px; }
+    .stats { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 20px; }
+    @media (max-width: 1080px) { .stats { grid-template-columns: repeat(3, 1fr); } }
     @media (max-width: 820px) { .stats { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 440px) { .stats { grid-template-columns: 1fr 1fr; } }
     .stat { background: #fff; border: 1px solid var(--c-border); border-radius: var(--radius-md); padding: 14px 16px; box-shadow: var(--shadow-sm); }
@@ -124,14 +125,24 @@
     .day.today .dnum { color: var(--c-primary); }
     .day.pos-bg { background: linear-gradient(180deg, #fff 0%, var(--c-green-soft) 220%); }
     .day.neg-bg { background: linear-gradient(180deg, #fff 0%, var(--c-red-soft) 220%); }
-    .day .dprofit { text-align: right; font-size: 13.5px; font-weight: 800; font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; }
+    /* Beneficio centrado en la casilla; pedidos anclados abajo. El .dorders se
+       pinta siempre (vacío si no hay pedidos) para que el beneficio no se
+       descentre entre unos días y otros. */
+    .day .dprofit { text-align: center; font-size: 13.5px; font-weight: 800; font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .day .dprofit.pos { color: var(--c-green); } .day .dprofit.neg { color: var(--c-red); } .day .dprofit.zero { color: var(--c-text-soft); }
+    /* En RON las cifras son ~5x más largas y no caben a 13,5px */
+    .cal-grid.cur-long .dprofit { font-size: 11.5px; letter-spacing: -0.02em; }
+    .day .dorders { display: flex; align-items: center; justify-content: center; gap: 3px; min-height: 14px; font-size: 11px; font-weight: 700; color: var(--c-text-soft); font-variant-numeric: tabular-nums; }
+    .day .dorders svg { width: 11px; height: 11px; flex: none; opacity: 0.7; }
     .day .ddot { position: absolute; top: 9px; right: 9px; width: 6px; height: 6px; border-radius: 50%; background: var(--c-primary-100); opacity: 0; }
     .day.has-data .ddot { opacity: 1; }
     @media (max-width: 560px) {
       .cal-card { padding: 10px; } .cal-grid, .cal-weekdays { gap: 5px; }
       .day { padding: 6px; border-radius: 10px; aspect-ratio: 1 / 1; }
       .day .dnum { font-size: 12px; } .day .dprofit { font-size: 11px; }
+      .cal-grid.cur-long .dprofit { font-size: 9px; }
+      .day .dorders { font-size: 9.5px; gap: 2px; min-height: 11px; }
+      .day .dorders svg { width: 9px; height: 9px; }
     }
     .cal-hint { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; text-align: center; color: var(--c-text-soft); font-size: 14px; padding: 26px 16px; background: var(--c-primary-soft); border-radius: var(--radius-md); margin-bottom: 20px; }
     .cal-hint b { color: var(--c-primary-dark); }
@@ -162,6 +173,9 @@
     .btn-primary:hover { background: var(--c-primary-dark); transform: translateY(-2px); }
     .btn-ghost { background: #fff; color: var(--c-text-soft); border: 1px solid var(--c-border); }
     .btn-ghost:hover { color: var(--c-primary); border-color: var(--c-primary-100); }
+    .cur-box { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
+    .rate-tag { font-size: 11px; font-weight: 600; color: var(--c-text-soft); font-variant-numeric: tabular-nums; }
+    .rate-tag.is-stale { opacity: 0.6; }
     .cur-switch { display: inline-flex; gap: 5px; }
     .cur-switch button { padding: 8px 11px; border-radius: var(--radius-sm); border: 1px solid var(--c-border); background: #fff; font-size: 12.5px; font-weight: 600; color: var(--c-text-soft); transition: background var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease); }
     .cur-switch button:hover { border-color: var(--c-primary-100); color: var(--c-primary); }
@@ -213,7 +227,11 @@
     .input-wrap input { flex: 1; width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; padding: 11px 12px; font-size: 15px; font-weight: 700; color: var(--c-text); -moz-appearance: textfield; }
     .input-wrap input::-webkit-outer-spin-button, .input-wrap input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     .msec-ganancias .input-wrap input { font-size: 22px; }
+    /* Pedidos: no es dinero, así que va sin prefijo de divisa y en cuerpo normal */
+    .mfield-orders { margin-top: 16px; margin-bottom: 0; padding-top: 14px; border-top: 1px dashed var(--c-border); }
+    .msec-ganancias .mfield-orders .input-wrap input { font-size: 15px; }
     .msec-hint { margin-top: 10px; font-size: 11.5px; color: var(--c-text-soft); line-height: 1.45; }
+    .msec-hint b { color: var(--c-text); font-weight: 700; }
     .modal-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 14px 20px; background: var(--c-bg-alt); border-top: 1px solid var(--c-border); }
     .mfoot-stats { font-size: 12.5px; color: var(--c-text-soft); display: flex; flex-wrap: wrap; gap: 4px 14px; }
     .mfoot-stats b { color: var(--c-text); font-weight: 800; font-variant-numeric: tabular-nums; }
@@ -284,11 +302,15 @@
         </div>
 
         <div class="cal-spacer"></div>
-        <div class="cur-switch" role="group" aria-label="Elegir moneda">
-          <button type="button" data-cur="EUR">€</button>
-          <button type="button" data-cur="USD">$</button>
-          <button type="button" data-cur="GBP">£</button>
-          <button type="button" data-cur="RON">RON</button>
+        <div class="cur-box">
+          <div class="cur-switch" role="group" aria-label="Elegir moneda">
+            <button type="button" data-cur="EUR">€</button>
+            <button type="button" data-cur="USD">$</button>
+            <button type="button" data-cur="GBP">£</button>
+            <button type="button" data-cur="RON">RON</button>
+          </div>
+          <!-- Tasa vigente: solo se muestra cuando la moneda no es el euro -->
+          <div class="rate-tag" id="rateTag" hidden></div>
         </div>
       </div>
 
@@ -297,6 +319,7 @@
         <div class="stat"><div class="sk">Costes</div><div class="sv" id="sCost">—</div></div>
         <div class="stat accent"><div class="sk">Beneficio del mes</div><div class="sv" id="sProfit">—</div></div>
         <div class="stat"><div class="sk">Margen medio</div><div class="sv" id="sMargin">—</div></div>
+        <div class="stat"><div class="sk">Pedidos</div><div class="sv" id="sOrders">—</div></div>
         <div class="stat"><div class="sk">Días con datos</div><div class="sv" id="sDays">—</div></div>
       </div>
 
@@ -357,6 +380,7 @@
             <div class="mfield"><label for="mProduct">Coste del Producto</label><div class="input-wrap"><span class="cur">€</span><input type="number" id="mProduct" step="0.01" min="0" inputmode="decimal" placeholder="0"></div></div>
             <div class="mfield"><label for="mAd">Coste de Anuncios</label><div class="input-wrap"><span class="cur">€</span><input type="number" id="mAd" step="0.01" min="0" inputmode="decimal" placeholder="0"></div></div>
             <div class="mfield"><label for="mCommission">Comisiones</label><div class="input-wrap"><span class="cur">€</span><input type="number" id="mCommission" step="0.01" min="0" inputmode="decimal" placeholder="0"></div></div>
+            <p class="msec-hint">Introduce siempre los importes en <b>euros</b>. El selector $ / £ / RON solo cambia cómo se muestran las cifras.</p>
           </div>
           <div class="msec msec-ganancias">
             <div class="msec-title">
@@ -365,6 +389,7 @@
             </div>
             <div class="mfield"><label for="mEarn">Ganancias del día</label><div class="input-wrap"><span class="cur">€</span><input type="number" id="mEarn" step="0.01" min="0" inputmode="decimal" placeholder="0"></div></div>
             <p class="msec-hint">Ingresos totales generados ese día (antes de gastos).</p>
+            <div class="mfield mfield-orders"><label for="mOrders">¿Cuántos pedidos has tenido?</label><div class="input-wrap"><input type="number" id="mOrders" step="1" min="0" inputmode="numeric" placeholder="0"></div></div>
           </div>
         </div>
 
@@ -373,6 +398,7 @@
             <span>Costes <b id="mCosts">€0,00</b></span>
             <span>Beneficio <b id="mProfit">€0,00</b></span>
             <span>Margen <b id="mMargin">—</b></span>
+            <span>Pedidos <b id="mOrdersOut">—</b></span>
           </div>
           <div class="mfoot-actions">
             <button type="button" class="btn btn-ghost" id="mClear">Vaciar día</button>
@@ -423,6 +449,8 @@
   <!-- Almacenamiento compartido con compresión + aviso de cuota llena -->
   <script src="/lz-string.min.js"></script>
   <script src="/zonga-storage.js"></script>
+  <!-- Tipos de cambio reales (BCE) para el selector de moneda -->
+  <script src="/zonga-rates.js?v=20260726"></script>
   <!-- Copia de seguridad en la nube + sincronización entre dispositivos -->
   <script type="module" src="/firebase.js"></script>
   <script type="module" src="/sync.js?v=20260718"></script>
@@ -433,6 +461,8 @@
       const CUR = { EUR: '€', USD: '$', GBP: '£', RON: 'RON' };
       const STORE_KEY = 'zonga_tracker_beneficio_v3';
       const WD = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+      // Bolsa de compra: acompaña al número de pedidos en la casilla del día
+      const BAG_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>';
       const $ = (id) => document.getElementById(id);
 
       /* Estado */
@@ -452,7 +482,15 @@
       function symbol() { return CUR[currency] || '€'; }
       function n(v) { const x = parseFloat(v); return isFinite(x) ? x : 0; }
       function fmt(x) { return isFinite(x) ? x.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—'; }
-      function money(x) { return isFinite(x) ? symbol() + fmt(x) : '—'; }
+      function int(x) { return isFinite(x) ? Math.round(x).toLocaleString('es-ES') : '—'; }
+      // Todo se guarda en euros; la moneda elegida es solo visualización.
+      function convert(x) { return window.ZongaRates ? ZongaRates.convert(x, currency) : x; }
+      // El símbolo de RON va detrás (como se escribe en rumano); €/$/£ delante.
+      function money(x) {
+        if (!isFinite(x)) return '—';
+        const v = fmt(convert(x));
+        return currency === 'RON' ? v + ' RON' : symbol() + v;
+      }
       function pct(x) { return isFinite(x) ? x.toLocaleString('es-ES', { maximumFractionDigits: 1 }) + '%' : '—'; }
       function pad(x) { return String(x).padStart(2, '0'); }
       function keyOf(y, m, d) { return y + '-' + pad(m + 1) + '-' + pad(d); }
@@ -473,25 +511,27 @@
       /* ---------- Cálculo ---------- */
       function calcEntry(e) {
         const E = n(e && e.earnings), P = n(e && e.product), A = n(e && e.ad), C = n(e && e.commission);
+        // `orders` no existe en los días registrados antes de esta versión: n() lo deja en 0.
+        const O = n(e && e.orders);
         const costs = P + A + C;
         const profit = E - costs;
         const margin = E > 0 ? (profit / E) * 100 : NaN;
-        const filled = e && (e.earnings || e.product || e.ad || e.commission);
-        const has = !!(filled && (E || P || A || C));
-        return { E, P, A, C, costs, profit, margin, has };
+        const filled = e && (e.earnings || e.product || e.ad || e.commission || e.orders);
+        const has = !!(filled && (E || P || A || C || O));
+        return { E, P, A, C, O, costs, profit, margin, has };
       }
       // Agrega un día según el filtro (producto concreto o 'all')
       function dayAgg(dateKey) {
         if (selectedProductId === 'all') {
-          let E = 0, costs = 0, profit = 0, any = false;
+          let E = 0, costs = 0, profit = 0, orders = 0, any = false;
           products.forEach(p => {
             const c = calcEntry((data[p.id] || {})[dateKey]);
-            if (c.has) { any = true; E += c.E; costs += c.costs; profit += c.profit; }
+            if (c.has) { any = true; E += c.E; costs += c.costs; profit += c.profit; orders += c.O; }
           });
-          return { E, costs, profit, has: any };
+          return { E, costs, profit, orders, has: any };
         }
         const c = calcEntry((data[selectedProductId] || {})[dateKey]);
-        return { E: c.E, costs: c.costs, profit: c.profit, has: c.has };
+        return { E: c.E, costs: c.costs, profit: c.profit, orders: c.O, has: c.has };
       }
       // Estadísticas totales de un producto (todo el tiempo)
       function productStats(id) {
@@ -574,20 +614,37 @@
         $('prodDDBtn').setAttribute('aria-expanded', show ? 'true' : 'false');
       }
 
+      /* ---------- Indicador de tipo de cambio ---------- */
+      // Solo tiene sentido cuando se está viendo en otra moneda: en euros no
+      // hay conversión que explicar.
+      function renderRateTag() {
+        const el = $('rateTag');
+        if (!el) return;
+        if (currency === 'EUR' || !window.ZongaRates) { el.hidden = true; return; }
+        const r = ZongaRates.rate(currency);
+        const label = ZongaRates.dateLabel();
+        el.hidden = false;
+        el.classList.toggle('is-stale', !!ZongaRates.stale);
+        el.textContent = '1 € = ' + r.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 4 }) + ' ' +
+          (currency === 'RON' ? 'RON' : symbol()) +
+          (ZongaRates.stale ? ' · sin conexión' : (label ? ' · ' + label : ''));
+      }
+
       /* ---------- Estadísticas del mes ---------- */
       function renderStats() {
         const y = view.getFullYear(), m = view.getMonth();
         const days = new Date(y, m + 1, 0).getDate();
-        let TE = 0, TC = 0, TPr = 0, nDays = 0;
+        let TE = 0, TC = 0, TPr = 0, TO = 0, nDays = 0;
         for (let d = 1; d <= days; d++) {
           const a = dayAgg(keyOf(y, m, d));
-          if (a.has) { TE += a.E; TC += a.costs; TPr += a.profit; nDays++; }
+          if (a.has) { TE += a.E; TC += a.costs; TPr += a.profit; TO += a.orders; nDays++; }
         }
         const margin = TE > 0 ? (TPr / TE) * 100 : NaN;
         $('sEarn').textContent = money(TE);
         $('sCost').textContent = money(TC);
         $('sProfit').textContent = money(TPr);
         $('sMargin').textContent = isFinite(margin) ? pct(margin) : '—';
+        $('sOrders').textContent = int(TO);
         $('sDays').textContent = nDays;
       }
 
@@ -608,14 +665,21 @@
           const a = dayAgg(key);
           let cls = 'day';
           if (key === todayKey) cls += ' today';
-          let profitHTML = '';
+          let bodyHTML = '';
           if (a.has) {
             const sign = a.profit > 0 ? 'pos' : (a.profit < 0 ? 'neg' : 'zero');
             cls += ' has-data ' + (a.profit > 0 ? 'pos-bg' : (a.profit < 0 ? 'neg-bg' : ''));
-            profitHTML = '<span class="dprofit ' + sign + '">' + money(a.profit) + '</span>';
+            // Beneficio en el centro y pedidos abajo. Si no hay pedidos apuntados
+            // se deja la fila vacía para que el beneficio siga centrado.
+            const ordersHTML = a.orders > 0
+              ? BAG_SVG + int(a.orders)
+              : '&nbsp;';
+            bodyHTML = '<span class="dprofit ' + sign + '">' + money(a.profit) + '</span>' +
+                       '<span class="dorders"' + (a.orders > 0 ? ' title="' + int(a.orders) + (a.orders === 1 ? ' pedido"' : ' pedidos"') : '') + '>' + ordersHTML + '</span>';
           }
-          html += '<button type="button" class="' + cls + '" data-date="' + key + '"><span class="ddot"></span><span class="dnum">' + d + '</span>' + profitHTML + '</button>';
+          html += '<button type="button" class="' + cls + '" data-date="' + key + '"><span class="ddot"></span><span class="dnum">' + d + '</span>' + bodyHTML + '</button>';
         }
+        $('calGrid').classList.toggle('cur-long', currency === 'RON');
         $('calGrid').innerHTML = html;
         renderStats();
       }
@@ -689,30 +753,32 @@
         if (!modalProduct) return;
         const p = productById(modalProduct);
         $('mProdName').textContent = p ? p.name : '';
-        const e = (data[modalProduct] || {})[currentDate] || { product: '', ad: '', commission: '', earnings: '' };
+        const e = (data[modalProduct] || {})[currentDate] || { product: '', ad: '', commission: '', earnings: '', orders: '' };
         $('mProduct').value = e.product ?? '';
         $('mAd').value = e.ad ?? '';
         $('mCommission').value = e.commission ?? '';
         $('mEarn').value = e.earnings ?? '';
+        $('mOrders').value = e.orders ?? '';
         refreshDay();
         showStep('data');
         setTimeout(() => $('mEarn').focus(), 50);
       }
       function readDayToEntry() {
         if (!currentDate || !modalProduct) return;
-        const product = $('mProduct').value, ad = $('mAd').value, commission = $('mCommission').value, earnings = $('mEarn').value;
+        const product = $('mProduct').value, ad = $('mAd').value, commission = $('mCommission').value, earnings = $('mEarn').value, orders = $('mOrders').value;
         if (!data[modalProduct]) data[modalProduct] = {};
-        if (product === '' && ad === '' && commission === '' && earnings === '') delete data[modalProduct][currentDate];
-        else data[modalProduct][currentDate] = { product, ad, commission, earnings };
+        if (product === '' && ad === '' && commission === '' && earnings === '' && orders === '') delete data[modalProduct][currentDate];
+        else data[modalProduct][currentDate] = { product, ad, commission, earnings, orders };
         save();
       }
       function refreshDay() {
-        const c = calcEntry({ product: $('mProduct').value, ad: $('mAd').value, commission: $('mCommission').value, earnings: $('mEarn').value });
+        const c = calcEntry({ product: $('mProduct').value, ad: $('mAd').value, commission: $('mCommission').value, earnings: $('mEarn').value, orders: $('mOrders').value });
         $('mCosts').textContent = money(c.costs);
         const pEl = $('mProfit'); pEl.textContent = money(c.profit);
         pEl.classList.remove('pos', 'neg');
         if (c.profit > 0) pEl.classList.add('pos'); else if (c.profit < 0) pEl.classList.add('neg');
         $('mMargin').textContent = isFinite(c.margin) ? pct(c.margin) : '—';
+        $('mOrdersOut').textContent = $('mOrders').value === '' ? '—' : int(c.O);
       }
       function closeDay() {
         closeBackdrop('dayBackdrop');
@@ -794,15 +860,23 @@
       $('nextMonth').addEventListener('click', () => { view.setMonth(view.getMonth() + 1); renderCalendar(); });
       $('todayBtn').addEventListener('click', () => { view = new Date(); view.setDate(1); renderCalendar(); });
 
-      // Moneda
+      // Moneda: los importes se guardan en euros, así que el selector solo
+      // cambia la visualización (los inputs del modal se quedan siempre en €).
       document.querySelectorAll('.cur-switch button').forEach(b => b.addEventListener('click', () => {
         currency = b.dataset.cur; save();
         document.querySelectorAll('.cur-switch button').forEach(x => x.classList.toggle('is-active', x.dataset.cur === currency));
-        document.querySelectorAll('.input-wrap .cur').forEach(u => u.textContent = symbol());
+        renderRateTag();
         renderDropdown();
         if (!$('viewProductos').hidden) renderProducts(); else renderCalendar();
         if (currentDate && modalProduct) refreshDay();
       }));
+
+      // Cuando llega la tasa fresca, repintamos lo que haya en pantalla.
+      window.addEventListener('zonga:rates-updated', () => {
+        renderRateTag();
+        if (!$('viewProductos').hidden) renderProducts(); else renderCalendar();
+        if (currentDate && modalProduct) refreshDay();
+      });
 
       // Calendario: clic en día
       $('calGrid').addEventListener('click', (e) => {
@@ -819,8 +893,8 @@
         modalProduct = pid; goStepData();
       });
       $('changeProd').addEventListener('click', () => { renderProductPick(); showStep('product'); });
-      ['mProduct', 'mAd', 'mCommission', 'mEarn'].forEach(id => $(id).addEventListener('input', () => { readDayToEntry(); refreshDay(); }));
-      $('mClear').addEventListener('click', () => { $('mProduct').value = ''; $('mAd').value = ''; $('mCommission').value = ''; $('mEarn').value = ''; readDayToEntry(); refreshDay(); });
+      ['mProduct', 'mAd', 'mCommission', 'mEarn', 'mOrders'].forEach(id => $(id).addEventListener('input', () => { readDayToEntry(); refreshDay(); }));
+      $('mClear').addEventListener('click', () => { ['mProduct', 'mAd', 'mCommission', 'mEarn', 'mOrders'].forEach(id => { $(id).value = ''; }); readDayToEntry(); refreshDay(); });
       document.querySelectorAll('[data-dayclose]').forEach(b => b.addEventListener('click', closeDay));
       $('dayBackdrop').addEventListener('click', (e) => { if (e.target === $('dayBackdrop')) closeDay(); });
 
@@ -864,9 +938,11 @@
       /* ---------- Init ---------- */
       loadState();
       document.querySelectorAll('.cur-switch button').forEach(x => x.classList.toggle('is-active', x.dataset.cur === currency));
-      document.querySelectorAll('.input-wrap .cur').forEach(u => u.textContent = symbol());
+      renderRateTag();
       renderDropdown();
       renderCalendar();
+      // Tasas del día (BCE). Pinta ya con la cache y se refresca sola al llegar.
+      if (window.ZongaRates) ZongaRates.refresh();
     })();
   </script>
 </body>

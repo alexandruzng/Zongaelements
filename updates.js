@@ -5,15 +5,6 @@
 */
 const UPDATES = [
   {
-    id: '2026-07-29-reto-30-dias',
-    title: 'Nueva herramienta: Reto de 30 días (la versión dura del diario)',
-    items: [
-      'En Productividad Personal tienes una herramienta nueva, «Reto de 30 días». Funciona así: antes de empezar defines tus secciones (Sueño, Entrenamiento, Trabajo…) y las tareas que vas a cumplir TODOS los días. Al pulsar «Empezar», esas tareas se bloquean y ya no las puedes tocar durante el intento. Cada noche marcas lo que has hecho y pulsas «Finalizar día»: si están todas, la casilla se sella y avanzas. Si te falta aunque sea una, vuelves al día 1 y empiezas de cero. Esa es la diferencia con el Diario de 30 días, que solo registraba tu evolución sin penalizarte.',
-      'Comodines con motor de reglas: si un día no llegas, puedes justificarte por escrito y un motor determinista (nada de IA inventando) lee las horas que mencionas — «me desperté a las 8», «estuve de 13:00 a 22:00» — y calcula tu hueco libre más grande. Si tuviste 3 horas o más libres, te lo rechaza y reinicias; si el día estuvo realmente ocupado o hubo algo fuera de tu control (enfermedad, urgencia, imprevisto), lo acepta y congela el día sin perder la racha. Te enseña siempre el razonamiento completo: hora de despertar detectada, franjas ocupadas, huecos libres y por qué decide lo que decide. También pilla contradicciones: si dices que no tuviste tiempo pero mencionas que fuiste al gimnasio a las 17:00 estando libre, te lo tumba.',
-      'Además: rangos con XP (Novato → Constante → Disciplinado → Implacable → Imparable) que NO se pierden al reiniciar, tarjeta visual de 30 sellos, insignias por semanas, modo claro/oscuro, sonido, y una pantalla de estadísticas con mapa de calor de los últimos 90 días, calendario del mes, ranking de las tareas que más te tumban, muro con todos los comodines que has pedido y el historial de todos tus intentos.',
-    ],
-  },
-  {
     id: '2026-07-26-ads-pedidos-y-cambio-real',
     title: 'Calendario de beneficio: pedidos por día y conversión de moneda de verdad',
     items: [

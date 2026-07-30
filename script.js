@@ -157,15 +157,6 @@ const tools = [
     icon: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><line x1="12" y1="3" x2="12" y2="8"/><line x1="12" y1="16" x2="12" y2="21"/></svg>`
   },
   {
-    id: 'reto-30-dias',
-    name: 'Reto de 30 días',
-    description: 'Define tus tareas diarias y cúmplelas 30 días seguidos. Si fallas, vuelves al día 1. Con comodines que juzga un motor de reglas, rangos y estadísticas.',
-    url: 'reto-30-dias/index.html',
-    status: 'available',
-    category: 'personal',
-    icon: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><path d="M14 17.5l2.5 2.5L21 15"/></svg>`
-  },
-  {
     id: 'reviews-ig',
     name: 'Generador de reviews Instagram',
     description: 'Crea capturas realistas de conversaciones de Instagram con clientes elogiando tu producto. Hasta 20 por ronda, en ES o EN.',

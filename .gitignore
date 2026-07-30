@@ -67,3 +67,8 @@ node_modules/
 
 # dataconnect generated files
 .dataconnect
+
+# Carpeta de trabajo del artefacto original de "Reto de 30 dias"
+# (fuentes .dc.html, uploads y miniatura). La herramienta publicada vive
+# en reto-30-dias/ y no necesita nada de aqui.
+/reto 30 dias seguidos/

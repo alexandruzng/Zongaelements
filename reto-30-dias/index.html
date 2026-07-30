@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reto de 30 días · Zonga Elements</title>
+<meta name="description" content="Define tus tareas diarias y cúmplelas 30 días seguidos. Si fallas, vuelves al día 1. Con comodines que juzga un motor de reglas, rangos con avatar y estadísticas.">
+<meta property="og:title" content="Reto de 30 días · Zonga Elements">
+<meta property="og:description" content="30 días seguidos sin fallar. Si fallas, vuelves al día 1.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect x='8' y='8' width='36' height='36' rx='10' fill='%23e8833a'/%3E%3Crect x='56' y='8' width='36' height='36' rx='10' fill='%233fae76'/%3E%3Crect x='8' y='56' width='36' height='36' rx='10' fill='none' stroke='%23d8d3c8' stroke-width='6'/%3E%3Crect x='56' y='56' width='36' height='36' rx='10' fill='none' stroke='%23d8d3c8' stroke-width='6'/%3E%3C/svg%3E">
+
+<!-- React (UMD) — lo necesita el runtime de la herramienta (support.js) -->
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
+<!-- Guardado comprimido compartido de Zonga (ZongaLS) -->
+<script src="/lz-string.min.js"></script>
+<script src="/zonga-storage.js"></script>
+<!-- Rutas de los avatares por rango. Declararlas aquí evita además que el
+     runtime vuelva a descargar esta misma página en cada carga. -->
+<script>
+  window.__resources = {
+    avatar1: 'avatars/rango-1.webp',
+    avatar2: 'avatars/rango-2.webp',
+    avatar3: 'avatars/rango-3.webp',
+    avatar4: 'avatars/rango-4.webp',
+    avatar5: 'avatars/rango-5.webp'
+  };
+</script>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="ext-resource-dependency" content="avatars/rango-1.webp" data-resource-id="avatar1" />
+<meta name="ext-resource-dependency" content="avatars/rango-2.webp" data-resource-id="avatar2" />
+<meta name="ext-resource-dependency" content="avatars/rango-3.webp" data-resource-id="avatar3" />
+<meta name="ext-resource-dependency" content="avatars/rango-4.webp" data-resource-id="avatar4" />
+<meta name="ext-resource-dependency" content="avatars/rango-5.webp" data-resource-id="avatar5" />
+<template id="__bundler_thumbnail" data-bg-color="#f7f6f3">
+  <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+    <rect width="1200" height="800" fill="#f7f6f3"/>
+    <g transform="translate(360,224)">
+      <rect x="0" y="0" width="140" height="140" rx="28" fill="#3fae76"/>
+      <rect x="170" y="0" width="140" height="140" rx="28" fill="#3fae76"/>
+      <rect x="340" y="0" width="140" height="140" rx="28" fill="#e8833a"/>
+      <rect x="0" y="170" width="140" height="140" rx="28" fill="none" stroke="#d8d3c8" stroke-width="8"/>
+      <rect x="170" y="170" width="140" height="140" rx="28" fill="none" stroke="#d8d3c8" stroke-width="8"/>
+      <rect x="340" y="170" width="140" height="140" rx="28" fill="none" stroke="#d8d3c8" stroke-width="8"/>
+    </g>
+    <text x="600" y="600" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" font-weight="700" font-size="92" letter-spacing="6" fill="#1b1a17">RETO 30</text>
+  </svg>
+</template>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f7f6f3; --grain:rgba(0,0,0,.035); --panel:#ffffff; --panel2:#f1efea; --line:#e2ded5;
+  --ink:#1b1a17; --ink2:#5d594f; --ink3:#98938a;
+  --accent:oklch(0.66 0.18 45); --accentSoft:oklch(0.95 0.05 45);
+  --ok:oklch(0.60 0.16 152); --okSoft:oklch(0.94 0.06 152);
+  --wild:oklch(0.58 0.16 285); --wildSoft:oklch(0.94 0.05 285);
+  --bad:oklch(0.58 0.19 25); --badSoft:oklch(0.94 0.05 25);
+  --shadow:0 1px 2px rgba(20,18,14,.06),0 8px 24px -12px rgba(20,18,14,.18);
+}
+:root[data-theme="dark"]{
+  --bg:#131311; --grain:rgba(255,255,255,.035); --panel:#1c1c19; --panel2:#232320; --line:#32322d;
+  --ink:#f2f0eb; --ink2:#a8a49a; --ink3:#6e6a61;
+  --accent:oklch(0.74 0.17 45); --accentSoft:oklch(0.32 0.08 45);
+  --ok:oklch(0.72 0.15 152); --okSoft:oklch(0.30 0.07 152);
+  --wild:oklch(0.72 0.14 285); --wildSoft:oklch(0.30 0.07 285);
+  --bad:oklch(0.68 0.17 25); --badSoft:oklch(0.30 0.08 25);
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px -14px rgba(0,0,0,.7);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background-color:var(--bg);
+  background-image:repeating-linear-gradient(0deg,var(--grain) 0 1px,transparent 1px 5px),repeating-linear-gradient(90deg,var(--grain) 0 1px,transparent 1px 5px);
+  color:var(--ink); font-family:'Outfit',system-ui,sans-serif; -webkit-font-smoothing:antialiased;
+}
+a{color:var(--accent);text-decoration:none}
+a:hover{color:var(--ink);text-decoration:underline}
+input,textarea,button{font-family:inherit;color:inherit}
+::placeholder{color:var(--ink3)}
+@keyframes pulseCell{0%,100%{transform:scale(1);box-shadow:0 0 0 0 var(--accentSoft)}50%{transform:scale(1.08);box-shadow:0 0 0 6px var(--accentSoft)}}
+@keyframes flameFlick{0%,100%{transform:rotate(-45deg) scale(1)}50%{transform:rotate(-45deg) scale(1.07,0.95)}}
+@keyframes shakeScreen{0%,100%{transform:translate(0,0)}10%{transform:translate(-9px,3px)}20%{transform:translate(8px,-4px)}30%{transform:translate(-7px,-3px)}40%{transform:translate(6px,4px)}50%{transform:translate(-5px,2px)}60%{transform:translate(4px,-2px)}70%{transform:translate(-3px,1px)}80%{transform:translate(2px,-1px)}90%{transform:translate(-1px,0)}}
+@keyframes popIn{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes glowRing{from{opacity:.9;transform:scale(.6)}to{opacity:0;transform:scale(2.2)}}
+@keyframes floatY{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+@keyframes sweep{from{transform:translateX(-100%)}to{transform:translateX(300%)}}
+</style>
+</helmet>
+<canvas ref="{{ confettiRef }}" style="position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:120"></canvas>
+
+<!-- Vuelta al índice de Zonga Elements (fuera del flujo de pantallas) -->
+<div style="max-width:720px;margin:0 auto;padding:16px 18px 0">
+  <a href="../index.html" style="color:var(--ink3);text-decoration:none;font-size:14px;display:inline-flex;align-items:center;gap:6px">← Volver a Zonga Elements</a>
+</div>
+
+<div data-screen-label="App" style="min-height:100vh;padding:0 0 40px">
+
+<sc-if value="{{ isTutorial }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Tutorial" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px">
+<div style="width:100%;max-width:520px;background:var(--panel);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);padding:30px 26px 24px;animation:popIn .4s ease both">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:26px">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3)">Cómo funciona · {{ tutStep }}/5</div>
+    <button onClick="{{ skipTutorial }}" style="background:none;border:none;font-size:13px;color:var(--ink3);cursor:pointer;padding:6px 2px">Saltar</button>
+  </div>
+  <div style="display:flex;justify-content:center;margin-bottom:22px">
+    <div style="width:96px;height:96px;border-radius:26px;background:var(--panel2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-size:40px;font-weight:600;color:var(--accent);animation:floatY 3.4s ease-in-out infinite">{{ tutIcon }}</div>
+  </div>
+  <h2 style="margin:0 0 12px;font-family:'Oswald',sans-serif;font-weight:600;font-size:30px;line-height:1.08;letter-spacing:-.01em;text-transform:uppercase">{{ tutTitle }}</h2>
+  <p style="margin:0 0 26px;font-size:16px;line-height:1.55;color:var(--ink2);text-wrap:pretty">{{ tutBody }}</p>
+  <div style="display:flex;align-items:center;gap:14px">
+    <div style="display:flex;gap:6px;flex:1">
+      <sc-for list="{{ tutDots }}" as="d" hint-placeholder-count="5">
+        <div style="height:5px;flex:1;border-radius:99px;background:{{ d.bg }};transition:background .3s"></div>
+      </sc-for>
+    </div>
+    <button onClick="{{ prevTutorial }}" style="background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:11px 15px;font-size:14px;cursor:pointer;color:var(--ink2)">Atrás</button>
+    <button onClick="{{ nextTutorial }}" style="background:var(--ink);color:var(--bg);border:none;border-radius:12px;padding:12px 20px;font-size:14px;font-weight:600;cursor:pointer">{{ tutCta }}</button>
+  </div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isSetup }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Setup" style="max-width:720px;margin:0 auto;padding:26px 18px 0">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3)">Configuración · Intento nº {{ attemptNo }}</div>
+    <div style="display:flex;gap:8px">
+      <button onClick="{{ toggleSound }}" title="Sonido" style="width:38px;height:38px;border-radius:12px;border:1px solid var(--line);background:var(--panel);cursor:pointer;font-size:15px">{{ soundIcon }}</button>
+      <button onClick="{{ toggleTheme }}" title="Tema" style="width:38px;height:38px;border-radius:12px;border:1px solid var(--line);background:var(--panel);cursor:pointer;font-size:15px">{{ themeIcon }}</button>
+    </div>
+  </div>
+  <h1 style="margin:0 0 8px;font-family:'Oswald',sans-serif;font-size:clamp(34px,7vw,46px);font-weight:700;line-height:1;text-transform:uppercase;letter-spacing:-.015em">Define tu reto</h1>
+  <p style="margin:0 0 24px;color:var(--ink2);font-size:15px;line-height:1.5;max-width:52ch">Crea las secciones y las tareas que vas a cumplir <strong style="color:var(--ink)">todos los días durante 30 días</strong>. Cuando empieces, quedan bloqueadas para siempre.</p>
+
+  <sc-for list="{{ setupSections }}" as="s" hint-placeholder-count="2">
+    <div style="background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:16px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <button onClick="{{ s.cycleIcon }}" title="Cambiar icono" style="width:44px;height:44px;flex:none;border-radius:14px;border:1px solid var(--line);background:var(--panel2);font-size:21px;cursor:pointer;line-height:1">{{ s.icon }}</button>
+        <input value="{{ s.name }}" onChange="{{ s.rename }}" placeholder="Nombre de la sección" style="flex:1;min-width:0;background:none;border:none;border-bottom:1.5px solid var(--line);padding:8px 2px;font-family:'Oswald',sans-serif;font-size:21px;font-weight:600;text-transform:uppercase;letter-spacing:.01em;outline:none">
+        <button onClick="{{ s.remove }}" title="Eliminar sección" style="width:36px;height:36px;flex:none;border-radius:10px;border:1px solid var(--line);background:none;color:var(--ink3);cursor:pointer;font-size:16px">×</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <sc-for list="{{ s.tasks }}" as="t" hint-placeholder-count="2">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="width:8px;height:8px;flex:none;border-radius:50%;background:var(--accent)"></div>
+            <input value="{{ t.name }}" onChange="{{ t.rename }}" placeholder="Ej: ir al gimnasio" style="flex:1;min-width:0;background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:11px 13px;font-size:15px;outline:none">
+            <button onClick="{{ t.remove }}" style="width:34px;height:34px;flex:none;border-radius:10px;border:1px solid var(--line);background:none;color:var(--ink3);cursor:pointer">×</button>
+          </div>
+        </sc-for>
+        <button onClick="{{ s.addTask }}" style="align-self:flex-start;margin-top:4px;background:none;border:1.5px dashed var(--line);border-radius:11px;padding:9px 14px;font-size:14px;color:var(--ink2);cursor:pointer">+ Añadir tarea</button>
+      </div>
+    </div>
+  </sc-for>
+
+  <button onClick="{{ addSection }}" style="width:100%;background:none;border:1.5px dashed var(--line);border-radius:16px;padding:15px;font-size:15px;font-weight:500;color:var(--ink2);cursor:pointer;margin-bottom:22px">+ Nueva sección</button>
+
+  <div style="position:sticky;bottom:14px;background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:14px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+    <div style="flex:1;min-width:150px">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:700;line-height:1">{{ setupTaskCount }}</div>
+      <div style="font-size:12px;color:var(--ink3);letter-spacing:.06em;text-transform:uppercase">tareas diarias · {{ setupSectionCount }} secciones</div>
+    </div>
+    <button onClick="{{ askStart }}" style="flex:1;min-width:200px;background:var(--accent);color:#fff;border:none;border-radius:14px;padding:16px 20px;font-family:'Oswald',sans-serif;font-size:18px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;cursor:pointer;box-shadow:0 6px 18px -8px var(--accent)">Empezar reto de 30 días</button>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isActive }}" hint-placeholder-val="{{ true }}">
+<div data-screen-label="Dashboard diario" style="max-width:720px;margin:0 auto;padding:0 18px">
+
+  <div style="position:sticky;top:0;z-index:40;background:var(--bg);padding:14px 0 12px;margin-bottom:6px;border-bottom:1px solid var(--line)">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+      <div style="width:44px;height:44px;flex:none;position:relative;display:flex;align-items:flex-end;justify-content:center">
+        <div style="position:absolute;bottom:2px;width:{{ flameW }}px;height:{{ flameW }}px;border-radius:0 50% 50% 50%;background:linear-gradient(135deg,var(--accent),oklch(0.80 0.16 75));transform:rotate(-45deg);animation:flameFlick 1.6s ease-in-out infinite;opacity:{{ flameOpacity }}"></div>
+        <div style="position:absolute;bottom:5px;width:{{ flameInner }}px;height:{{ flameInner }}px;border-radius:0 50% 50% 50%;background:oklch(0.94 0.12 95);transform:rotate(-45deg);opacity:{{ flameOpacity }}"></div>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:baseline;gap:7px">
+          <div style="font-family:'Oswald',sans-serif;font-size:26px;font-weight:700;line-height:1">{{ streak }}</div>
+          <div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3)">días de racha</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
+          <div style="flex:1;height:8px;border-radius:99px;background:var(--panel2);border:1px solid var(--line);overflow:hidden;position:relative">
+            <div style="position:absolute;inset:0 auto 0 0;width:{{ xpPct }}%;background:linear-gradient(90deg,var(--accent),oklch(0.78 0.15 75));border-radius:99px;transition:width .7s cubic-bezier(.2,.8,.2,1)"></div>
+          </div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink3);white-space:nowrap">{{ xpLabel }}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:5px">
+          <div style="width:14px;height:14px;border-radius:5px;background:{{ rankColor }}"></div>
+          <div style="font-family:'Oswald',sans-serif;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.05em">{{ rankName }}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:7px;flex:none">
+        <button onClick="{{ openStats }}" title="Estadísticas" style="width:38px;height:38px;border-radius:12px;border:1px solid var(--line);background:var(--panel);cursor:pointer;font-size:15px">▦</button>
+        <button onClick="{{ toggleSound }}" title="Sonido" style="width:38px;height:38px;border-radius:12px;border:1px solid var(--line);background:var(--panel);cursor:pointer;font-size:15px">{{ soundIcon }}</button>
+        <button onClick="{{ toggleTheme }}" title="Tema" style="width:38px;height:38px;border-radius:12px;border:1px solid var(--line);background:var(--panel);cursor:pointer;font-size:15px">{{ themeIcon }}</button>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;align-items:flex-end;gap:16px;padding:16px 0 6px">
+    <div style="flex:1;min-width:0">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink3)">día actual</div>
+      <div style="display:flex;align-items:baseline;gap:6px">
+        <div style="font-family:'Oswald',sans-serif;font-size:clamp(58px,15vw,86px);font-weight:700;line-height:.9;letter-spacing:-.02em">{{ dayPad }}</div>
+        <div style="font-family:'Oswald',sans-serif;font-size:26px;font-weight:500;color:var(--ink3)">/30</div>
+      </div>
+    </div>
+    <div onMouseEnter="{{ avEnter }}" onMouseLeave="{{ avLeave }}" style="flex:none;position:relative;display:flex;flex-direction:column;align-items:center;gap:3px">
+      <div style="position:absolute;bottom:calc(100% + 6px);right:-4px;z-index:6;white-space:nowrap;background:var(--ink);color:var(--bg);border-radius:9px;padding:6px 10px;font-family:'JetBrains Mono',monospace;font-size:11px;pointer-events:none;opacity:{{ avTipOp }};transform:translateY({{ avTipY }});transition:opacity .18s ease,transform .18s ease">{{ xpToNextLabel }}</div>
+      <div style="position:relative;width:clamp(88px,23vw,120px);height:clamp(130px,33vw,172px)">
+        <sc-if value="{{ avReady }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;inset:0">
+            <div aria-hidden="true" style="position:absolute;inset:0;background-image:url({{ avPrevSrc }});background-size:contain;background-repeat:no-repeat;background-position:bottom center;opacity:{{ avPrevOp }};transition:opacity 600ms ease;pointer-events:none"></div>
+            <div role="img" aria-label="Avatar del rango {{ rankName }}" style="position:absolute;inset:0;background-image:url({{ avSrc }});background-size:contain;background-repeat:no-repeat;background-position:bottom center;opacity:{{ avOp }};transform:scale({{ avSc }});transform-origin:bottom center;transition:opacity 600ms ease,transform 600ms cubic-bezier(.2,.9,.3,1);filter:drop-shadow(0 8px 16px rgba(0,0,0,.16))"></div>
+          </div>
+        </sc-if>
+      </div>
+      <div style="font-family:'Oswald',sans-serif;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:{{ rankColor }}">{{ rankName }}</div>
+    </div>
+  </div>
+
+
+  <div style="border-left:3px solid var(--accent);padding:2px 0 2px 12px;margin:10px 0 20px">
+    <div style="font-size:15px;font-style:italic;color:var(--ink2);line-height:1.45;text-wrap:pretty">{{ quote }}</div>
+  </div>
+
+  <div style="background:var(--panel);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);padding:16px;margin-bottom:16px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div style="font-family:'Oswald',sans-serif;font-size:16px;font-weight:600;text-transform:uppercase;letter-spacing:.06em">Tarjeta de sellos</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink3)">{{ sealedCount }}/30 sellados</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(10,1fr);gap:6px">
+      <sc-for list="{{ cells }}" as="c" hint-placeholder-count="30">
+        <div title="{{ c.title }}" style="aspect-ratio:1;border-radius:9px;display:flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-size:13px;font-weight:600;border:1.5px solid {{ c.bd }};background:{{ c.bg }};color:{{ c.fg }};animation:{{ c.anim }}">{{ c.label }}</div>
+      </sc-for>
+    </div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;font-size:11px;color:var(--ink3)">
+      <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:3px;background:var(--ok)"></div>cumplido</div>
+      <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:3px;background:var(--wild)"></div>comodín</div>
+      <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:3px;border:1.5px solid var(--accent)"></div>hoy</div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
+    <sc-for list="{{ badges }}" as="b" hint-placeholder-count="4">
+      <div style="flex:1;min-width:132px;background:{{ b.bg }};border:1.5px solid {{ b.bd }};border-radius:14px;padding:11px 12px;display:flex;align-items:center;gap:10px;opacity:{{ b.op }}">
+        <div style="width:30px;height:30px;flex:none;border-radius:50%;border:2px solid {{ b.bd }};display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:{{ b.fg }}">{{ b.day }}</div>
+        <div style="min-width:0">
+          <div style="font-family:'Oswald',sans-serif;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:{{ b.fg }}">{{ b.name }}</div>
+          <div style="font-size:11px;color:var(--ink3)">{{ b.state }}</div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="font-family:'Oswald',sans-serif;font-size:18px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin:0 0 4px">Checklist de hoy</div>
+  <div style="font-size:13px;color:var(--ink3);margin-bottom:14px;font-family:'JetBrains Mono',monospace">{{ doneCount }}/{{ totalCount }} completadas</div>
+
+  <sc-for list="{{ viewSections }}" as="sec" hint-placeholder-count="2">
+    <div style="background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:6px 14px 12px;margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:9px;padding:12px 0 8px;border-bottom:1px solid var(--line);margin-bottom:6px">
+        <div style="font-size:19px;line-height:1">{{ sec.icon }}</div>
+        <div style="font-family:'Oswald',sans-serif;font-size:16px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;flex:1;min-width:0">{{ sec.name }}</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink3)">{{ sec.count }}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <sc-for list="{{ sec.tasks }}" as="t" hint-placeholder-count="2">
+          <div onClick="{{ t.toggle }}" style="display:flex;align-items:center;gap:12px;padding:13px 4px;cursor:pointer;border-radius:12px;min-height:48px" style-hover="background:var(--panel2)">
+            <div style="width:26px;height:26px;flex:none;border-radius:9px;border:2px solid {{ t.bd }};background:{{ t.bg }};display:flex;align-items:center;justify-content:center;transition:all .22s cubic-bezier(.2,1.4,.4,1);transform:scale({{ t.scale }})">
+              <div style="width:11px;height:6px;border-left:2.5px solid #fff;border-bottom:2.5px solid #fff;transform:rotate(-45deg) translateY(-1px);opacity:{{ t.check }};transition:opacity .18s"></div>
+            </div>
+            <div style="flex:1;min-width:0;font-size:16px;line-height:1.35;color:{{ t.fg }};text-decoration:{{ t.deco }};transition:color .2s">{{ t.name }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </sc-for>
+
+  <button onClick="{{ finishDay }}" style="width:100%;margin-top:10px;background:{{ finishBg }};color:{{ finishFg }};border:1.5px solid {{ finishBd }};border-radius:16px;padding:19px;font-family:'Oswald',sans-serif;font-size:20px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;cursor:pointer;position:relative;overflow:hidden;transition:all .25s">{{ finishLabel }}</button>
+  <div style="text-align:center;font-size:12px;color:var(--ink3);margin-top:10px;line-height:1.5">Si fallas alguna tarea vuelves al día 1, salvo comodín válido.</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isDone }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Reto completado" style="max-width:620px;margin:0 auto;padding:40px 18px">
+  <div style="text-align:center;margin-bottom:26px">
+    <div style="position:relative;display:inline-flex;align-items:center;justify-content:center;width:120px;height:120px">
+      <div style="position:absolute;inset:0;border-radius:50%;border:2px solid var(--accent);animation:glowRing 2.4s ease-out infinite"></div>
+      <div style="width:78px;height:78px;border-radius:50%;background:linear-gradient(150deg,oklch(0.86 0.14 85),var(--accent));display:flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-size:34px;font-weight:700;color:#fff;animation:floatY 3s ease-in-out infinite">30</div>
+    </div>
+    <h1 style="margin:14px 0 6px;font-family:'Oswald',sans-serif;font-size:clamp(38px,9vw,58px);font-weight:700;line-height:1;text-transform:uppercase;letter-spacing:-.015em">Reto completado</h1>
+    <p style="margin:0;color:var(--ink2);font-size:17px;line-height:1.5">30 días seguidos. Sin excusas. Esto ya no es motivación: es identidad.</p>
+  </div>
+  <div style="background:var(--panel);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);padding:22px;margin-bottom:18px">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:14px;border-bottom:1.5px dashed var(--line);margin-bottom:14px">
+      <div style="font-family:'Oswald',sans-serif;font-size:19px;font-weight:600;text-transform:uppercase;letter-spacing:.08em">Certificado</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink3)">{{ certDate }}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:11px">
+      <sc-for list="{{ certRows }}" as="r" hint-placeholder-count="5">
+        <div style="display:flex;align-items:baseline;gap:10px">
+          <div style="font-size:14px;color:var(--ink2);white-space:nowrap">{{ r.k }}</div>
+          <div style="flex:1;border-bottom:1px dotted var(--line);min-width:20px"></div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;text-align:right">{{ r.v }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap">
+    <button onClick="{{ repeatSame }}" style="flex:1;min-width:200px;background:var(--accent);color:#fff;border:none;border-radius:14px;padding:16px;font-family:'Oswald',sans-serif;font-size:17px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;cursor:pointer">Repetir mismo reto</button>
+    <button onClick="{{ newChallenge }}" style="flex:1;min-width:200px;background:var(--panel);color:var(--ink);border:1.5px solid var(--line);border-radius:14px;padding:16px;font-family:'Oswald',sans-serif;font-size:17px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;cursor:pointer">Reto nuevo</button>
+  </div>
+  <div style="text-align:center;margin-top:16px"><button onClick="{{ openStats }}" style="background:none;border:none;color:var(--ink3);font-size:13px;cursor:pointer;text-decoration:underline">Ver estadísticas e historial</button></div>
+</div>
+</sc-if>
+
+<sc-if value="{{ showConfirmStart }}" hint-placeholder-val="{{ false }}">
+<div style="position:fixed;inset:0;z-index:100;background:rgba(10,9,7,.55);display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn .2s both">
+  <div style="width:100%;max-width:440px;background:var(--panel);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);padding:24px;animation:popIn .3s both">
+    <h3 style="margin:0 0 10px;font-family:'Oswald',sans-serif;font-size:26px;font-weight:600;text-transform:uppercase;line-height:1.05">¿Bloqueamos tus tareas?</h3>
+    <p style="margin:0 0 8px;color:var(--ink2);font-size:15px;line-height:1.5">Vas a empezar con <strong style="color:var(--ink)">{{ setupTaskCount }} tareas</strong> en {{ setupSectionCount }} secciones.</p>
+    <p style="margin:0 0 20px;color:var(--ink2);font-size:15px;line-height:1.5">A partir de ahora <strong style="color:var(--ink)">no podrás editarlas, añadirlas ni quitarlas</strong> durante este intento. Sin excepciones.</p>
+    <div style="display:flex;gap:10px">
+      <button onClick="{{ cancelStart }}" style="flex:1;background:var(--panel2);border:1px solid var(--line);border-radius:13px;padding:14px;font-size:15px;cursor:pointer">Seguir editando</button>
+      <button onClick="{{ doStart }}" style="flex:1;background:var(--ink);color:var(--bg);border:none;border-radius:13px;padding:14px;font-size:15px;font-weight:600;cursor:pointer">Bloquear y empezar</button>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ wildStage }}" hint-placeholder-val="{{ false }}">
+<div style="position:fixed;inset:0;z-index:100;background:rgba(10,9,7,.6);display:flex;align-items:flex-end;justify-content:center;padding:0;animation:fadeIn .2s both">
+  <div style="width:100%;max-width:520px;max-height:92vh;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:24px 24px 0 0;box-shadow:var(--shadow);padding:24px 20px 28px;animation:popIn .3s both">
+    <sc-if value="{{ wildIsOffer }}" hint-placeholder-val="{{ true }}">
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--bad);margin-bottom:8px">Día incompleto</div>
+        <h3 style="margin:0 0 10px;font-family:'Oswald',sans-serif;font-size:28px;font-weight:600;text-transform:uppercase;line-height:1.05">Te faltan {{ missingCount }} tareas</h3>
+        <div style="background:var(--badSoft);border-radius:14px;padding:12px 14px;margin-bottom:16px">
+          <sc-for list="{{ missingList }}" as="m" hint-placeholder-count="2">
+            <div style="font-size:14px;color:var(--ink);padding:3px 0">· {{ m.name }}</div>
+          </sc-for>
+        </div>
+        <p style="margin:0 0 20px;color:var(--ink2);font-size:15px;line-height:1.5">Si aceptas el fallo vuelves al <strong style="color:var(--ink)">día 1</strong>. También puedes usar un comodín: escribes por qué no pudiste y un motor de reglas decide si es válido.</p>
+        <div style="display:flex;flex-direction:column;gap:9px">
+          <button onClick="{{ goWildForm }}" style="background:var(--wild);color:#fff;border:none;border-radius:14px;padding:16px;font-family:'Oswald',sans-serif;font-size:17px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;cursor:pointer">Usar comodín</button>
+          <button onClick="{{ confirmFail }}" style="background:none;border:1.5px solid var(--line);border-radius:14px;padding:14px;font-size:15px;color:var(--ink2);cursor:pointer">Aceptar fallo y reiniciar</button>
+          <button onClick="{{ closeWild }}" style="background:none;border:none;padding:8px;font-size:14px;color:var(--ink3);cursor:pointer">Volver al checklist</button>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ wildIsForm }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--wild);margin-bottom:8px">Comodín · justificación</div>
+        <h3 style="margin:0 0 8px;font-family:'Oswald',sans-serif;font-size:26px;font-weight:600;text-transform:uppercase;line-height:1.05">¿Por qué no pudiste?</h3>
+        <p style="margin:0 0 14px;color:var(--ink2);font-size:14px;line-height:1.5">Sé concreto con las horas. El motor busca si tuviste un hueco libre de <strong style="color:var(--ink)">3 horas o más</strong> entre que te despertaste y tu hora de dormir ({{ sleepLabel }}).</p>
+        <textarea value="{{ wildText }}" onChange="{{ setWildText }}" placeholder="Ej: me desperté a las 8 y he estado con mi novia desde las 13:00 hasta las 22:00" style="width:100%;min-height:120px;resize:vertical;background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:14px;font-size:15px;line-height:1.5;outline:none"></textarea>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink3);margin:8px 0 16px">{{ wildCharLabel }}</div>
+        <div style="display:flex;gap:10px">
+          <button onClick="{{ backToOffer }}" style="flex:none;background:var(--panel2);border:1px solid var(--line);border-radius:13px;padding:14px 16px;font-size:15px;cursor:pointer">Atrás</button>
+          <button onClick="{{ evalWild }}" style="flex:1;background:var(--wild);color:#fff;border:none;border-radius:13px;padding:14px;font-family:'Oswald',sans-serif;font-size:17px;font-weight:600;text-transform:uppercase;cursor:pointer">Evaluar comodín</button>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ wildIsResult }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+          <div style="width:48px;height:48px;flex:none;border-radius:16px;background:{{ resBg }};border:2px solid {{ resBd }};display:flex;align-items:center;justify-content:center;font-size:22px;color:{{ resBd }}">{{ resIcon }}</div>
+          <div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3)">Veredicto del motor</div>
+            <h3 style="margin:2px 0 0;font-family:'Oswald',sans-serif;font-size:26px;font-weight:600;text-transform:uppercase;line-height:1;color:{{ resBd }}">{{ resTitle }}</h3>
+          </div>
+        </div>
+        <p style="margin:0 0 14px;color:var(--ink2);font-size:15px;line-height:1.55">{{ resReason }}</p>
+        <div style="background:var(--panel2);border-radius:14px;padding:14px;margin-bottom:18px;display:flex;flex-direction:column;gap:9px">
+          <sc-for list="{{ resTrace }}" as="tr" hint-placeholder-count="3">
+            <div style="display:flex;gap:10px;align-items:baseline">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink3);width:96px;flex:none;text-transform:uppercase;letter-spacing:.05em">{{ tr.k }}</div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:13px;flex:1;min-width:0">{{ tr.v }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:9px">
+          <sc-if value="{{ resAccepted }}" hint-placeholder-val="{{ true }}">
+            <button onClick="{{ applyFreeze }}" style="background:var(--wild);color:#fff;border:none;border-radius:14px;padding:16px;font-family:'Oswald',sans-serif;font-size:17px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;cursor:pointer">Congelar día {{ dayNum }}</button>
+          </sc-if>
+          <sc-if value="{{ canRetryWild }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ retryWild }}" style="background:var(--panel2);border:1.5px solid var(--line);border-radius:14px;padding:14px;font-size:15px;font-weight:600;cursor:pointer">Reescribir el motivo (1 intento)</button>
+          </sc-if>
+          <sc-if value="{{ resRejected }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ confirmFail }}" style="background:var(--bad);color:#fff;border:none;border-radius:14px;padding:15px;font-family:'Oswald',sans-serif;font-size:16px;font-weight:600;text-transform:uppercase;cursor:pointer">Aceptar reinicio a día 1</button>
+          </sc-if>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ showRankup }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Subida de rango" style="position:fixed;inset:0;z-index:110;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px;animation:fadeIn .3s both">
+  <div style="text-align:center;max-width:440px">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink3);margin-bottom:12px">Nuevo rango desbloqueado</div>
+    <div style="position:relative;display:flex;align-items:flex-end;justify-content:center;width:min(72vw,340px);height:min(58vh,520px);margin:0 auto 4px">
+      <div style="position:absolute;left:50%;bottom:6%;transform:translateX(-50%);width:62%;aspect-ratio:1;pointer-events:none">
+        <div style="width:100%;height:100%;border-radius:50%;border:2px solid {{ rankColor }};animation:glowRing 2s ease-out infinite"></div>
+      </div>
+      <sc-if value="{{ avReady }}" hint-placeholder-val="{{ false }}">
+        <div role="img" aria-label="Avatar del rango {{ rankName }}" style="position:relative;width:100%;height:100%;background-image:url({{ avSrc }});background-size:contain;background-repeat:no-repeat;background-position:bottom center;filter:drop-shadow(0 16px 30px rgba(0,0,0,.24));animation:popIn .7s cubic-bezier(.2,.9,.3,1) both"></div>
+      </sc-if>
+    </div>
+    <h1 style="margin:6px 0 8px;font-family:'Oswald',sans-serif;font-size:clamp(40px,10vw,60px);font-weight:700;line-height:1;text-transform:uppercase;letter-spacing:-.015em;color:{{ rankColor }}">{{ rankName }}</h1>
+    <p style="margin:0 0 24px;color:var(--ink2);font-size:16px;line-height:1.5">{{ rankBlurb }}</p>
+    <button onClick="{{ closeRankup }}" style="background:var(--ink);color:var(--bg);border:none;border-radius:14px;padding:16px 30px;font-family:'Oswald',sans-serif;font-size:17px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;cursor:pointer">Seguir</button>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ recap }}" hint-placeholder-val="{{ false }}">
+<div style="position:fixed;inset:0;z-index:100;background:rgba(10,9,7,.6);display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn .2s both">
+  <div style="width:100%;max-width:460px;background:var(--panel);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);padding:24px;animation:popIn .3s both">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--bad);margin-bottom:8px">Intento nº {{ recapAttempt }} cerrado</div>
+    <h3 style="margin:0 0 6px;font-family:'Oswald',sans-serif;font-size:28px;font-weight:600;text-transform:uppercase;line-height:1.05">Vuelta al día 1</h3>
+    <p style="margin:0 0 18px;color:var(--ink2);font-size:15px;line-height:1.5">{{ recapLine }}</p>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
+      <sc-for list="{{ recapRows }}" as="r" hint-placeholder-count="3">
+        <div style="display:flex;align-items:baseline;gap:10px">
+          <div style="font-size:14px;color:var(--ink2)">{{ r.k }}</div>
+          <div style="flex:1;border-bottom:1px dotted var(--line)"></div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;text-align:right">{{ r.v }}</div>
+        </div>
+      </sc-for>
+    </div>
+    <button onClick="{{ closeRecap }}" style="width:100%;background:var(--ink);color:var(--bg);border:none;border-radius:14px;padding:15px;font-family:'Oswald',sans-serif;font-size:17px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;cursor:pointer">Empezar de nuevo</button>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ showStats }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Estadísticas" style="position:fixed;inset:0;z-index:95;background:var(--bg);overflow:auto;animation:fadeIn .2s both">
+  <div style="max-width:720px;margin:0 auto;padding:18px 18px 60px">
+    <div style="position:sticky;top:0;background:var(--bg);padding:8px 0 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);margin-bottom:20px;z-index:5">
+      <h2 style="margin:0;font-family:'Oswald',sans-serif;font-size:28px;font-weight:700;text-transform:uppercase;letter-spacing:-.01em">Estadísticas</h2>
+      <button onClick="{{ closeStats }}" style="width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--panel);cursor:pointer;font-size:18px">×</button>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:22px">
+      <sc-for list="{{ statCards }}" as="s" hint-placeholder-count="4">
+        <div style="background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px">
+          <div style="font-family:'Oswald',sans-serif;font-size:34px;font-weight:700;line-height:1;color:{{ s.c }}">{{ s.v }}</div>
+          <div style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink3);margin-top:5px">{{ s.k }}</div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="font-family:'Oswald',sans-serif;font-size:17px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Actividad · últimos 90 días</div>
+    <div style="background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:22px">
+      <div style="display:grid;grid-template-columns:repeat(15,1fr);gap:4px">
+        <sc-for list="{{ heat }}" as="h" hint-placeholder-count="90">
+          <div title="{{ h.title }}" style="aspect-ratio:1;border-radius:4px;background:{{ h.bg }};border:1px solid var(--line)"></div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="font-family:'Oswald',sans-serif;font-size:17px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">{{ monthLabel }}</div>
+    <div style="background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:22px">
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:6px">
+        <sc-for list="{{ weekDays }}" as="w" hint-placeholder-count="7">
+          <div style="text-align:center;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink3);text-transform:uppercase">{{ w.d }}</div>
+        </sc-for>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px">
+        <sc-for list="{{ monthCells }}" as="m" hint-placeholder-count="35">
+          <div style="aspect-ratio:1;border-radius:8px;background:{{ m.bg }};border:1px solid {{ m.bd }};display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:{{ m.fg }}">{{ m.n }}</div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="font-family:'Oswald',sans-serif;font-size:17px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Tareas que más te tumban</div>
+    <div style="background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:22px;display:flex;flex-direction:column;gap:12px">
+      <sc-for list="{{ failRanking }}" as="f" hint-placeholder-count="3">
+        <div>
+          <div style="display:flex;justify-content:space-between;gap:10px;margin-bottom:5px">
+            <div style="font-size:14px;min-width:0">{{ f.name }}</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--ink3);flex:none">{{ f.n }}×</div>
+          </div>
+          <div style="height:7px;border-radius:99px;background:var(--panel2);overflow:hidden"><div style="height:100%;width:{{ f.pct }}%;background:var(--bad);border-radius:99px"></div></div>
+        </div>
+      </sc-for>
+      <div style="font-size:13px;color:var(--ink3);display:{{ failEmptyDisp }}">Todavía no has fallado ninguna tarea.</div>
+    </div>
+
+    <div style="font-family:'Oswald',sans-serif;font-size:17px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Muro de comodines</div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:22px">
+      <sc-for list="{{ wildWall }}" as="w" hint-placeholder-count="2">
+        <div style="background:var(--panel);border:1px solid var(--line);border-left:4px solid {{ w.c }};border-radius:14px;padding:13px 15px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
+            <div style="font-family:'Oswald',sans-serif;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:{{ w.c }}">{{ w.verdict }}</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink3)">día {{ w.day }} · {{ w.cat }} · {{ w.date }}</div>
+          </div>
+          <div style="font-size:14px;line-height:1.5;color:var(--ink2);font-style:italic">“{{ w.text }}”</div>
+        </div>
+      </sc-for>
+      <div style="font-size:13px;color:var(--ink3);display:{{ wildEmptyDisp }}">Ningún comodín usado todavía.</div>
+    </div>
+
+    <div style="font-family:'Oswald',sans-serif;font-size:17px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Historial de intentos</div>
+    <div style="background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-bottom:26px">
+      <sc-for list="{{ history }}" as="h" hint-placeholder-count="3">
+        <div style="display:flex;align-items:center;gap:12px;padding:13px 15px;border-bottom:1px solid var(--line)">
+          <div style="font-family:'Oswald',sans-serif;font-size:20px;font-weight:700;width:34px;flex:none;color:var(--ink3)">{{ h.n }}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-family:'Oswald',sans-serif;font-size:15px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:{{ h.c }}">{{ h.result }}</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink3)">{{ h.date }} · {{ h.wilds }} comodines</div>
+          </div>
+          <div style="text-align:right;flex:none">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:700">{{ h.days }}</div>
+            <div style="font-size:10px;color:var(--ink3);text-transform:uppercase;letter-spacing:.08em">días</div>
+          </div>
+        </div>
+      </sc-for>
+      <div style="font-size:13px;color:var(--ink3);padding:14px 15px;display:{{ histEmptyDisp }}">Este es tu primer intento. Todavía no hay historial.</div>
+    </div>
+
+    <div style="border:1.5px dashed var(--bad);border-radius:16px;padding:16px">
+      <div style="font-family:'Oswald',sans-serif;font-size:15px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--bad);margin-bottom:6px">Zona peligrosa</div>
+      <p style="margin:0 0 12px;font-size:14px;color:var(--ink2);line-height:1.5">{{ wipeCopy }}</p>
+      <div style="display:flex;gap:9px;flex-wrap:wrap">
+        <button onClick="{{ wipeStepUp }}" style="background:{{ wipeBg }};color:{{ wipeFg }};border:1.5px solid var(--bad);border-radius:12px;padding:12px 16px;font-size:14px;font-weight:600;cursor:pointer">{{ wipeLabel }}</button>
+        <button onClick="{{ wipeCancel }}" style="background:none;border:1px solid var(--line);border-radius:12px;padding:12px 16px;font-size:14px;color:var(--ink3);cursor:pointer;display:{{ wipeCancelDisp }}">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:760,&quot;height&quot;:900}}">
+/* ============================================================
+   RETO DE 30 DÍAS — reglas del motor de comodín (deterministas)
+   ============================================================ */
+const RULES = {
+  MIN_FREE_MIN: 180,          // hueco libre que invalida el comodín (3 h)
+  DEFAULT_WAKE: 8 * 60,       // hora de despertar por defecto
+  DEFAULT_SLEEP: 23 * 60,     // límite del día si no hay hora en las tareas
+  ALL_DAY: ['todo el dia','todo el rato','sin parar','sin descanso','ni un momento','ni un hueco','sin un momento','no ha habido ni','de sol a sol','todo el tiempo','no he tenido tiempo libre','sin poder parar','todas las horas'],
+  INVOLUNTARY: ['enferm','fiebre','gripe','vomit','mareo','migrana','dolor','urgencia','hospital','medico','ambulancia','accidente','muerte','falleci','funeral','velatorio','imprevisto','emergencia','averia','se alargo','se quedo mas','sin avisar','me llamaron','apagon','tormenta','inundacion','robo','policia','se puso mal','tuve que cuidar','ingres'],
+  TASK_EXTRA: ['trabaj','anunci','gimnasio','entren','estudi'],
+  STOPWORDS: ['para','como','todos','todas','desde','hasta','sobre','antes','despues','menos','cada','este','esta','porque','muy','mas','del','los','las','una','unos','con','sin','que','por','mis','tus'],
+  CATEGORIES: [
+    { key:'salud',      label:'Salud',      color:'var(--bad)',  words:['enferm','fiebre','gripe','vomit','mareo','dolor','hospital','medico','urgencia','ambulancia','migrana','ingres','se puso mal'] },
+    { key:'relacion',   label:'Relación',   color:'var(--wild)', words:['novia','novio','pareja','mujer','marido','familia','madre','padre','hermano','hermana','hijo','hija','amigo','amiga','cumpleanos','boda','cena con'] },
+    { key:'imprevisto', label:'Imprevisto', color:'var(--accent)',words:['imprevisto','averia','accidente','se alargo','sin avisar','emergencia','apagon','se quedo mas','me llamaron','tormenta','atasco','vuelo','tren','viaje','mudanza','robo'] },
+    { key:'otros',      label:'Otros',      color:'var(--ink2)', words:[] }
+  ]
+};
+
+const XP_DAY = 100, XP_WILD = 25;
+const RANKS = [
+  { n:'Novato',       xp:0,    c:'var(--ink3)',  s:1, blurb:'Empiezas. Nadie te conoce todavía, ni tú mismo.' },
+  { n:'Constante',    xp:300,  c:'var(--ok)',    s:2, blurb:'Ya no dependes de las ganas. Apareces igual.' },
+  { n:'Disciplinado', xp:800,  c:'var(--accent)',s:3, blurb:'La disciplina dejó de doler. Ahora es tu suelo.' },
+  { n:'Implacable',   xp:1500, c:'var(--wild)',  s:4, blurb:'No negocias contigo. Ejecutas y sigues.' },
+  { n:'Imparable',    xp:2500, c:'#c9a227',      s:5, blurb:'Ya no es un reto: es quien eres.' }
+];
+// Avatares por rango (índice 0 = Novato … 4 = Imparable). Editable: sustituye la ruta.
+const R = (typeof window !== 'undefined' && window.__resources) || {};
+const AVATARS = [
+  R.avatar1 || 'avatars/rango-1.webp',
+  R.avatar2 || 'avatars/rango-2.webp',
+  R.avatar3 || 'avatars/rango-3.webp',
+  R.avatar4 || 'avatars/rango-4.webp',
+  R.avatar5 || 'avatars/rango-5.webp'
+];
+const BADGE_DAYS = [{d:7,n:'Semana 1'},{d:14,n:'Semana 2'},{d:21,n:'Semana 3'},{d:30,n:'Reto completo'}];
+const QUOTES = [
+  'La motivación se acaba a las 48 horas. La disciplina no pide permiso.',
+  'Nadie va a venir. Levántate tú.',
+  'Hoy no tienes que ser brillante. Solo tienes que aparecer.',
+  'Las excusas son cómodas hasta que ves en quién te convierten.',
+  'Un día perfecto no cambia nada. Treinta seguidos lo cambian todo.',
+  'Lo que evitas hoy te espera mañana con intereses.',
+  'No cuentes los días. Haz que los días cuenten contigo.',
+  'La versión de ti que quieres ser no descansa de sí misma.',
+  'Cumple cuando no te apetezca. Ahí se construye.',
+  'Es más fácil mantener la racha que volver a empezarla.',
+  'El dolor de la disciplina dura minutos. El del arrepentimiento, años.',
+  'Cada casilla sellada es una promesa que te cumpliste.',
+  'No busques ganas. Busca el hábito.',
+  'Tus resultados son la media de tus días normales.',
+  'Hazlo aburrido. Hazlo siempre.'
+];
+const ICONS = ['🌙','🏋️','💼','📚','🥗','💧','🧠','💰','🚿','⏰','🏃','🧘'];
+
+const norm = (s) => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ');
+const pad2 = (n) => String(n).padStart(2, '0');
+const hm = (m) => pad2(Math.floor(((m % 1440) + 1440) % 1440 / 60)) + ':' + pad2(m % 60);
+const uid = () => Math.random().toString(36).slice(2, 9);
+const dkey = (d) => d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+const esDate = (iso) => { const d = new Date(iso); return isNaN(d) ? '—' : pad2(d.getDate()) + '/' + pad2(d.getMonth() + 1) + '/' + d.getFullYear(); };
+
+/* --- extracción de horas ------------------------------------ */
+function findTimes(text) {
+  const pats = [
+    { re: /(?:a\s+)?las?\s+(\d{1,2})(?:[:.](\d{2}))?(?:\s*de la\s+(manana|tarde|noche|madrugada))?/g, g: [1, 2, 3] },
+    { re: /\b(\d{1,2})[:.](\d{2})(?!\d)\s*(am|pm)?/g, g: [1, 2, 3] },
+    { re: /\b(\d{1,2})\s*(am|pm)\b/g, g: [1, null, 2] },
+    { re: /\b(\d{1,2})(?:[:.](\d{2}))?\s*(?:h|hs|hrs)\b/g, g: [1, 2, null] },
+    { re: /\b(\d{1,2})(?:[:.](\d{2}))?\s+de la\s+(manana|tarde|noche|madrugada)\b/g, g: [1, 2, 3] },
+    { re: /\bmediodia\b/g, fixed: 12 * 60 },
+    { re: /\bmedianoche\b/g, fixed: 24 * 60 }
+  ];
+  const raw = [];
+  pats.forEach((p) => {
+    let m; p.re.lastIndex = 0;
+    while ((m = p.re.exec(text)) !== null) {
+      let min;
+      if (p.fixed != null) min = p.fixed;
+      else {
+        let h = parseInt(m[p.g[0]], 10);
+        const mi = p.g[1] && m[p.g[1]] ? parseInt(m[p.g[1]], 10) : 0;
+        const per = p.g[2] ? m[p.g[2]] : null;
+        if (h > 24 || mi > 59) continue;
+        if (per === 'pm' && h < 12) h += 12;
+        else if (per === 'am' && h === 12) h = 0;
+        else if ((per === 'tarde' || per === 'noche') && h < 12) h += 12;
+        else if (per === 'manana' && h === 12) h = 0;
+        min = h * 60 + mi;
+        if (!per && h >= 1 && h <= 6) min += 12 * 60; // "las 3" ≈ 15:00
+      }
+      raw.push({ i: m.index, len: m[0].length, min, bare: !p.g || !p.g[2] || !m[p.g[2]] });
+    }
+  });
+  raw.sort((a, b) => a.i - b.i || b.len - a.len);
+  const out = [];
+  raw.forEach((r) => { if (!out.some((o) => r.i < o.i + o.len && o.i < r.i + r.len)) out.push(r); });
+  return out;
+}
+
+function tokenize(text) {
+  const times = findTimes(text);
+  let t = text, offset = 0;
+  const map = [];
+  times.forEach((tm, idx) => {
+    const tag = '@' + idx + '@';
+    const s = tm.i + offset;
+    t = t.slice(0, s) + tag + t.slice(s + tm.len);
+    offset += tag.length - tm.len;
+    map.push(tm.min);
+  });
+  return { tok: t, times: map };
+}
+
+// Solo horas de acostarse plausibles: exige ":" con minutos, o sufijo h/am/pm,
+// o prefijo "las". Ignora cifras tipo "10.000 pasos". Se queda con la más tardía.
+function sleepLimitFromTasks(taskNames) {
+  const pats = [
+    /\b(\d{1,2}):(\d{2})(?!\d)/g,
+    /\b(\d{1,2})(?::(\d{2}))?\s*(?:h|hs|hrs)\b/g,
+    /\b(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b/g,
+    /las?\s+(\d{1,2})(?::(\d{2}))?/g
+  ];
+  let best = null;
+  taskNames.forEach((raw) => {
+    const n = norm(raw);
+    pats.forEach((p) => {
+      let m; p.lastIndex = 0;
+      while ((m = p.exec(n)) !== null) {
+        let h = parseInt(m[1], 10); const mi = m[2] ? parseInt(m[2], 10) : 0;
+        if (h > 24 || mi > 59) continue;
+        if (m[3] === 'pm' && h < 12) h += 12;
+        let min = h * 60 + mi;
+        if (min < 12 * 60) min += 12 * 60;              // "las 11" en tarea de sueño → 23:00
+        if (min < 20 * 60 || min > 24 * 60) continue;   // solo horas de dormir creíbles
+        if (best == null || min > best) best = min;
+      }
+    });
+  });
+  return best == null ? RULES.DEFAULT_SLEEP : Math.min(best, 24 * 60);
+}
+
+/* --- motor de decisión -------------------------------------- */
+function evaluateWildcard(rawText, taskNames) {
+  const text = norm(rawText);
+  const trace = [];
+  const cat = (RULES.CATEGORIES.find((c) => c.words.some((w) => text.includes(w))) || RULES.CATEGORIES[RULES.CATEGORIES.length - 1]);
+  const sleep = sleepLimitFromTasks(taskNames);
+  const { tok, times } = tokenize(text);
+
+  if (text.replace(/\s/g, '').length < 15) {
+    return { accepted:false, cat, reason:'La justificación es demasiado corta para poder evaluarla. Describe qué pasó y a qué horas.', trace:[{k:'texto',v:'insuficiente'}] };
+  }
+
+  // hora de despertar
+  let wake = RULES.DEFAULT_WAKE, wakeSrc = 'por defecto';
+  const wm = /(?:despert|levant|abri los ojos|me he levantado)[^@]{0,30}@(\d+)@/.exec(tok);
+  if (wm) { wake = times[+wm[1]] % 1440; wakeSrc = 'texto'; }
+
+  // franjas ocupadas
+  const busy = [];
+  const used = new Set();
+  const addRange = (a, b, src) => {
+    let s = a, e = b;
+    if (e <= s) e += (e + 720 <= s ? 1440 : 720);
+    busy.push({ s: Math.max(s, 0), e: Math.min(e, sleep), src });
+  };
+  let m;
+  const pairRe = /(?:desde|de|entre)?\s*@(\d+)@\s*(?:hasta|hast|a|al|-|y)\s*@(\d+)@/g;
+  while ((m = pairRe.exec(tok)) !== null) {
+    used.add(m[1]); used.add(m[2]);
+    addRange(times[+m[1]], times[+m[2]], 'rango');
+  }
+  const untilRe = /hasta\s*(?:las?\s*)?@(\d+)@/g;
+  while ((m = untilRe.exec(tok)) !== null) if (!used.has(m[1])) { used.add(m[1]); addRange(wake, times[+m[1]], 'hasta'); }
+  const fromRe = /(?:desde|a partir de)\s*(?:las?\s*)?@(\d+)@/g;
+  while ((m = fromRe.exec(tok)) !== null) if (!used.has(m[1])) { used.add(m[1]); addRange(times[+m[1]], sleep, 'desde'); }
+  const presets = { manana: [wake, 13 * 60], tarde: [16 * 60, 20 * 60 + 30], noche: [21 * 60, sleep] };
+  const presetRe = /(?:toda|todo|por)\s+la\s+(manana|tarde|noche)/g;
+  while ((m = presetRe.exec(tok)) !== null) { const p = presets[m[1]]; addRange(p[0], p[1], 'franja'); }
+
+  // huecos libres
+  const merged = [];
+  busy.filter((b) => b.e > b.s).sort((a, b) => a.s - b.s).forEach((b) => {
+    const last = merged[merged.length - 1];
+    if (last && b.s <= last.e) last.e = Math.max(last.e, b.e); else merged.push({ ...b });
+  });
+  const gaps = [];
+  let cur = wake;
+  merged.forEach((b) => { if (b.s > cur) gaps.push([cur, Math.min(b.s, sleep)]); cur = Math.max(cur, b.e); });
+  if (cur < sleep) gaps.push([cur, sleep]);
+  const clean = gaps.filter((g) => g[1] - g[0] > 0);
+  const maxGap = clean.reduce((a, g) => Math.max(a, g[1] - g[0]), 0);
+
+  trace.push({ k: 'despertar', v: hm(wake) + ' (' + wakeSrc + ')' });
+  trace.push({ k: 'dormir', v: hm(sleep) });
+  trace.push({ k: 'ocupado', v: merged.length ? merged.map((b) => hm(b.s) + '–' + hm(b.e)).join('  ') : 'no detectado' });
+  trace.push({ k: 'libre', v: clean.length ? clean.map((g) => hm(g[0]) + '–' + hm(g[1]) + ' (' + (Math.round((g[1] - g[0]) / 6) / 10) + 'h)').join('  ') : 'ninguno' });
+  trace.push({ k: 'categoría', v: cat.label });
+
+  // contradicción: menciona una tarea junto a una hora dentro de un hueco libre
+  const words = new Set(RULES.TASK_EXTRA);
+  taskNames.forEach((n) => norm(n).split(/[^a-z0-9]+/).forEach((w) => { if (w.length > 3 && !RULES.STOPWORDS.includes(w)) words.add(w); }));
+  let contra = null;
+  words.forEach((w) => {
+    if (contra) return;
+    let idx = tok.indexOf(w);
+    while (idx !== -1) {
+      const around = tok.slice(Math.max(0, idx - 45), idx + w.length + 45);
+      const tm = /@(\d+)@/.exec(around);
+      const neg = /(no |ni |tampoco|sin )[^@]{0,18}$/.test(tok.slice(Math.max(0, idx - 22), idx));
+      if (tm && !neg) {
+        const t = times[+tm[1]];
+        if (clean.some((g) => t >= g[0] && t <= g[1])) { contra = { w, t }; break; }
+      }
+      idx = tok.indexOf(w, idx + 1);
+    }
+  });
+
+  if (merged.length === 0) {
+    const allDay = RULES.ALL_DAY.some((k) => text.includes(k));
+    const invol = RULES.INVOLUNTARY.some((k) => text.includes(k));
+    if (contra) return { accepted:false, cat, reason:'Contradicción: mencionas «' + contra.w + '» a las ' + hm(contra.t) + ', dentro de una franja que declaras libre. Si pudiste con eso, podías con el reto.', trace };
+    if (allDay || invol) return { accepted:true, cat, reason:'No describes ninguna ventana libre y el motivo encaja con una situación ' + (invol ? 'fuera de tu control' : 'que te ocupó el día completo') + '. Comodín válido.', trace };
+    return { accepted:false, cat, reason:'No hay horas concretas ni una causa fuera de tu control. Sin datos que demuestren que no tuviste 3 h libres, el comodín se rechaza.', trace };
+  }
+  if (maxGap >= RULES.MIN_FREE_MIN) {
+    const g = clean.find((x) => x[1] - x[0] >= RULES.MIN_FREE_MIN);
+    return { accepted:false, cat, reason:'Tuviste de ' + hm(g[0]) + ' a ' + hm(g[1]) + ' libres (' + (Math.round((g[1] - g[0]) / 6) / 10) + ' h, más de ' + (RULES.MIN_FREE_MIN / 60) + ' h). Había ventana real para cumplir y no se cumplió.', trace };
+  }
+  if (contra) return { accepted:false, cat, reason:'Contradicción: mencionas «' + contra.w + '» a las ' + hm(contra.t) + ', dentro de una franja libre. Eso invalida el comodín.', trace };
+  return { accepted:true, cat, reason:'El día quedó ocupado y tu hueco libre más grande fue de ' + (Math.round(maxGap / 6) / 10) + ' h, por debajo de las ' + (RULES.MIN_FREE_MIN / 60) + ' h mínimas. Comodín válido.', trace };
+}
+
+/* --- datos por defecto -------------------------------------- */
+const DEFAULT_DATA = () => ({
+  dark: false, sound: true, tutorialDone: false, phase: 'setup',
+  sections: [
+    { id: uid(), icon: '🌙', name: 'Sueño', tasks: [{ id: uid(), name: 'Acostarme a las 23:30' }, { id: uid(), name: 'Sin pantallas la última media hora' }] },
+    { id: uid(), icon: '🏋️', name: 'Entrenamiento', tasks: [{ id: uid(), name: 'Ir al gimnasio' }, { id: uid(), name: '10.000 pasos' }] }
+  ],
+  day: 1, checked: {}, events: [], xp: 0, attempt: 1, resets: 0, best: 0,
+  history: [], wildcards: [], activity: [], failCounts: {}, badges: []
+});
+
+/* Guardado a través de ZongaLS: comprime (~7-10x) y avisa con un banner si el
+   localStorage compartido del dominio se llena, en vez de perder datos en
+   silencio. Lee también valores antiguos sin comprimir. */
+const STORE_KEY = 'reto30_v1';
+const readStore = (k) => (window.ZongaLS ? ZongaLS.load(k) : localStorage.getItem(k));
+const writeStore = (k, v) => {
+  if (window.ZongaLS) return ZongaLS.save(k, v);
+  try { localStorage.setItem(k, v); return true; } catch (e) { return false; }
+};
+
+class Component extends DCLogic {
+  state = { data: null, tutStep: 1, wildStage: null, wildText: '', wildRes: null, wildTries: 0, showStats: false, showConfirm: false, showRankup: false, rankupIdx: 0, recap: null, wipeStep: 0, avIdx: null, avPrev: null, avAnim: true, avTip: false };
+
+  componentDidMount() {
+    let d = null;
+    try { const raw = readStore(STORE_KEY); if (raw) d = JSON.parse(raw); } catch (e) {}
+    if (!d) d = DEFAULT_DATA();
+    if (!d.tutorialDone) d.phase = 'tutorial';
+    this.setState({ data: d, avIdx: this.rankIdx(d.xp) }, () => { this.applyTheme(); this.persist(); });
+    this.confettiRef = React.createRef();
+    window.addEventListener('resize', this.onResize = () => this.sizeCanvas());
+  }
+  componentWillUnmount() { window.removeEventListener('resize', this.onResize); cancelAnimationFrame(this.raf); }
+  persist() { try { if (this.state.data) writeStore(STORE_KEY, JSON.stringify(this.state.data)); } catch (e) {} }
+  applyTheme() { document.documentElement.setAttribute('data-theme', this.state.data && this.state.data.dark ? 'dark' : 'light'); }
+  up(fn, cb) {
+    this.setState((s) => { const d = JSON.parse(JSON.stringify(s.data)); fn(d); return { data: d }; },
+      () => { this.persist(); this.applyTheme(); if (cb) cb(); });
+  }
+
+  /* --- audio --- */
+  sound(kind) {
+    if (!this.state.data || !this.state.data.sound) return;
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+      this.ac = this.ac || new AC(); const ac = this.ac; if (ac.state === 'suspended') ac.resume();
+      const seq = { tick: [[880, 0, .05, .06]], seal: [[523, 0, .12, .12], [784, .07, .22, .12]], fail: [[196, 0, .3, .16], [147, .12, .4, .12]], win: [[523, 0, .2, .14], [659, .1, .2, .14], [784, .2, .25, .14], [1046, .32, .5, .16]], rank: [[659, 0, .18, .13], [880, .1, .3, .13], [1174, .24, .5, .14]] }[kind] || [];
+      seq.forEach(([f, t, dur, vol]) => {
+        const o = ac.createOscillator(), g = ac.createGain();
+        o.type = 'sine'; o.frequency.value = f;
+        g.gain.setValueAtTime(0, ac.currentTime + t);
+        g.gain.linearRampToValueAtTime(vol, ac.currentTime + t + .02);
+        g.gain.exponentialRampToValueAtTime(.0001, ac.currentTime + t + dur);
+        o.connect(g); g.connect(ac.destination); o.start(ac.currentTime + t); o.stop(ac.currentTime + t + dur + .02);
+      });
+    } catch (e) {}
+  }
+  shake() { const b = document.body; b.style.animation = 'none'; void b.offsetWidth; b.style.animation = 'shakeScreen .55s cubic-bezier(.36,.07,.19,.97)'; setTimeout(() => { b.style.animation = ''; }, 620); }
+
+  /* --- confeti / partículas --- */
+  sizeCanvas() { const c = this.confettiRef && this.confettiRef.current; if (!c) return; c.width = window.innerWidth; c.height = window.innerHeight; }
+  burst(n, opts) {
+    const c = this.confettiRef && this.confettiRef.current; if (!c) return;
+    this.sizeCanvas();
+    const ctx = c.getContext('2d');
+    const cols = (opts && opts.colors) || ['#e8833a', '#3fae76', '#7c6ce0', '#e0c341', '#e05c5c'];
+    const ox = (opts && opts.x) != null ? opts.x : c.width / 2, oy = (opts && opts.y) != null ? opts.y : c.height * .3;
+    this.parts = (this.parts || []).concat(Array.from({ length: n }, () => ({
+      x: ox + (Math.random() - .5) * (opts && opts.spread || 200), y: oy + (Math.random() - .5) * 40,
+      vx: (Math.random() - .5) * 9, vy: -Math.random() * 11 - 3, g: .28 + Math.random() * .12,
+      s: 3 + Math.random() * 6, r: Math.random() * 6.28, vr: (Math.random() - .5) * .3, life: 1, col: cols[(Math.random() * cols.length) | 0]
+    })));
+    if (this.raf) return;
+    const loop = () => {
+      ctx.clearRect(0, 0, c.width, c.height);
+      this.parts = this.parts.filter((p) => p.life > 0 && p.y < c.height + 40);
+      this.parts.forEach((p) => {
+        p.x += p.vx; p.y += p.vy; p.vy += p.g; p.vx *= .995; p.r += p.vr; p.life -= .006;
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.globalAlpha = Math.max(0, Math.min(1, p.life));
+        ctx.fillStyle = p.col; ctx.fillRect(-p.s / 2, -p.s / 2, p.s, p.s * 1.6); ctx.restore();
+      });
+      if (this.parts.length) this.raf = requestAnimationFrame(loop);
+      else { cancelAnimationFrame(this.raf); this.raf = null; ctx.clearRect(0, 0, c.width, c.height); }
+    };
+    this.raf = requestAnimationFrame(loop);
+  }
+
+  /* --- helpers de datos --- */
+  allTasks(d) { const o = []; (d.sections || []).forEach((s) => s.tasks.forEach((t) => o.push({ ...t, sec: s.name }))); return o; }
+  rankIdx(xp) { let i = 0; RANKS.forEach((r, k) => { if (xp >= r.xp) i = k; }); return i; }
+  checkRank(prevXp) {
+    const d = this.state.data; const a = this.rankIdx(prevXp), b = this.rankIdx(d.xp);
+    if (b > a) { this.setState({ showRankup: true }); this.sound('rank'); this.bumpAvatar(b); setTimeout(() => this.burst(140, { colors: ['#e8833a', '#e0c341', '#fff1c9'] }), 120); }
+  }
+  bumpAvatar(idx) {
+    this.setState((s) => ({ avPrev: s.avIdx, avIdx: idx, avAnim: false }), () => {
+      requestAnimationFrame(() => requestAnimationFrame(() => this.setState({ avAnim: true })));
+      clearTimeout(this.avT); this.avT = setTimeout(() => this.setState({ avPrev: null }), 750);
+    });
+  }
+
+  /* --- acciones --- */
+  renderVals() {
+    const d = this.state.data;
+    const S = this.state;
+    const T = {};
+    if (!d) return { isTutorial: false, isSetup: false, isActive: false, isDone: false, confettiRef: this.confettiRef,
+      avReady: false, avSrc: AVATARS[0], avPrevSrc: AVATARS[0], avOp: '0', avSc: '1', avPrevOp: '0', avTipOp: '0', avTipY: '4px',
+      rankName: '', rankColor: 'var(--ink3)', xpToNextLabel: '' };
+
+    const tasks = this.allTasks(d);
+    const doneCount = tasks.filter((t) => d.checked[t.id]).length;
+    const rIdx = this.rankIdx(d.xp), rank = RANKS[rIdx], next = RANKS[rIdx + 1];
+    const xpPct = next ? Math.round(((d.xp - rank.xp) / (next.xp - rank.xp)) * 100) : 100;
+    const streak = Math.max(0, d.day - 1);
+    const avIdx = S.avIdx == null ? rIdx : S.avIdx;
+
+    /* sellos */
+    const cells = [];
+    let dayNo = 0;
+    (d.events || []).forEach((e) => {
+      if (e.t === 'done') { dayNo++; cells.push({ label: String(dayNo), bg: 'var(--ok)', fg: '#fff', bd: 'var(--ok)', anim: 'none', title: 'Día ' + dayNo + ' cumplido' }); }
+      else { cells.push({ label: '•', bg: 'var(--wildSoft)', fg: 'var(--wild)', bd: 'var(--wild)', anim: 'none', title: 'Comodín (' + (e.cat || 'otros') + ')' }); }
+    });
+    if (d.phase === 'active') cells.push({ label: String(d.day), bg: 'var(--accentSoft)', fg: 'var(--accent)', bd: 'var(--accent)', anim: 'pulseCell 1.9s ease-in-out infinite', title: 'Hoy' });
+    for (let i = cells.filter((c) => c.bg === 'var(--ok)').length + (d.phase === 'active' ? 1 : 0); i < 30; i++) cells.push({ label: '', bg: 'transparent', fg: 'var(--ink3)', bd: 'var(--line)', anim: 'none', title: 'Pendiente' });
+
+    /* badges */
+    const badges = BADGE_DAYS.map((b) => { const got = (d.badges || []).includes(b.d);
+      return { day: b.d, name: b.n, state: got ? 'desbloqueada' : 'día ' + b.d, bg: got ? 'var(--accentSoft)' : 'transparent', bd: got ? 'var(--accent)' : 'var(--line)', fg: got ? 'var(--accent)' : 'var(--ink3)', op: got ? '1' : '.55' }; });
+
+    /* stats */
+    const failEntries = Object.entries(d.failCounts || {}).sort((a, b) => b[1] - a[1]).slice(0, 6);
+    const maxFail = failEntries.length ? failEntries[0][1] : 1;
+    const actMap = {}; (d.activity || []).forEach((a) => { actMap[a.k] = a.t; });
+    const heat = []; const today = new Date();
+    for (let i = 89; i >= 0; i--) { const dd = new Date(today); dd.setDate(dd.getDate() - i); const k = dkey(dd); const t = actMap[k];
+      heat.push({ bg: t === 'done' ? 'var(--ok)' : t === 'wild' ? 'var(--wild)' : t === 'fail' ? 'var(--bad)' : 'var(--panel2)', title: k + (t ? ' · ' + t : '') }); }
+    const MONTHS = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+    const first = new Date(today.getFullYear(), today.getMonth(), 1);
+    const offset = (first.getDay() + 6) % 7;
+    const dim = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+    const monthCells = [];
+    for (let i = 0; i < offset; i++) monthCells.push({ n: '', bg: 'transparent', bd: 'transparent', fg: 'var(--ink3)' });
+    for (let i = 1; i <= dim; i++) { const k = dkey(new Date(today.getFullYear(), today.getMonth(), i)); const t = actMap[k]; const isToday = i === today.getDate();
+      monthCells.push({ n: String(i), bg: t === 'done' ? 'var(--ok)' : t === 'wild' ? 'var(--wild)' : t === 'fail' ? 'var(--bad)' : 'var(--panel2)', bd: isToday ? 'var(--accent)' : 'var(--line)', fg: t ? '#fff' : 'var(--ink3)' }); }
+
+    const wildsThisAttempt = (d.wildcards || []).filter((w) => w.attempt === d.attempt).length;
+    const hardest = failEntries.length ? failEntries[0][0] : '—';
+
+    Object.assign(T, {
+      confettiRef: this.confettiRef,
+      isTutorial: d.phase === 'tutorial', isSetup: d.phase === 'setup', isActive: d.phase === 'active', isDone: d.phase === 'done',
+      themeIcon: d.dark ? '☀' : '☾', soundIcon: d.sound ? '♪' : '✕',
+      toggleTheme: () => this.up((x) => { x.dark = !x.dark; }),
+      toggleSound: () => { this.up((x) => { x.sound = !x.sound; }); this.sound('tick'); },
+
+      /* tutorial */
+      tutStep: S.tutStep, tutIcon: ['30','▦','✓','❄','★'][S.tutStep - 1],
+      tutTitle: ['Treinta días seguidos','Tus tareas, tus secciones','Cada noche sellas el día','Fallar reinicia. El comodín congela.','Sube de rango'][S.tutStep - 1],
+      tutBody: [
+        'Eliges lo que vas a cumplir todos los días. Si cumples, avanzas. Si fallas, vuelves al día 1. El objetivo es llegar a 30/30 sin excusas.',
+        'Organizas tus tareas en secciones con icono y nombre (Sueño, Entrenamiento, Trabajo…). Cuando empieces, quedan bloqueadas para todo el intento.',
+        'Marcas las tareas y pulsas “Finalizar día”. Si están todas, la casilla del día se sella y pasas al siguiente.',
+        'Si te falta alguna, puedes usar un comodín: escribes por qué. Un motor de reglas mira las horas que mencionas; si tuviste 3 h libres, se rechaza y reinicias. Si es válido, el día se congela y te quedas en el mismo número.',
+        'Cada día cumplido da XP y sube tu rango: Novato, Constante, Disciplinado, Implacable, Imparable. Al llegar al día 30 desbloqueas el certificado final.'
+      ][S.tutStep - 1],
+      tutCta: S.tutStep === 5 ? 'Configurar tareas' : 'Siguiente',
+      tutDots: [1,2,3,4,5].map((i) => ({ bg: i <= S.tutStep ? 'var(--accent)' : 'var(--line)' })),
+      nextTutorial: () => { this.sound('tick'); if (S.tutStep === 5) this.up((x) => { x.tutorialDone = true; x.phase = x.sections.length ? 'setup' : 'setup'; }); else this.setState({ tutStep: S.tutStep + 1 }); },
+      prevTutorial: () => this.setState({ tutStep: Math.max(1, S.tutStep - 1) }),
+      skipTutorial: () => this.up((x) => { x.tutorialDone = true; x.phase = 'setup'; }),
+
+      /* setup */
+      attemptNo: d.attempt,
+      setupTaskCount: tasks.length, setupSectionCount: d.sections.length,
+      setupSections: d.sections.map((s, i) => ({
+        icon: s.icon, name: s.name,
+        cycleIcon: () => this.up((x) => { x.sections[i].icon = ICONS[(ICONS.indexOf(x.sections[i].icon) + 1) % ICONS.length]; }),
+        rename: (e) => { const v = e.target.value; this.up((x) => { x.sections[i].name = v; }); },
+        remove: () => this.up((x) => { x.sections.splice(i, 1); }),
+        addTask: () => this.up((x) => { x.sections[i].tasks.push({ id: uid(), name: '' }); }),
+        tasks: s.tasks.map((t, j) => ({
+          name: t.name,
+          rename: (e) => { const v = e.target.value; this.up((x) => { x.sections[i].tasks[j].name = v; }); },
+          remove: () => this.up((x) => { x.sections[i].tasks.splice(j, 1); })
+        }))
+      })),
+      addSection: () => this.up((x) => { x.sections.push({ id: uid(), icon: ICONS[x.sections.length % ICONS.length], name: 'Nueva sección', tasks: [{ id: uid(), name: '' }] }); }),
+      askStart: () => {
+        const clean = tasks.filter((t) => t.name.trim());
+        if (!clean.length) { this.shake(); this.sound('fail'); return; }
+        this.setState({ showConfirm: true });
+      },
+      showConfirmStart: S.showConfirm,
+      cancelStart: () => this.setState({ showConfirm: false }),
+      doStart: () => { this.setState({ showConfirm: false }); this.sound('seal');
+        this.up((x) => { x.sections = x.sections.map((s) => ({ ...s, tasks: s.tasks.filter((t) => t.name.trim()) })).filter((s) => s.tasks.length); x.phase = 'active'; x.day = 1; x.checked = {}; x.events = []; x.badges = []; }); },
+
+      /* dashboard */
+      dayPad: pad2(d.day), dayNum: d.day, streak, sealedCount: (d.events || []).filter((e) => e.t === 'done').length,
+      xpPct: Math.max(3, Math.min(100, xpPct)), xpLabel: d.xp + (next ? ' / ' + next.xp + ' XP' : ' XP · MAX'),
+      rankName: rank.n, rankColor: rank.c, rankBlurb: rank.blurb, rankStripes: Array.from({ length: rank.s }, () => ({ c: rank.c })),
+      avReady: true, avSrc: AVATARS[avIdx], avOp: S.avAnim ? '1' : '0', avSc: S.avAnim ? '1' : '0.95',
+      avPrevSrc: AVATARS[S.avPrev != null ? S.avPrev : avIdx],
+      avPrevOp: S.avPrev != null && !S.avAnim ? '1' : '0',
+      avTipOp: S.avTip ? '1' : '0', avTipY: S.avTip ? '0' : '4px',
+      avEnter: () => this.setState({ avTip: true }), avLeave: () => this.setState({ avTip: false }),
+      xpToNextLabel: next ? (next.xp - d.xp) + ' XP para ' + next.n : 'Rango máximo alcanzado',
+      flameW: Math.round(16 + Math.min(streak, 30) * 0.62), flameInner: Math.round(7 + Math.min(streak, 30) * 0.3), flameOpacity: String(0.45 + Math.min(streak, 20) * 0.0275),
+      quote: QUOTES[(d.day - 1 + (d.attempt - 1) * 3) % QUOTES.length],
+      cells, badges, doneCount, totalCount: tasks.length,
+      viewSections: d.sections.map((s) => ({
+        icon: s.icon, name: s.name, count: s.tasks.filter((t) => d.checked[t.id]).length + '/' + s.tasks.length,
+        tasks: s.tasks.map((t) => { const on = !!d.checked[t.id]; return {
+          name: t.name, bd: on ? 'var(--ok)' : 'var(--line)', bg: on ? 'var(--ok)' : 'transparent',
+          check: on ? '1' : '0', scale: on ? '1.08' : '1', fg: on ? 'var(--ink3)' : 'var(--ink)', deco: on ? 'line-through' : 'none',
+          toggle: () => { this.sound('tick'); this.up((x) => { if (x.checked[t.id]) delete x.checked[t.id]; else x.checked[t.id] = true; }); }
+        }; })
+      })),
+      finishLabel: doneCount === tasks.length && tasks.length ? 'Sellar día ' + d.day : 'Finalizar día · ' + doneCount + '/' + tasks.length,
+      finishBg: doneCount === tasks.length && tasks.length ? 'var(--ok)' : 'var(--panel)',
+      finishFg: doneCount === tasks.length && tasks.length ? '#fff' : 'var(--ink)',
+      finishBd: doneCount === tasks.length && tasks.length ? 'var(--ok)' : 'var(--line)',
+      finishDay: () => {
+        if (!tasks.length) return;
+        if (doneCount === tasks.length) this.sealDay(); else this.setState({ wildStage: 'offer', wildText: '', wildRes: null, wildTries: 0 });
+      },
+
+      /* comodín */
+      wildStage: !!S.wildStage, wildIsOffer: S.wildStage === 'offer', wildIsForm: S.wildStage === 'form', wildIsResult: S.wildStage === 'result',
+      missingCount: tasks.length - doneCount, missingList: tasks.filter((t) => !d.checked[t.id]).map((t) => ({ name: t.name })),
+      sleepLabel: hm(sleepLimitFromTasks(tasks.map((t) => t.name))),
+      wildText: S.wildText, wildCharLabel: S.wildText.length + ' caracteres · intento ' + (S.wildTries + 1) + '/2',
+      setWildText: (e) => this.setState({ wildText: e.target.value }),
+      goWildForm: () => this.setState({ wildStage: 'form' }),
+      backToOffer: () => this.setState({ wildStage: 'offer' }),
+      closeWild: () => this.setState({ wildStage: null }),
+      evalWild: () => {
+        const res = evaluateWildcard(S.wildText, tasks.map((t) => t.name));
+        this.up((x) => { x.wildcards.unshift({ attempt: x.attempt, day: x.day, text: S.wildText.trim(), accepted: res.accepted, cat: res.cat.label, catKey: res.cat.key, color: res.cat.color, date: new Date().toISOString() }); });
+        this.setState({ wildStage: 'result', wildRes: res, wildTries: S.wildTries + 1 });
+        this.sound(res.accepted ? 'seal' : 'fail');
+        if (!res.accepted) this.shake();
+      },
+      resAccepted: !!(S.wildRes && S.wildRes.accepted), resRejected: !!(S.wildRes && !S.wildRes.accepted),
+      canRetryWild: !!(S.wildRes && !S.wildRes.accepted && S.wildTries < 2),
+      resTitle: S.wildRes ? (S.wildRes.accepted ? 'Comodín válido' : 'Comodín rechazado') : '',
+      resReason: S.wildRes ? S.wildRes.reason : '', resTrace: S.wildRes ? S.wildRes.trace : [],
+      resIcon: S.wildRes && S.wildRes.accepted ? '❄' : '✕',
+      resBg: S.wildRes && S.wildRes.accepted ? 'var(--wildSoft)' : 'var(--badSoft)',
+      resBd: S.wildRes && S.wildRes.accepted ? 'var(--wild)' : 'var(--bad)',
+      retryWild: () => this.setState({ wildStage: 'form', wildRes: null }),
+      applyFreeze: () => this.freezeDay(S.wildRes),
+      confirmFail: () => this.resetChallenge(),
+
+      /* rankup */
+      showRankup: S.showRankup, closeRankup: () => this.setState({ showRankup: false }),
+
+      /* recap */
+      recap: !!S.recap, recapAttempt: S.recap ? S.recap.attempt : 0, recapLine: S.recap ? S.recap.line : '',
+      recapRows: S.recap ? S.recap.rows : [], closeRecap: () => this.setState({ recap: null }),
+
+      /* final */
+      certDate: esDate(new Date().toISOString()),
+      certRows: [
+        { k: 'Intentos totales', v: String(d.attempt) }, { k: 'Reinicios', v: String(d.resets) },
+        { k: 'Comodines usados', v: String((d.wildcards || []).length) }, { k: 'Tarea más difícil', v: hardest },
+        { k: 'XP acumulada', v: String(d.xp) }, { k: 'Rango final', v: rank.n }
+      ],
+      repeatSame: () => { this.up((x) => { x.phase = 'active'; x.day = 1; x.checked = {}; x.events = []; x.badges = []; x.attempt += 1; }); },
+      newChallenge: () => { this.up((x) => { x.phase = 'setup'; x.day = 1; x.checked = {}; x.events = []; x.badges = []; x.attempt += 1; }); },
+
+      /* stats */
+      showStats: S.showStats, openStats: () => this.setState({ showStats: true, wipeStep: 0 }), closeStats: () => this.setState({ showStats: false }),
+      statCards: [
+        { k: 'Racha actual', v: String(streak), c: 'var(--accent)' }, { k: 'Mejor racha', v: String(d.best), c: 'var(--ok)' },
+        { k: 'Intentos', v: String(d.attempt), c: 'var(--ink)' }, { k: 'Reinicios', v: String(d.resets), c: 'var(--bad)' },
+        { k: 'Comodines', v: String((d.wildcards || []).length), c: 'var(--wild)' }, { k: 'XP total', v: String(d.xp), c: 'var(--ink)' }
+      ],
+      heat, monthLabel: 'Calendario · ' + MONTHS[today.getMonth()] + ' ' + today.getFullYear(),
+      weekDays: ['L','M','X','J','V','S','D'].map((x) => ({ d: x })), monthCells,
+      failRanking: failEntries.map(([n, c]) => ({ name: n, n: c, pct: Math.round((c / maxFail) * 100) })),
+      failEmptyDisp: failEntries.length ? 'none' : 'block',
+      wildWall: (d.wildcards || []).map((w) => ({ verdict: w.accepted ? 'Aceptado' : 'Rechazado', c: w.accepted ? w.color || 'var(--wild)' : 'var(--bad)', day: w.day, cat: w.cat, date: esDate(w.date), text: w.text })),
+      wildEmptyDisp: (d.wildcards || []).length ? 'none' : 'block',
+      history: (d.history || []).map((h) => ({ n: '#' + h.attempt, result: h.result === 'completado' ? 'Completado' : 'Reiniciado', c: h.result === 'completado' ? 'var(--ok)' : 'var(--bad)', date: esDate(h.date), days: h.days + '/30', wilds: h.wilds })),
+      histEmptyDisp: (d.history || []).length ? 'none' : 'block',
+      wipeCopy: S.wipeStep === 0 ? 'Borrar todos los datos elimina tareas, historial, comodines y XP. No hay vuelta atrás.' : S.wipeStep === 1 ? 'Confirmación 1 de 2: vas a perder ' + d.attempt + ' intentos y ' + d.xp + ' XP. ¿Seguro?' : 'Confirmación 2 de 2: última oportunidad para cancelar.',
+      wipeLabel: S.wipeStep === 0 ? 'Borrar todos los datos' : S.wipeStep === 1 ? 'Sí, continuar' : 'Borrar definitivamente',
+      wipeBg: S.wipeStep === 2 ? 'var(--bad)' : 'transparent', wipeFg: S.wipeStep === 2 ? '#fff' : 'var(--bad)',
+      wipeCancelDisp: S.wipeStep > 0 ? 'inline-block' : 'none',
+      wipeCancel: () => this.setState({ wipeStep: 0 }),
+      wipeStepUp: () => { if (S.wipeStep < 2) { this.setState({ wipeStep: S.wipeStep + 1 }); return; }
+        try { localStorage.removeItem(STORE_KEY); } catch (e) {}
+        const fresh = DEFAULT_DATA(); fresh.dark = d.dark; fresh.sound = d.sound; fresh.tutorialDone = true;
+        this.setState({ data: fresh, showStats: false, wipeStep: 0, recap: null, wildStage: null }); this.sound('fail'); }
+    });
+    return T;
+  }
+
+  sealDay() {
+    const d = this.state.data; const prevXp = d.xp; const day = d.day;
+    this.sound('seal'); this.burst(60, { y: window.innerHeight * 0.55, spread: 320, colors: ['#3fae76', '#8fd6b0', '#e0c341'] });
+    const last = day === 30;
+    this.up((x) => {
+      x.events.push({ t: 'done', day, date: new Date().toISOString() });
+      x.activity = (x.activity || []).filter((a) => a.k !== dkey(new Date())).concat([{ k: dkey(new Date()), t: 'done' }]).slice(-200);
+      x.xp += XP_DAY; x.best = Math.max(x.best, day); x.checked = {};
+      BADGE_DAYS.forEach((b) => { if (day >= b.d && !x.badges.includes(b.d)) x.badges.push(b.d); });
+      if (last) { x.phase = 'done'; x.history.unshift({ attempt: x.attempt, date: new Date().toISOString(), days: 30, result: 'completado', wilds: (x.wildcards || []).filter((w) => w.attempt === x.attempt && w.accepted).length }); }
+      else x.day = day + 1;
+    }, () => {
+      if (last) { this.sound('win'); this.burst(220, { spread: 500 }); setTimeout(() => this.burst(160, { spread: 600 }), 700); }
+      this.checkRank(prevXp);
+    });
+  }
+
+  freezeDay(res) {
+    const d = this.state.data; const prevXp = d.xp;
+    this.sound('seal'); this.burst(50, { colors: ['#7c6ce0', '#b6a9f2', '#e6e0ff'] });
+    this.up((x) => {
+      x.events.push({ t: 'wild', day: x.day, cat: res.cat.label, date: new Date().toISOString() });
+      x.activity = (x.activity || []).filter((a) => a.k !== dkey(new Date())).concat([{ k: dkey(new Date()), t: 'wild' }]).slice(-200);
+      x.xp += XP_WILD; x.checked = {};
+    }, () => { this.setState({ wildStage: null, wildRes: null, wildText: '', wildTries: 0 }); this.checkRank(prevXp); });
+  }
+
+  resetChallenge() {
+    const d = this.state.data; const tasks = this.allTasks(d);
+    const missing = tasks.filter((t) => !d.checked[t.id]).map((t) => t.name);
+    const wilds = (d.wildcards || []).filter((w) => w.attempt === d.attempt);
+    const attempt = d.attempt, days = d.day;
+    this.sound('fail'); this.shake();
+    this.up((x) => {
+      missing.forEach((n) => { x.failCounts[n] = (x.failCounts[n] || 0) + 1; });
+      x.activity = (x.activity || []).filter((a) => a.k !== dkey(new Date())).concat([{ k: dkey(new Date()), t: 'fail' }]).slice(-200);
+      x.history.unshift({ attempt, date: new Date().toISOString(), days, result: 'reiniciado', wilds: wilds.filter((w) => w.accepted).length });
+      x.resets += 1; x.attempt += 1; x.day = 1; x.checked = {}; x.events = []; x.badges = [];
+    }, () => this.setState({
+      wildStage: null, wildRes: null, wildText: '', wildTries: 0,
+      recap: { attempt, line: 'Llegaste al día ' + days + ' de 30. Tu XP y tu rango se quedan contigo: eso no se reinicia.', rows: [
+        { k: 'Días aguantados', v: days + '/30' },
+        { k: 'Tareas falladas', v: missing.length ? missing.slice(0, 2).join(', ') + (missing.length > 2 ? ' +' + (missing.length - 2) : '') : '—' },
+        { k: 'Comodines del intento', v: wilds.filter((w) => w.accepted).length + ' ok / ' + wilds.filter((w) => !w.accepted).length + ' no' }
+      ] }
+    }));
+  }
+}
+</script>
+
+<script src="/zonga-memory.js"></script>
+<script type="module" src="/firebase.js"></script>
+<script type="module" src="/sync.js?v=20260718"></script>
+</body>
+</html>

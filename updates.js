@@ -5,6 +5,16 @@
 */
 const UPDATES = [
   {
+    id: '2026-08-01-reto-30-dias-casilla-obligatoria',
+    title: 'Reto de 30 días: casilla obligatoria de «terminar todas las tareas de hoy»',
+    items: [
+      'Arriba del todo del checklist tienes una casilla nueva, «Terminar todas las tareas de hoy», marcada como OBLIGATORIO. Es un desplegable donde apuntas cada día lo que tengas que hacer: llamadas, recados, grabar creativos, lo que sea. Se suma al total del día, así que ahora el contador va a 5/5 en vez de 4/4, y el botón de sellar no se pone verde hasta que la casilla también esté cumplida.',
+      'La casilla cuenta AUNQUE no apuntes nada. Si la dejas vacía no se cumple sola: al pulsar «Finalizar día» te aparecerá en la lista de lo que te falta como «Terminar todas las tareas de hoy (no apuntaste ninguna)». Si apuntaste tareas y te dejaste alguna sin marcar, te dice cuáles. La idea es que no puedas cerrar el día en blanco.',
+      'Las tareas que apuntas ahí entran también en el motor de reglas del comodín: si te justificas, se tienen en cuenta junto a tus tareas fijas para decidir si te lo acepta. La lista se vacía sola cada vez que sellas el día, usas un comodín o reinicias el reto, así que cada día empiezas con la hoja en blanco.',
+      'Además, al configurar el reto el icono de cada sección vuelve a ser un campo de texto: escribes directamente el emoji que quieras en vez de ir rotando entre una lista fija.',
+    ],
+  },
+  {
     id: '2026-08-01-pedidos-evolucion-mes',
     title: 'Pedidos diarios: gráfico de evolución mes a mes',
     items: [

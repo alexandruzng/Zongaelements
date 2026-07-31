@@ -143,7 +143,7 @@ input,textarea,button{font-family:inherit;color:inherit}
   <sc-for list="{{ setupSections }}" as="s" hint-placeholder-count="2">
     <div style="background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:16px;margin-bottom:14px">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-        <button onClick="{{ s.cycleIcon }}" title="Cambiar icono" style="width:44px;height:44px;flex:none;border-radius:14px;border:1px solid var(--line);background:var(--panel2);font-size:21px;cursor:pointer;line-height:1">{{ s.icon }}</button>
+        <input value="{{ s.icon }}" onChange="{{ s.setIcon }}" title="Escribe el emoji que quieras" placeholder="🙂" style="width:44px;height:44px;flex:none;border-radius:14px;border:1px solid var(--line);background:var(--panel2);font-size:21px;text-align:center;padding:0;color:var(--ink);font-family:inherit;cursor:text;outline:none" />
         <input value="{{ s.name }}" onChange="{{ s.rename }}" placeholder="Nombre de la sección" style="flex:1;min-width:0;background:none;border:none;border-bottom:1.5px solid var(--line);padding:8px 2px;font-family:'Oswald',sans-serif;font-size:21px;font-weight:600;text-transform:uppercase;letter-spacing:.01em;outline:none">
         <button onClick="{{ s.remove }}" title="Eliminar sección" style="width:36px;height:36px;flex:none;border-radius:10px;border:1px solid var(--line);background:none;color:var(--ink3);cursor:pointer;font-size:16px">×</button>
       </div>
@@ -263,6 +263,43 @@ input,textarea,button{font-family:inherit;color:inherit}
 
   <div style="font-family:'Oswald',sans-serif;font-size:18px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin:0 0 4px">Checklist de hoy</div>
   <div style="font-size:13px;color:var(--ink3);margin-bottom:14px;font-family:'JetBrains Mono',monospace">{{ doneCount }}/{{ totalCount }} completadas</div>
+
+
+  <div style="background:var(--panel);border:1.5px solid {{ mandBd }};border-radius:18px;box-shadow:var(--shadow);padding:6px 14px 12px;margin-bottom:12px">
+    <div onClick="{{ mandToggle }}" style="display:flex;align-items:center;gap:12px;padding:13px 4px;cursor:pointer;min-height:48px;border-radius:12px" style-hover="background:var(--panel2)">
+      <div style="width:26px;height:26px;flex:none;border-radius:9px;border:2px solid {{ mandBd }};background:{{ mandBg }};display:flex;align-items:center;justify-content:center;transition:all .22s cubic-bezier(.2,1.4,.4,1);transform:scale({{ mandScale }})">
+        <div style="width:11px;height:6px;border-left:2.5px solid #fff;border-bottom:2.5px solid #fff;transform:rotate(-45deg) translateY(-1px);opacity:{{ mandCheck }};transition:opacity .18s"></div>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:16px;line-height:1.3;color:{{ mandFg }};text-decoration:{{ mandDeco }}">Terminar todas las tareas de hoy</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink3);margin-top:3px;letter-spacing:.04em">OBLIGATORIO · {{ mandCount }}</div>
+      </div>
+      <div style="font-size:14px;color:var(--ink3);transform:rotate({{ mandRot }});transition:transform .25s;flex:none">▼</div>
+    </div>
+
+    <sc-if value="{{ mandOpen }}" hint-placeholder-val="{{ true }}">
+      <div style="border-top:1px solid var(--line);margin-top:4px;padding-top:8px">
+        <sc-if value="{{ mandEmpty }}" hint-placeholder-val="{{ false }}">
+          <div style="font-size:13px;color:var(--ink3);line-height:1.5;padding:6px 4px 10px">Apunta aquí lo que tienes que hacer hoy. Si queda algo sin marcar, esta casilla no se cumple.</div>
+        </sc-if>
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <sc-for list="{{ mandList }}" as="m" hint-placeholder-count="2">
+            <div style="display:flex;align-items:center;gap:10px;padding:9px 4px;border-radius:10px" style-hover="background:var(--panel2)">
+              <div onClick="{{ m.toggle }}" style="width:22px;height:22px;flex:none;border-radius:8px;border:2px solid {{ m.bd }};background:{{ m.bg }};display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s">
+                <div style="width:9px;height:5px;border-left:2.5px solid #fff;border-bottom:2.5px solid #fff;transform:rotate(-45deg) translateY(-1px);opacity:{{ m.check }}"></div>
+              </div>
+              <div onClick="{{ m.toggle }}" style="flex:1;min-width:0;font-size:15px;line-height:1.35;cursor:pointer;color:{{ m.fg }};text-decoration:{{ m.deco }}">{{ m.name }}</div>
+              <button onClick="{{ m.remove }}" style="flex:none;background:none;border:none;color:var(--ink3);font-size:16px;line-height:1;cursor:pointer;padding:6px 4px" style-hover="color:var(--bad)">×</button>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <input value="{{ mandDraft }}" onChange="{{ setMandDraft }}" onKeyDown="{{ mandKey }}" placeholder="Añadir tarea de hoy…" style="flex:1;min-width:0;background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:12px;font-size:15px;color:var(--ink);font-family:inherit;outline:none" />
+          <button onClick="{{ mandAdd }}" style="flex:none;background:var(--accent);color:#fff;border:none;border-radius:11px;padding:12px 16px;font-family:'Oswald',sans-serif;font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;cursor:pointer">Añadir</button>
+        </div>
+      </div>
+    </sc-if>
+  </div>
 
   <sc-for list="{{ viewSections }}" as="sec" hint-placeholder-count="2">
     <div style="background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:6px 14px 12px;margin-bottom:12px">
@@ -782,6 +819,7 @@ function evaluateWildcard(rawText, taskNames) {
 /* --- datos por defecto -------------------------------------- */
 const DEFAULT_DATA = () => ({
   dark: false, sound: true, tutorialDone: false, phase: 'setup',
+  todayList: [],
   sections: [
     { id: uid(), icon: '🌙', name: 'Sueño', tasks: [{ id: uid(), name: 'Acostarme a las 23:30' }, { id: uid(), name: 'Sin pantallas la última media hora' }] },
     { id: uid(), icon: '🏋️', name: 'Entrenamiento', tasks: [{ id: uid(), name: 'Ir al gimnasio' }, { id: uid(), name: '10.000 pasos' }] }
@@ -892,6 +930,10 @@ class Component extends DCLogic {
 
     const tasks = this.allTasks(d);
     const doneCount = tasks.filter((t) => d.checked[t.id]).length;
+    const todayList = d.todayList || [];
+    const mandDone = todayList.length > 0 && todayList.every((m) => m.done);
+    const doneAll = doneCount + (mandDone ? 1 : 0), totalAll = tasks.length + 1;
+    const pendingToday = todayList.filter((m) => !m.done).map((m) => m.name);
     const rIdx = this.rankIdx(d.xp), rank = RANKS[rIdx], next = RANKS[rIdx + 1];
     const xpPct = next ? Math.round(((d.xp - rank.xp) / (next.xp - rank.xp)) * 100) : 100;
     const streak = Math.max(0, d.day - 1);
@@ -958,7 +1000,15 @@ class Component extends DCLogic {
       setupTaskCount: tasks.length, setupSectionCount: d.sections.length,
       setupSections: d.sections.map((s, i) => ({
         icon: s.icon, name: s.name,
-        cycleIcon: () => this.up((x) => { x.sections[i].icon = ICONS[(ICONS.indexOf(x.sections[i].icon) + 1) % ICONS.length]; }),
+        setIcon: (e) => {
+          let v = (e.target.value || '').replace(/\s/g, '');
+          if (v) {
+            const segs = (typeof Intl !== 'undefined' && Intl.Segmenter)
+              ? Array.from(new Intl.Segmenter().segment(v), (x) => x.segment) : Array.from(v);
+            v = segs[segs.length - 1];
+          }
+          this.up((x) => { x.sections[i].icon = v; });
+        },
         rename: (e) => { const v = e.target.value; this.up((x) => { x.sections[i].name = v; }); },
         remove: () => this.up((x) => { x.sections.splice(i, 1); }),
         addTask: () => this.up((x) => { x.sections[i].tasks.push({ id: uid(), name: '' }); }),
@@ -977,7 +1027,7 @@ class Component extends DCLogic {
       showConfirmStart: S.showConfirm,
       cancelStart: () => this.setState({ showConfirm: false }),
       doStart: () => { this.setState({ showConfirm: false }); this.sound('seal');
-        this.up((x) => { x.sections = x.sections.map((s) => ({ ...s, tasks: s.tasks.filter((t) => t.name.trim()) })).filter((s) => s.tasks.length); x.phase = 'active'; x.day = 1; x.checked = {}; x.events = []; x.badges = []; }); },
+        this.up((x) => { x.sections = x.sections.map((s) => ({ ...s, tasks: s.tasks.filter((t) => t.name.trim()) })).filter((s) => s.tasks.length); x.phase = 'active'; x.day = 1; x.checked = {}; x.todayList = []; x.events = []; x.badges = []; }); },
 
       /* dashboard */
       dayPad: pad2(d.day), dayNum: d.day, streak, sealedCount: (d.events || []).filter((e) => e.t === 'done').length,
@@ -991,7 +1041,24 @@ class Component extends DCLogic {
       xpToNextLabel: next ? (next.xp - d.xp) + ' XP para ' + next.n : 'Rango máximo alcanzado',
       flameW: Math.round(16 + Math.min(streak, 30) * 0.62), flameInner: Math.round(7 + Math.min(streak, 30) * 0.3), flameOpacity: String(0.45 + Math.min(streak, 20) * 0.0275),
       quote: QUOTES[(d.day - 1 + (d.attempt - 1) * 3) % QUOTES.length],
-      cells, badges, doneCount, totalCount: tasks.length,
+      cells, badges, doneCount: doneAll, totalCount: totalAll,
+      mandOpen: S.mandOpen !== false, mandRot: S.mandOpen !== false ? '180deg' : '0deg',
+      mandEmpty: !todayList.length,
+      mandCount: todayList.length ? todayList.filter((m) => m.done).length + '/' + todayList.length : 'sin tareas apuntadas',
+      mandBd: mandDone ? 'var(--ok)' : 'var(--line)', mandBg: mandDone ? 'var(--ok)' : 'transparent',
+      mandCheck: mandDone ? '1' : '0', mandScale: mandDone ? '1.08' : '1',
+      mandFg: mandDone ? 'var(--ink3)' : 'var(--ink)', mandDeco: mandDone ? 'line-through' : 'none',
+      mandToggle: () => this.setState({ mandOpen: S.mandOpen === false }),
+      mandDraft: S.mandDraft || '',
+      setMandDraft: (e) => this.setState({ mandDraft: e.target.value }),
+      mandKey: (e) => { if (e.key === 'Enter') { e.preventDefault(); this.addToday(); } },
+      mandAdd: () => this.addToday(),
+      mandList: todayList.map((m, i) => ({
+        name: m.name, bd: m.done ? 'var(--ok)' : 'var(--line)', bg: m.done ? 'var(--ok)' : 'transparent',
+        check: m.done ? '1' : '0', fg: m.done ? 'var(--ink3)' : 'var(--ink)', deco: m.done ? 'line-through' : 'none',
+        toggle: () => { this.sound('tick'); this.up((x) => { x.todayList[i].done = !x.todayList[i].done; }); },
+        remove: () => this.up((x) => { x.todayList.splice(i, 1); })
+      })),
       viewSections: d.sections.map((s) => ({
         icon: s.icon, name: s.name, count: s.tasks.filter((t) => d.checked[t.id]).length + '/' + s.tasks.length,
         tasks: s.tasks.map((t) => { const on = !!d.checked[t.id]; return {
@@ -1000,18 +1067,19 @@ class Component extends DCLogic {
           toggle: () => { this.sound('tick'); this.up((x) => { if (x.checked[t.id]) delete x.checked[t.id]; else x.checked[t.id] = true; }); }
         }; })
       })),
-      finishLabel: doneCount === tasks.length && tasks.length ? 'Sellar día ' + d.day : 'Finalizar día · ' + doneCount + '/' + tasks.length,
-      finishBg: doneCount === tasks.length && tasks.length ? 'var(--ok)' : 'var(--panel)',
-      finishFg: doneCount === tasks.length && tasks.length ? '#fff' : 'var(--ink)',
-      finishBd: doneCount === tasks.length && tasks.length ? 'var(--ok)' : 'var(--line)',
+      finishLabel: doneAll === totalAll ? 'Sellar día ' + d.day : 'Finalizar día · ' + doneAll + '/' + totalAll,
+      finishBg: doneAll === totalAll ? 'var(--ok)' : 'var(--panel)',
+      finishFg: doneAll === totalAll ? '#fff' : 'var(--ink)',
+      finishBd: doneAll === totalAll ? 'var(--ok)' : 'var(--line)',
       finishDay: () => {
-        if (!tasks.length) return;
-        if (doneCount === tasks.length) this.sealDay(); else this.setState({ wildStage: 'offer', wildText: '', wildRes: null, wildTries: 0 });
+        if (doneAll === totalAll) this.sealDay(); else this.setState({ wildStage: 'offer', wildText: '', wildRes: null, wildTries: 0 });
       },
 
       /* comodín */
       wildStage: !!S.wildStage, wildIsOffer: S.wildStage === 'offer', wildIsForm: S.wildStage === 'form', wildIsResult: S.wildStage === 'result',
-      missingCount: tasks.length - doneCount, missingList: tasks.filter((t) => !d.checked[t.id]).map((t) => ({ name: t.name })),
+      missingCount: totalAll - doneAll,
+      missingList: tasks.filter((t) => !d.checked[t.id]).map((t) => ({ name: t.name }))
+        .concat(mandDone ? [] : [{ name: todayList.length ? 'Terminar todas las tareas de hoy (' + pendingToday.join(', ') + ')' : 'Terminar todas las tareas de hoy (no apuntaste ninguna)' }]),
       sleepLabel: hm(sleepLimitFromTasks(tasks.map((t) => t.name))),
       wildText: S.wildText, wildCharLabel: S.wildText.length + ' caracteres · intento ' + (S.wildTries + 1) + '/2',
       setWildText: (e) => this.setState({ wildText: e.target.value }),
@@ -1019,7 +1087,7 @@ class Component extends DCLogic {
       backToOffer: () => this.setState({ wildStage: 'offer' }),
       closeWild: () => this.setState({ wildStage: null }),
       evalWild: () => {
-        const res = evaluateWildcard(S.wildText, tasks.map((t) => t.name));
+        const res = evaluateWildcard(S.wildText, tasks.map((t) => t.name).concat(pendingToday));
         this.up((x) => { x.wildcards.unshift({ attempt: x.attempt, day: x.day, text: S.wildText.trim(), accepted: res.accepted, cat: res.cat.label, catKey: res.cat.key, color: res.cat.color, date: new Date().toISOString() }); });
         this.setState({ wildStage: 'result', wildRes: res, wildTries: S.wildTries + 1 });
         this.sound(res.accepted ? 'seal' : 'fail');
@@ -1050,8 +1118,8 @@ class Component extends DCLogic {
         { k: 'Comodines usados', v: String((d.wildcards || []).length) }, { k: 'Tarea más difícil', v: hardest },
         { k: 'XP acumulada', v: String(d.xp) }, { k: 'Rango final', v: rank.n }
       ],
-      repeatSame: () => { this.up((x) => { x.phase = 'active'; x.day = 1; x.checked = {}; x.events = []; x.badges = []; x.attempt += 1; }); },
-      newChallenge: () => { this.up((x) => { x.phase = 'setup'; x.day = 1; x.checked = {}; x.events = []; x.badges = []; x.attempt += 1; }); },
+      repeatSame: () => { this.up((x) => { x.phase = 'active'; x.day = 1; x.checked = {}; x.todayList = []; x.events = []; x.badges = []; x.attempt += 1; }); },
+      newChallenge: () => { this.up((x) => { x.phase = 'setup'; x.day = 1; x.checked = {}; x.todayList = []; x.events = []; x.badges = []; x.attempt += 1; }); },
 
       /* stats */
       showStats: S.showStats, openStats: () => this.setState({ showStats: true, wipeStep: 0 }), closeStats: () => this.setState({ showStats: false }),
@@ -1081,6 +1149,14 @@ class Component extends DCLogic {
     return T;
   }
 
+  addToday() {
+    const v = (this.state.mandDraft || '').trim();
+    if (!v) return;
+    this.sound('tick');
+    this.up((x) => { x.todayList = (x.todayList || []).concat([{ id: uid(), name: v, done: false }]); });
+    this.setState({ mandDraft: '', mandOpen: true });
+  }
+
   sealDay() {
     const d = this.state.data; const prevXp = d.xp; const day = d.day;
     this.sound('seal'); this.burst(60, { y: window.innerHeight * 0.55, spread: 320, colors: ['#3fae76', '#8fd6b0', '#e0c341'] });
@@ -1088,7 +1164,7 @@ class Component extends DCLogic {
     this.up((x) => {
       x.events.push({ t: 'done', day, date: new Date().toISOString() });
       x.activity = (x.activity || []).filter((a) => a.k !== dkey(new Date())).concat([{ k: dkey(new Date()), t: 'done' }]).slice(-200);
-      x.xp += XP_DAY; x.best = Math.max(x.best, day); x.checked = {};
+      x.xp += XP_DAY; x.best = Math.max(x.best, day); x.checked = {}; x.todayList = [];
       BADGE_DAYS.forEach((b) => { if (day >= b.d && !x.badges.includes(b.d)) x.badges.push(b.d); });
       if (last) { x.phase = 'done'; x.history.unshift({ attempt: x.attempt, date: new Date().toISOString(), days: 30, result: 'completado', wilds: (x.wildcards || []).filter((w) => w.attempt === x.attempt && w.accepted).length }); }
       else x.day = day + 1;
@@ -1104,7 +1180,7 @@ class Component extends DCLogic {
     this.up((x) => {
       x.events.push({ t: 'wild', day: x.day, cat: res.cat.label, date: new Date().toISOString() });
       x.activity = (x.activity || []).filter((a) => a.k !== dkey(new Date())).concat([{ k: dkey(new Date()), t: 'wild' }]).slice(-200);
-      x.xp += XP_WILD; x.checked = {};
+      x.xp += XP_WILD; x.checked = {}; x.todayList = [];
     }, () => { this.setState({ wildStage: null, wildRes: null, wildText: '', wildTries: 0 }); this.checkRank(prevXp); });
   }
 
@@ -1118,7 +1194,7 @@ class Component extends DCLogic {
       missing.forEach((n) => { x.failCounts[n] = (x.failCounts[n] || 0) + 1; });
       x.activity = (x.activity || []).filter((a) => a.k !== dkey(new Date())).concat([{ k: dkey(new Date()), t: 'fail' }]).slice(-200);
       x.history.unshift({ attempt, date: new Date().toISOString(), days, result: 'reiniciado', wilds: wilds.filter((w) => w.accepted).length });
-      x.resets += 1; x.attempt += 1; x.day = 1; x.checked = {}; x.events = []; x.badges = [];
+      x.resets += 1; x.attempt += 1; x.day = 1; x.checked = {}; x.todayList = []; x.events = []; x.badges = [];
     }, () => this.setState({
       wildStage: null, wildRes: null, wildText: '', wildTries: 0,
       recap: { attempt, line: 'Llegaste al día ' + days + ' de 30. Tu XP y tu rango se quedan contigo: eso no se reinicia.', rows: [

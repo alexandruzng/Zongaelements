@@ -5,6 +5,16 @@
 */
 const UPDATES = [
   {
+    id: '2026-08-01-pedidos-evolucion-mes',
+    title: 'Pedidos diarios: gráfico de evolución mes a mes',
+    items: [
+      'Debajo del calendario tienes una sección nueva, «Evolución por mes», con una gráfica de línea que muestra cómo va cada mes desde que empezaste a registrar. Puedes cambiar entre PEDIDOS y FACTURACIÓN con el interruptor de arriba a la derecha, y elegir si quieres ver los últimos 6 meses, los últimos 12 o todo el histórico.',
+      'Cada punto es el total del mes cerrado a su último día (31 de marzo, 30 de abril…), así que comparas meses completos contra meses completos. El mes en curso se dibuja con línea discontinua para que se distinga de un vistazo, y una línea de puntos marca la proyección a cierre: a qué cifra llegarías el último día si sigues al ritmo que llevas. Todo se recalcula solo en cuanto guardas un día nuevo en el calendario.',
+      'Pasa el dedo o el ratón por la gráfica para ver el detalle de cualquier mes (total, días registrados y si está cerrado o en curso). Debajo tienes tres tarjetas — mes en curso con su variación frente al mes anterior al mismo ritmo, mejor mes cerrado y media mensual — y un desplegable «Ver los datos en tabla» con las cifras exactas de pedidos y facturación de cada mes.',
+      'No se ha tocado ningún dato: la sección solo lee lo que ya tenías registrado, incluidos los meses que importaste con «Importar mes».',
+    ],
+  },
+  {
     id: '2026-07-30-reto-30-dias',
     title: 'Nueva herramienta: Reto de 30 días (la versión dura del diario)',
     items: [

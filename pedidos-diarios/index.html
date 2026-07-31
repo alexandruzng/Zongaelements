@@ -352,6 +352,119 @@
   }
   .picker .months button:hover { background: var(--blue-soft); color: var(--blue-dark); border-color: var(--blue-soft); }
   .picker .months button.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+
+  /* ── Estadísticas / evolución mensual ───────────────── */
+  .stats-section { margin-top: 40px; }
+  .sec-head {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    gap: 12px; flex-wrap: wrap; margin-bottom: 14px;
+  }
+  .eyebrow {
+    font-size: 10px; font-weight: 700; color: var(--ink-3);
+    text-transform: uppercase; letter-spacing: .1em;
+  }
+  .sec-head h2 {
+    font-family: 'DM Serif Display', serif; font-weight: 400;
+    font-size: 26px; letter-spacing: -0.02em; margin-top: 4px;
+  }
+  .seg {
+    display: inline-flex; padding: 3px; gap: 2px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  }
+  .seg button {
+    background: none; border: none; border-radius: 7px;
+    padding: 7px 14px; font-weight: 600; font-size: 12px; cursor: pointer;
+    color: var(--ink-3); transition: all .15s;
+  }
+  .seg button[data-active="true"] { background: var(--bg); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+  .seg button:hover:not([data-active="true"]) { color: var(--ink-2); }
+
+  .chips { display: flex; gap: 6px; margin-bottom: 12px; }
+  .chip {
+    padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border);
+    background: var(--bg); color: var(--ink-3);
+    font-size: 12px; font-weight: 600; cursor: pointer; transition: all .15s;
+  }
+  .chip:hover { color: var(--ink-2); background: var(--surface); }
+  .chip[data-active="true"] { background: var(--blue-soft); color: var(--blue-dark); border-color: transparent; }
+
+  .chart-card {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 18px;
+    padding: 14px 12px 12px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.02), 0 8px 24px -16px rgba(0,0,0,.06);
+  }
+  .chart-wrap { position: relative; width: 100%; }
+  .chart-wrap svg { display: block; width: 100%; }
+  .chart-empty {
+    padding: 46px 20px; text-align: center; color: var(--ink-3);
+    font-size: 13px; line-height: 1.5;
+  }
+  .chart-tip {
+    position: absolute; z-index: 10; pointer-events: none;
+    background: var(--ink); color: #fff; border-radius: 10px;
+    padding: 8px 10px; font-size: 12px; line-height: 1.35;
+    box-shadow: 0 10px 30px rgba(0,0,0,.22);
+    transform: translate(-50%, -100%); white-space: nowrap;
+    transition: opacity .12s;
+  }
+  .chart-tip .tt-m { font-weight: 700; font-size: 11px; opacity: .7; text-transform: capitalize; }
+  .chart-tip .tt-v { font-size: 15px; font-weight: 700; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .chart-tip .tt-s { font-size: 11px; opacity: .7; margin-top: 3px; }
+  .chart-legend {
+    display: flex; flex-wrap: wrap; gap: 14px;
+    padding: 10px 6px 2px; border-top: 1px solid var(--border); margin-top: 8px;
+  }
+  .chart-legend span { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--ink-3); }
+  .chart-legend i { width: 16px; height: 0; border-top: 2px solid var(--blue); display: inline-block; }
+  .chart-legend i.dash { border-top-style: dashed; }
+  .chart-legend i.dot { border-top-style: dotted; border-color: var(--ink-3); }
+
+  .mini-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 14px; }
+  .mini {
+    background: var(--surface); border-radius: 14px; padding: 12px 12px 11px;
+    min-width: 0;
+  }
+  .mini .l { font-size: 10px; color: var(--ink-3); text-transform: uppercase; letter-spacing: .04em; font-weight: 700; }
+  .mini .v { font-size: 18px; font-weight: 700; margin-top: 5px; letter-spacing: -0.01em; }
+  .mini .s { font-size: 11px; color: var(--ink-3); margin-top: 2px; }
+  .mini .s.up { color: var(--green-ink); font-weight: 600; }
+  .mini .s.down { color: var(--red-ink); font-weight: 600; }
+
+  .table-view { margin-top: 14px; }
+  .table-view summary {
+    cursor: pointer; font-size: 12px; font-weight: 600; color: var(--ink-3);
+    padding: 8px 2px; list-style: none; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .table-view summary::-webkit-details-marker { display: none; }
+  .table-view summary::before { content: '▸'; transition: transform .15s; }
+  .table-view[open] summary::before { transform: rotate(90deg); }
+  .table-view summary:hover { color: var(--ink); }
+  .tbl-scroll { overflow-x: auto; margin-top: 6px; }
+  .table-view table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 380px; }
+  .table-view th {
+    text-align: right; font-size: 10px; color: var(--ink-3); font-weight: 700;
+    text-transform: uppercase; letter-spacing: .04em;
+    padding: 8px 10px; border-bottom: 1px solid var(--border);
+  }
+  .table-view th:first-child, .table-view td:first-child { text-align: left; }
+  .table-view td {
+    text-align: right; padding: 9px 10px; border-bottom: 1px solid var(--border);
+    color: var(--ink-2); font-variant-numeric: tabular-nums;
+  }
+  .table-view tr:last-child td { border-bottom: none; }
+  .table-view td.mth { color: var(--ink); font-weight: 600; text-transform: capitalize; }
+  .table-view td .live { color: var(--blue); font-weight: 600; font-size: 11px; }
+
+  @media (max-width: 540px) {
+    .stats-section { margin-top: 32px; }
+    .sec-head h2 { font-size: 22px; }
+    .seg button { padding: 7px 11px; }
+    .mini-stats { gap: 8px; }
+    .mini { padding: 10px 9px; border-radius: 12px; }
+    .mini .v { font-size: 15px; }
+    .mini .l { font-size: 9px; letter-spacing: .02em; }
+    .mini .s { font-size: 10px; }
+  }
 </style>
 </head>
 <body>
@@ -397,6 +510,38 @@
     </div>
     <div class="cal-grid" id="grid"></div>
   </div>
+
+  <!-- Evolución mensual -->
+  <section class="stats-section">
+    <div class="sec-head">
+      <div>
+        <div class="eyebrow">Histórico completo</div>
+        <h2>Evolución por mes</h2>
+      </div>
+      <div class="seg" id="metricToggle" role="tablist">
+        <button type="button" data-metric="orders" role="tab">Pedidos</button>
+        <button type="button" data-metric="revenue" role="tab">Facturación</button>
+      </div>
+    </div>
+
+    <div class="chips" id="rangeChips">
+      <button type="button" class="chip" data-range="6">6 meses</button>
+      <button type="button" class="chip" data-range="12">12 meses</button>
+      <button type="button" class="chip" data-range="all">Todo</button>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-wrap" id="chartWrap"></div>
+      <div class="chart-legend" id="chartLegend"></div>
+    </div>
+
+    <div class="mini-stats" id="miniStats"></div>
+
+    <details class="table-view">
+      <summary>Ver los datos en tabla</summary>
+      <div class="tbl-scroll" id="statsTable"></div>
+    </details>
+  </section>
 </div>
 
 <!-- Sticky month nav -->
@@ -605,7 +750,399 @@
     totalOrdersHint.textContent  = daysWithOrders > 0
       ? `Media: ${(totalOrders / daysWithOrders).toFixed(1)} / día`
       : 'En el mes';
+
+    renderStats();
   }
+
+  // ── Estadísticas: evolución por mes ─────────────────
+  const METRIC_KEY = 'pd:stats-metric'; // 'orders' | 'revenue'
+  const RANGE_KEY  = 'pd:stats-range';  // '6' | '12' | 'all'
+  const chartWrap  = document.getElementById('chartWrap');
+  const metricToggle = document.getElementById('metricToggle');
+  const rangeChips = document.getElementById('rangeChips');
+  const miniStats  = document.getElementById('miniStats');
+  const statsTable = document.getElementById('statsTable');
+  const chartLegend = document.getElementById('chartLegend');
+
+  let metric = localStorage.getItem(METRIC_KEY) === 'revenue' ? 'revenue' : 'orders';
+  let range  = localStorage.getItem(RANGE_KEY) || '12';
+  if (!['6','12','all'].includes(range)) range = '12';
+
+  // Agregado de un mes: suma día a día + total mensual declarado (histórico)
+  function aggregateMonth(y, m) {
+    const dim = daysInMonth(y, m);
+    const mk = monthKey(y, m);
+    let orders = 0, revenue = 0, recorded = 0;
+    for (let d = 1; d <= dim; d++) {
+      const data = days[dateKey(y, m, d)];
+      if (!data || data.orders == null) continue;
+      recorded++;
+      orders += data.orders || 0;
+      revenue += dayInUSD(data);
+    }
+    const declared = monthly[mk] ? monthlyInUSD(monthly[mk]) : 0;
+    return { y, m, mk, dim, orders, revenue: revenue + declared, recorded, declared: !!monthly[mk] };
+  }
+
+  // Serie continua desde el primer mes con datos hasta el mes actual
+  function buildSeries() {
+    const keys = new Set();
+    Object.keys(days).forEach(k => { if (days[k] && days[k].orders != null) keys.add(k.slice(0, 7)); });
+    Object.keys(monthly).forEach(k => keys.add(k));
+    if (!keys.size) return [];
+
+    const t = new Date();
+    const curIdx = t.getFullYear() * 12 + t.getMonth();
+    const idxs = [...keys].map(k => {
+      const [y, m] = k.split('-').map(Number);
+      return y * 12 + (m - 1);
+    });
+    const first = Math.min(...idxs);
+    const last  = Math.max(...idxs, curIdx);
+
+    const out = [];
+    for (let i = first; i <= last; i++) {
+      const y = Math.floor(i / 12), m = (i % 12) + 1;
+      const agg = aggregateMonth(y, m);
+      agg.isCurrent = i === curIdx;
+      agg.isFuture  = i > curIdx;
+      agg.dayOfMonth = agg.isCurrent ? t.getDate() : agg.dim;
+      // Proyección a cierre: solo mes en curso, con datos suficientes y sin total declarado
+      agg.projection = null;
+      if (agg.isCurrent && !agg.declared && agg.recorded >= 3 && agg.recorded < agg.dim) {
+        agg.projection = {
+          orders: agg.orders / agg.recorded * agg.dim,
+          revenue: agg.revenue / agg.recorded * agg.dim,
+        };
+      }
+      out.push(agg);
+    }
+    return out;
+  }
+
+  function metricValue(agg) { return metric === 'revenue' ? agg.revenue : agg.orders; }
+  function projValue(agg) { return agg.projection ? (metric === 'revenue' ? agg.projection.revenue : agg.projection.orders) : null; }
+
+  // En las estadísticas el dinero va sin céntimos: son cifras de mes, no de ticket
+  function fmtUSDInt(n) {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(Math.round(n) || 0);
+  }
+  function fmtShort(v) {
+    return metric === 'revenue' ? fmtUSDInt(v) : Math.round(v).toLocaleString('es-ES');
+  }
+  function fmtMetric(v) {
+    return metric === 'revenue'
+      ? fmtUSDInt(v)
+      : `${Math.round(v).toLocaleString('es-ES')} pedido${Math.round(v) === 1 ? '' : 's'}`;
+  }
+  function fmtAxis(v) {
+    const p = metric === 'revenue' ? '$' : '';
+    if (v >= 1000) {
+      const k = v / 1000;
+      return `${p}${k >= 10 ? Math.round(k) : +k.toFixed(1)}k`;
+    }
+    return `${p}${Math.round(v)}`;
+  }
+  function shortMonth(agg) { return `${MONTHS[agg.m - 1].slice(0, 3)} ${String(agg.y).slice(2)}`; }
+  function niceCeil(v) {
+    if (!(v > 0)) return 1;
+    const p = Math.pow(10, Math.floor(Math.log10(v)));
+    for (const f of [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10]) if (v <= f * p) return f * p;
+    return 10 * p;
+  }
+
+  // Curva monótona (Fritsch–Carlson): suaviza sin inventar picos por debajo/encima de los datos
+  function smoothPath(pts) {
+    const n = pts.length;
+    if (n < 2) return '';
+    const dx = [], dy = [], mm = [];
+    for (let i = 0; i < n - 1; i++) {
+      dx[i] = pts[i + 1].x - pts[i].x;
+      dy[i] = pts[i + 1].y - pts[i].y;
+      mm[i] = dy[i] / dx[i];
+    }
+    const tg = new Array(n);
+    tg[0] = mm[0]; tg[n - 1] = mm[n - 2];
+    for (let i = 1; i < n - 1; i++) {
+      if (mm[i - 1] * mm[i] <= 0) { tg[i] = 0; continue; }
+      const w1 = 2 * dx[i] + dx[i - 1], w2 = dx[i] + 2 * dx[i - 1];
+      tg[i] = (w1 + w2) / (w1 / mm[i - 1] + w2 / mm[i]);
+    }
+    let d = `M${pts[0].x},${pts[0].y}`;
+    for (let i = 0; i < n - 1; i++) {
+      const h = dx[i] / 3;
+      d += ` C${pts[i].x + h},${pts[i].y + tg[i] * h} ${pts[i + 1].x - h},${pts[i + 1].y - tg[i + 1] * h} ${pts[i + 1].x},${pts[i + 1].y}`;
+    }
+    return d;
+  }
+
+  function renderStats() {
+    const all = buildSeries();
+    // recorte por rango (siempre termina en el mes actual)
+    const series = range === 'all' ? all : all.slice(Math.max(0, all.length - parseInt(range, 10)));
+    // el mes en curso sin ningún registro no se dibuja: evita una caída falsa a 0
+    const plot = series.filter(a => !(a.isCurrent && a.recorded === 0 && !a.declared));
+
+    metricToggle.querySelectorAll('button').forEach(b => { b.dataset.active = String(b.dataset.metric === metric); });
+    rangeChips.querySelectorAll('.chip').forEach(b => { b.dataset.active = String(b.dataset.range === range); });
+    chartLegend.style.display = plot.length ? '' : 'none';
+
+    if (!series.length || !plot.length) {
+      chartWrap.innerHTML = `<div class="chart-empty">Todavía no hay datos.<br>Registra pedidos en el calendario y aquí verás cómo evoluciona cada mes.</div>`;
+      if (series.length) { drawMini(series); drawTable(series); }
+      else { miniStats.innerHTML = ''; statsTable.innerHTML = ''; }
+      return;
+    }
+
+    drawChart(plot);
+    drawMini(series);
+    drawTable(series);
+  }
+
+  function drawChart(series) {
+    const W = Math.max(280, chartWrap.clientWidth || 320);
+    const narrow = W < 420;
+    const H = narrow ? 210 : 250;
+    const PL = narrow ? 34 : 44, PR = narrow ? 24 : 34, PT = 16, PB = 26;
+    const plotW = W - PL - PR, plotH = H - PT - PB;
+
+    const values = series.map(metricValue);
+    const maxActual = Math.max(...values, 0);
+    // una proyección desorbitada aplastaría el histórico: se deja fuera del eje
+    // (sigue apareciendo en el tooltip) y no se dibuja
+    const projRaw = projValue(series[series.length - 1]);
+    const projs = projRaw != null && projRaw <= maxActual * 2 ? [projRaw] : [];
+    const maxRaw = Math.max(maxActual, ...projs);
+    // el tope se elige para que los 4 escalones sean cifras redondas (0, 4k, 8k…)
+    const yMax = niceCeil((maxRaw || 1) / 4) * 4;
+
+    const n = series.length;
+    const xAt = i => n === 1 ? PL + plotW / 2 : PL + (plotW * i) / (n - 1);
+    const yAt = v => PT + plotH - (plotH * Math.min(v, yMax)) / yMax;
+
+    const pts = series.map((agg, i) => ({ x: xAt(i), y: yAt(metricValue(agg)), agg, i }));
+
+    // índice del último mes cerrado (para separar sólido / discontinuo)
+    let lastClosed = -1;
+    series.forEach((agg, i) => { if (!agg.isCurrent && !agg.isFuture) lastClosed = i; });
+    const xSplit = lastClosed >= 0 ? xAt(lastClosed) : PL;
+
+    const line = smoothPath(pts);
+    const area = line ? `${line} L${pts[n - 1].x},${PT + plotH} L${pts[0].x},${PT + plotH} Z` : '';
+
+    // rejilla + etiquetas Y
+    let grid = '';
+    for (let t = 0; t <= 4; t++) {
+      const v = (yMax * t) / 4;
+      const y = yAt(v);
+      grid += `<line x1="${PL}" y1="${y}" x2="${PL + plotW}" y2="${y}" stroke="#ececec" stroke-width="1" shape-rendering="crispEdges"/>`;
+      grid += `<text x="${PL - 8}" y="${y + 3.5}" text-anchor="end" font-size="10" fill="#8e8b83" font-variant-numeric="tabular-nums">${fmtAxis(v)}</text>`;
+    }
+
+    // etiquetas X (se van saltando si hay muchos meses)
+    const maxLabels = narrow ? 5 : 8;
+    const step = Math.ceil(n / maxLabels);
+    let xLabels = '';
+    series.forEach((agg, i) => {
+      if (i !== n - 1 && (i % step !== 0 || n - 1 - i < step * 0.6)) return;
+      xLabels += `<text x="${xAt(i)}" y="${PT + plotH + 17}" text-anchor="middle" font-size="10" fill="#8e8b83">${shortMonth(agg)}</text>`;
+    });
+
+    // proyección del mes en curso: línea de puntos vertical + anillo hueco
+    let proj = '';
+    const cur = series[n - 1];
+    const cp = projs.length ? projRaw : null;
+    if (cp != null) {
+      const yP = yAt(cp), yC = yAt(metricValue(cur));
+      proj = `<line x1="${pts[n - 1].x}" y1="${yC}" x2="${pts[n - 1].x}" y2="${yP}" stroke="#8e8b83" stroke-width="2" stroke-dasharray="1 4" stroke-linecap="round"/>
+              <circle cx="${pts[n - 1].x}" cy="${yP}" r="4" fill="#ffffff" stroke="#8e8b83" stroke-width="2"/>`;
+    }
+
+    // marcadores
+    let dots = '';
+    pts.forEach(p => {
+      const live = p.agg.isCurrent || p.agg.isFuture;
+      dots += `<circle cx="${p.x}" cy="${p.y}" r="4" fill="#ffffff" stroke="#2563EB" stroke-width="2" ${live ? 'stroke-dasharray="2 2"' : ''}/>`;
+    });
+
+    // etiqueta directa solo en el último punto
+    const lastP = pts[n - 1];
+    const lastVal = metricValue(cur);
+    const labelTxt = fmtShort(lastVal);
+    const labelAnchor = n === 1 ? 'middle' : 'end';
+    const labelX = n === 1 ? lastP.x : lastP.x - 8;
+    // si la proyección sale por encima, la etiqueta baja para no chocar con ella
+    const labelBelow = cp != null && yAt(cp) < lastP.y - 8;
+    const labelY = labelBelow
+      ? Math.min(PT + plotH - 2, lastP.y + 17)
+      : Math.max(PT + 10, lastP.y - 12);
+
+    chartWrap.innerHTML = `
+      <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img"
+           aria-label="Evolución mensual de ${metric === 'revenue' ? 'facturación en dólares' : 'pedidos'} desde ${shortMonth(series[0])} hasta ${shortMonth(cur)}">
+        <defs>
+          <linearGradient id="areaFade" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#2563EB" stop-opacity="0.14"/>
+            <stop offset="100%" stop-color="#2563EB" stop-opacity="0"/>
+          </linearGradient>
+          <clipPath id="clipClosed"><rect x="0" y="0" width="${xSplit}" height="${H}"/></clipPath>
+          <clipPath id="clipLive"><rect x="${xSplit}" y="0" width="${W - xSplit}" height="${H}"/></clipPath>
+        </defs>
+        ${grid}
+        ${xLabels}
+        ${area ? `<path d="${area}" fill="url(#areaFade)"/>` : ''}
+        ${line ? `<path d="${line}" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" clip-path="url(#clipClosed)"/>` : ''}
+        ${line ? `<path d="${line}" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-dasharray="5 4" clip-path="url(#clipLive)"/>` : ''}
+        ${proj}
+        <line id="crosshair" x1="0" y1="${PT}" x2="0" y2="${PT + plotH}" stroke="#2563EB" stroke-width="1" opacity="0"/>
+        ${dots}
+        <text x="${labelX}" y="${labelY}" text-anchor="${labelAnchor}" font-size="12" font-weight="700" fill="#1E40AF">${labelTxt}</text>
+        <rect id="chartHit" x="${PL - 6}" y="${PT}" width="${plotW + 12}" height="${plotH + PB}" fill="transparent" style="cursor:crosshair"/>
+      </svg>
+      <div class="chart-tip" id="chartTip" hidden></div>
+    `;
+
+    // la leyenda solo nombra lo que está dibujado
+    chartLegend.innerHTML = [
+      `<span><i></i> Mes cerrado (total a último día)</span>`,
+      cur.isCurrent ? `<span><i class="dash"></i> Mes en curso (día ${cur.dayOfMonth} de ${cur.dim})</span>` : '',
+      cp != null ? `<span><i class="dot"></i> Proyección a cierre de mes</span>` : '',
+    ].join('');
+
+    const tipEl = chartWrap.querySelector('#chartTip');
+    const svg = chartWrap.querySelector('svg');
+    const hit = chartWrap.querySelector('#chartHit');
+    const cross = chartWrap.querySelector('#crosshair');
+
+    function showTip(e) {
+      const box = svg.getBoundingClientRect();
+      const scale = box.width / W;
+      const x = (e.clientX - box.left) / scale;
+      let best = pts[0];
+      pts.forEach(p => { if (Math.abs(p.x - x) < Math.abs(best.x - x)) best = p; });
+      const agg = best.agg;
+      const v = metricValue(agg);
+      const pv = projValue(agg);
+
+      let sub;
+      if (agg.isFuture) sub = 'Mes futuro';
+      else if (agg.isCurrent) {
+        sub = `En curso · día ${agg.dayOfMonth} de ${agg.dim} · ${agg.recorded} registrado${agg.recorded === 1 ? '' : 's'}`;
+        if (pv != null) sub += `<br>Proyección a cierre: ${fmtMetric(pv)}`;
+      } else {
+        sub = `Cerrado a ${agg.dim} de ${MONTHS[agg.m - 1].toLowerCase()} · ${agg.recorded} día${agg.recorded === 1 ? '' : 's'} con registro`;
+      }
+
+      tipEl.innerHTML = `
+        <div class="tt-m">${MONTHS[agg.m - 1]} ${agg.y}</div>
+        <div class="tt-v">${fmtMetric(v)}</div>
+        <div class="tt-s">${sub}</div>`;
+      tipEl.hidden = false;
+      const tipW = tipEl.offsetWidth;
+      const left = Math.min(Math.max(best.x * scale, tipW / 2 + 4), box.width - tipW / 2 - 4);
+      tipEl.style.left = `${left}px`;
+      tipEl.style.top  = `${Math.max(best.y * scale - 10, 8)}px`;
+      cross.setAttribute('x1', best.x); cross.setAttribute('x2', best.x);
+      cross.setAttribute('opacity', '0.25');
+    }
+    function hideTip() { if (tipEl) tipEl.hidden = true; cross.setAttribute('opacity', '0'); }
+
+    hit.addEventListener('pointermove', showTip);
+    hit.addEventListener('pointerdown', showTip);
+    hit.addEventListener('pointerleave', hideTip);
+    svg.addEventListener('pointerleave', hideTip);
+  }
+
+  function drawMini(series) {
+    const cur = series[series.length - 1];
+    const closed = series.filter(a => !a.isCurrent && !a.isFuture);
+    const prev = closed[closed.length - 1] || null;
+    const curVal = metricValue(cur);
+
+    // variación del mes en curso frente al último mes cerrado (mismo tramo de días)
+    let deltaHtml = 'Sin mes anterior para comparar';
+    if (cur.isCurrent && cur.recorded === 0 && !cur.declared) {
+      deltaHtml = `Sin registros de ${MONTHS[cur.m - 1].toLowerCase()} todavía`;
+    } else if (prev) {
+      const prevVal = metricValue(prev);
+      const cmpBase = cur.isCurrent && cur.recorded > 0 && cur.recorded < cur.dim
+        ? prevVal * (cur.recorded / prev.dim)
+        : prevVal;
+      if (cmpBase > 0) {
+        const pct = ((curVal - cmpBase) / cmpBase) * 100;
+        const up = pct >= 0;
+        deltaHtml = `<span class="s ${up ? 'up' : 'down'}">${up ? '▲' : '▼'} ${Math.abs(pct).toFixed(0)}%</span> vs ${MONTHS[prev.m - 1].slice(0,3).toLowerCase()} al mismo ritmo`;
+      } else {
+        deltaHtml = `${MONTHS[prev.m - 1].slice(0,3)} cerró en ${fmtMetric(metricValue(prev))}`;
+      }
+    }
+
+    const best = closed.length
+      ? closed.reduce((a, b) => (metricValue(b) > metricValue(a) ? b : a))
+      : null;
+    const avg = closed.length
+      ? closed.reduce((s, a) => s + metricValue(a), 0) / closed.length
+      : 0;
+
+    const short = fmtShort;
+
+    miniStats.innerHTML = `
+      <div class="mini">
+        <div class="l">Mes en curso</div>
+        <div class="v">${short(curVal)}</div>
+        <div class="s">${deltaHtml}</div>
+      </div>
+      <div class="mini">
+        <div class="l">Mejor mes cerrado</div>
+        <div class="v">${best ? short(metricValue(best)) : '—'}</div>
+        <div class="s">${best ? `${MONTHS[best.m - 1]} ${best.y}` : 'Aún ninguno'}</div>
+      </div>
+      <div class="mini">
+        <div class="l">Media mensual</div>
+        <div class="v">${closed.length ? short(avg) : '—'}</div>
+        <div class="s">${closed.length ? `${closed.length} mes${closed.length === 1 ? '' : 'es'} cerrado${closed.length === 1 ? '' : 's'}` : 'Sin meses cerrados'}</div>
+      </div>`;
+  }
+
+  function drawTable(series) {
+    const rows = [...series].reverse().map(agg => `
+      <tr>
+        <td class="mth">${MONTHS[agg.m - 1]} ${agg.y}</td>
+        <td>${agg.orders.toLocaleString('es-ES')}</td>
+        <td>${fmtUSDInt(agg.revenue)}</td>
+        <td>${agg.isFuture ? '—' : agg.isCurrent
+              ? `<span class="live">En curso ${agg.dayOfMonth}/${agg.dim}</span>`
+              : `Cerrado · ${agg.recorded}/${agg.dim} días`}</td>
+      </tr>`).join('');
+    statsTable.innerHTML = `
+      <table>
+        <thead><tr><th>Mes</th><th>Pedidos</th><th>Facturación (USD)</th><th>Estado</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  }
+
+  metricToggle.querySelectorAll('button').forEach(b => {
+    b.addEventListener('click', () => {
+      metric = b.dataset.metric;
+      try { localStorage.setItem(METRIC_KEY, metric); } catch {}
+      renderStats();
+    });
+  });
+  rangeChips.querySelectorAll('.chip').forEach(b => {
+    b.addEventListener('click', () => {
+      range = b.dataset.range;
+      try { localStorage.setItem(RANGE_KEY, range); } catch {}
+      renderStats();
+    });
+  });
+
+  let resizeT = null, lastW = 0;
+  window.addEventListener('resize', () => {
+    if (chartWrap.clientWidth === lastW) return;
+    lastW = chartWrap.clientWidth;
+    clearTimeout(resizeT);
+    resizeT = setTimeout(renderStats, 150);
+  });
 
   // ── Navegación de meses ─────────────────────────────
   function shiftMonth(delta) {

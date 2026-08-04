@@ -5,6 +5,16 @@
 */
 const UPDATES = [
   {
+    id: '2026-08-05-reto-30-dias-tokens-de-vida',
+    title: 'Reto de 30 días: 5 tokens de vida para salvar el día',
+    items: [
+      'Ya no es todo o nada. Cada intento arranca con 5 tokens de vida. Si pulsas «Finalizar día» y te falta alguna casilla por sellar, antes de hablarte del comodín te pregunta: «Tienes 2 tareas aún pendientes. ¿Quieres consumir 2 tokens de 4 restantes?». Si aceptas, el día se sella igual, avanzas al siguiente y no pierdes la racha.',
+      'Cuesta 1 token por cada tarea sin marcar, no 1 por día: si te dejaste tres casillas, pagas tres tokens. Y si te faltan más tareas que tokens te queden, el botón no aparece — te dice cuántos necesitas y cuántos tienes. Cuando llegas a 0 se acabó: solo te queda el comodín de siempre o aceptar el fallo y volver al día 1.',
+      'Los tokens se ven en todo momento en la tarjeta de sellos, con cinco círculos que se van apagando. Los días salvados con token se sellan en dorado (en vez del verde de cumplido) y se distinguen en la tarjeta, en el mapa de calor y en el calendario. Dan 40 XP en lugar de los 100 del día limpio, y las tareas que te saltaste siguen sumando en el ranking de «lo que más te tumba».',
+      'Se recargan los 5 tokens cada vez que empiezas un intento nuevo: al reiniciar tras un fallo, al repetir el reto o al montar uno desde cero. Las opciones de siempre — comodín con motor de reglas y aceptar el fallo — siguen exactamente donde estaban.',
+    ],
+  },
+  {
     id: '2026-08-01-reto-30-dias-casilla-obligatoria',
     title: 'Reto de 30 días: casilla obligatoria de «terminar todas las tareas de hoy»',
     items: [

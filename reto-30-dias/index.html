@@ -62,6 +62,7 @@
   --ok:oklch(0.60 0.16 152); --okSoft:oklch(0.94 0.06 152);
   --wild:oklch(0.58 0.16 285); --wildSoft:oklch(0.94 0.05 285);
   --bad:oklch(0.58 0.19 25); --badSoft:oklch(0.94 0.05 25);
+  --token:oklch(0.68 0.15 85); --tokenSoft:oklch(0.95 0.06 85);
   --shadow:0 1px 2px rgba(20,18,14,.06),0 8px 24px -12px rgba(20,18,14,.18);
 }
 :root[data-theme="dark"]{
@@ -71,6 +72,7 @@
   --ok:oklch(0.72 0.15 152); --okSoft:oklch(0.30 0.07 152);
   --wild:oklch(0.72 0.14 285); --wildSoft:oklch(0.30 0.07 285);
   --bad:oklch(0.68 0.17 25); --badSoft:oklch(0.30 0.08 25);
+  --token:oklch(0.80 0.14 85); --tokenSoft:oklch(0.32 0.07 85);
   --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px -14px rgba(0,0,0,.7);
 }
 *{box-sizing:border-box}
@@ -245,7 +247,21 @@ input,textarea,button{font-family:inherit;color:inherit}
     <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;font-size:11px;color:var(--ink3)">
       <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:3px;background:var(--ok)"></div>cumplido</div>
       <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:3px;background:var(--wild)"></div>comodín</div>
+      <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:3px;background:var(--token)"></div>token</div>
       <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:3px;border:1.5px solid var(--accent)"></div>hoy</div>
+    </div>
+
+    <!-- Tokens de vida: 1 token salva 1 tarea sin sellar al finalizar el día -->
+    <div style="display:flex;align-items:center;gap:12px;border-top:1px solid var(--line);margin-top:12px;padding-top:12px">
+      <div style="flex:1;min-width:0">
+        <div style="font-family:'Oswald',sans-serif;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:{{ tokenHeadFg }}">Tokens de vida</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink3);margin-top:2px">{{ tokenHint }}</div>
+      </div>
+      <div style="display:flex;gap:5px;flex:none">
+        <sc-for list="{{ tokenPips }}" as="p" hint-placeholder-count="5">
+          <div title="{{ p.title }}" style="width:16px;height:16px;border-radius:50%;border:2px solid {{ p.bd }};background:{{ p.bg }};opacity:{{ p.op }};transition:all .2s"></div>
+        </sc-for>
+      </div>
     </div>
   </div>
 
@@ -322,7 +338,7 @@ input,textarea,button{font-family:inherit;color:inherit}
   </sc-for>
 
   <button onClick="{{ finishDay }}" style="width:100%;margin-top:10px;background:{{ finishBg }};color:{{ finishFg }};border:1.5px solid {{ finishBd }};border-radius:16px;padding:19px;font-family:'Oswald',sans-serif;font-size:20px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;cursor:pointer;position:relative;overflow:hidden;transition:all .25s">{{ finishLabel }}</button>
-  <div style="text-align:center;font-size:12px;color:var(--ink3);margin-top:10px;line-height:1.5">Si fallas alguna tarea vuelves al día 1, salvo comodín válido.</div>
+  <div style="text-align:center;font-size:12px;color:var(--ink3);margin-top:10px;line-height:1.5">Si fallas alguna tarea vuelves al día 1, salvo token de vida o comodín válido.</div>
 </div>
 </sc-if>
 
@@ -379,14 +395,31 @@ input,textarea,button{font-family:inherit;color:inherit}
     <sc-if value="{{ wildIsOffer }}" hint-placeholder-val="{{ true }}">
       <div>
         <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--bad);margin-bottom:8px">Día incompleto</div>
-        <h3 style="margin:0 0 10px;font-family:'Oswald',sans-serif;font-size:28px;font-weight:600;text-transform:uppercase;line-height:1.05">Te faltan {{ missingCount }} tareas</h3>
+        <h3 style="margin:0 0 10px;font-family:'Oswald',sans-serif;font-size:28px;font-weight:600;text-transform:uppercase;line-height:1.05">{{ missingTitle }}</h3>
         <div style="background:var(--badSoft);border-radius:14px;padding:12px 14px;margin-bottom:16px">
           <sc-for list="{{ missingList }}" as="m" hint-placeholder-count="2">
             <div style="font-size:14px;color:var(--ink);padding:3px 0">· {{ m.name }}</div>
           </sc-for>
         </div>
+
+        <!-- Tokens de vida: 1 token por cada tarea sin sellar -->
+        <div style="background:{{ tokenBoxBg }};border:1.5px solid {{ tokenBoxBd }};border-radius:14px;padding:14px;margin-bottom:16px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:{{ tokenBoxBd }};flex:1;min-width:0">Tokens de vida · {{ tokensLeft }}/{{ tokensMax }}</div>
+            <div style="display:flex;gap:5px;flex:none">
+              <sc-for list="{{ tokenPips }}" as="p" hint-placeholder-count="5">
+                <div title="{{ p.title }}" style="width:14px;height:14px;border-radius:50%;border:2px solid {{ p.bd }};background:{{ p.bg }};opacity:{{ p.op }}"></div>
+              </sc-for>
+            </div>
+          </div>
+          <p style="margin:0;font-size:15px;line-height:1.5;color:var(--ink)">{{ tokenAsk }}</p>
+        </div>
+
         <p style="margin:0 0 20px;color:var(--ink2);font-size:15px;line-height:1.5">Si aceptas el fallo vuelves al <strong style="color:var(--ink)">día 1</strong>. También puedes usar un comodín: escribes por qué no pudiste y un motor de reglas decide si es válido.</p>
         <div style="display:flex;flex-direction:column;gap:9px">
+          <sc-if value="{{ tokenCanUse }}" hint-placeholder-val="{{ true }}">
+            <button onClick="{{ useTokens }}" style="background:var(--token);color:#fff;border:none;border-radius:14px;padding:16px;font-family:'Oswald',sans-serif;font-size:17px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;cursor:pointer">{{ tokenBtnLabel }}</button>
+          </sc-if>
           <button onClick="{{ goWildForm }}" style="background:var(--wild);color:#fff;border:none;border-radius:14px;padding:16px;font-family:'Oswald',sans-serif;font-size:17px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;cursor:pointer">Usar comodín</button>
           <button onClick="{{ confirmFail }}" style="background:none;border:1.5px solid var(--line);border-radius:14px;padding:14px;font-size:15px;color:var(--ink2);cursor:pointer">Aceptar fallo y reiniciar</button>
           <button onClick="{{ closeWild }}" style="background:none;border:none;padding:8px;font-size:14px;color:var(--ink3);cursor:pointer">Volver al checklist</button>
@@ -600,7 +633,10 @@ const RULES = {
   ]
 };
 
-const XP_DAY = 100, XP_WILD = 25;
+const XP_DAY = 100, XP_WILD = 25, XP_TOKEN = 40;
+/* Tokens de vida: 5 por intento. Cada tarea sin sellar al finalizar el día
+   cuesta 1 token; cuando se acaban, solo quedan el comodín o el reinicio. */
+const TOKENS_MAX = 5;
 const RANKS = [
   { n:'Novato',       xp:0,    c:'var(--ink3)',  s:1, blurb:'Empiezas. Nadie te conoce todavía, ni tú mismo.' },
   { n:'Constante',    xp:300,  c:'var(--ok)',    s:2, blurb:'Ya no dependes de las ganas. Apareces igual.' },
@@ -825,6 +861,7 @@ const DEFAULT_DATA = () => ({
     { id: uid(), icon: '🏋️', name: 'Entrenamiento', tasks: [{ id: uid(), name: 'Ir al gimnasio' }, { id: uid(), name: '10.000 pasos' }] }
   ],
   day: 1, checked: {}, events: [], xp: 0, attempt: 1, resets: 0, best: 0,
+  tokens: TOKENS_MAX, tokensUsed: 0,
   history: [], wildcards: [], activity: [], failCounts: {}, badges: []
 });
 
@@ -845,6 +882,9 @@ class Component extends DCLogic {
     let d = null;
     try { const raw = readStore(STORE_KEY); if (raw) d = JSON.parse(raw); } catch (e) {}
     if (!d) d = DEFAULT_DATA();
+    /* datos guardados antes de los tokens: arrancan con los 5 completos */
+    if (typeof d.tokens !== 'number') d.tokens = TOKENS_MAX;
+    if (typeof d.tokensUsed !== 'number') d.tokensUsed = 0;
     if (!d.tutorialDone) d.phase = 'tutorial';
     this.setState({ data: d, avIdx: this.rankIdx(d.xp) }, () => { this.applyTheme(); this.persist(); });
     this.confettiRef = React.createRef();
@@ -934,6 +974,9 @@ class Component extends DCLogic {
     const mandDone = todayList.length > 0 && todayList.every((m) => m.done);
     const doneAll = doneCount + (mandDone ? 1 : 0), totalAll = tasks.length + 1;
     const pendingToday = todayList.filter((m) => !m.done).map((m) => m.name);
+    const missingCount = totalAll - doneAll;
+    const tokens = typeof d.tokens === 'number' ? d.tokens : TOKENS_MAX;
+    const tokenCanUse = missingCount > 0 && tokens >= missingCount;
     const rIdx = this.rankIdx(d.xp), rank = RANKS[rIdx], next = RANKS[rIdx + 1];
     const xpPct = next ? Math.round(((d.xp - rank.xp) / (next.xp - rank.xp)) * 100) : 100;
     const streak = Math.max(0, d.day - 1);
@@ -944,10 +987,11 @@ class Component extends DCLogic {
     let dayNo = 0;
     (d.events || []).forEach((e) => {
       if (e.t === 'done') { dayNo++; cells.push({ label: String(dayNo), bg: 'var(--ok)', fg: '#fff', bd: 'var(--ok)', anim: 'none', title: 'Día ' + dayNo + ' cumplido' }); }
+      else if (e.t === 'token') { dayNo++; cells.push({ label: String(dayNo), bg: 'var(--token)', fg: '#fff', bd: 'var(--token)', anim: 'none', title: 'Día ' + dayNo + ' salvado con ' + e.n + ' token' + (e.n === 1 ? '' : 's') }); }
       else { cells.push({ label: '•', bg: 'var(--wildSoft)', fg: 'var(--wild)', bd: 'var(--wild)', anim: 'none', title: 'Comodín (' + (e.cat || 'otros') + ')' }); }
     });
     if (d.phase === 'active') cells.push({ label: String(d.day), bg: 'var(--accentSoft)', fg: 'var(--accent)', bd: 'var(--accent)', anim: 'pulseCell 1.9s ease-in-out infinite', title: 'Hoy' });
-    for (let i = cells.filter((c) => c.bg === 'var(--ok)').length + (d.phase === 'active' ? 1 : 0); i < 30; i++) cells.push({ label: '', bg: 'transparent', fg: 'var(--ink3)', bd: 'var(--line)', anim: 'none', title: 'Pendiente' });
+    for (let i = dayNo + (d.phase === 'active' ? 1 : 0); i < 30; i++) cells.push({ label: '', bg: 'transparent', fg: 'var(--ink3)', bd: 'var(--line)', anim: 'none', title: 'Pendiente' });
 
     /* badges */
     const badges = BADGE_DAYS.map((b) => { const got = (d.badges || []).includes(b.d);
@@ -959,7 +1003,7 @@ class Component extends DCLogic {
     const actMap = {}; (d.activity || []).forEach((a) => { actMap[a.k] = a.t; });
     const heat = []; const today = new Date();
     for (let i = 89; i >= 0; i--) { const dd = new Date(today); dd.setDate(dd.getDate() - i); const k = dkey(dd); const t = actMap[k];
-      heat.push({ bg: t === 'done' ? 'var(--ok)' : t === 'wild' ? 'var(--wild)' : t === 'fail' ? 'var(--bad)' : 'var(--panel2)', title: k + (t ? ' · ' + t : '') }); }
+      heat.push({ bg: t === 'done' ? 'var(--ok)' : t === 'wild' ? 'var(--wild)' : t === 'token' ? 'var(--token)' : t === 'fail' ? 'var(--bad)' : 'var(--panel2)', title: k + (t ? ' · ' + t : '') }); }
     const MONTHS = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
     const first = new Date(today.getFullYear(), today.getMonth(), 1);
     const offset = (first.getDay() + 6) % 7;
@@ -967,9 +1011,10 @@ class Component extends DCLogic {
     const monthCells = [];
     for (let i = 0; i < offset; i++) monthCells.push({ n: '', bg: 'transparent', bd: 'transparent', fg: 'var(--ink3)' });
     for (let i = 1; i <= dim; i++) { const k = dkey(new Date(today.getFullYear(), today.getMonth(), i)); const t = actMap[k]; const isToday = i === today.getDate();
-      monthCells.push({ n: String(i), bg: t === 'done' ? 'var(--ok)' : t === 'wild' ? 'var(--wild)' : t === 'fail' ? 'var(--bad)' : 'var(--panel2)', bd: isToday ? 'var(--accent)' : 'var(--line)', fg: t ? '#fff' : 'var(--ink3)' }); }
+      monthCells.push({ n: String(i), bg: t === 'done' ? 'var(--ok)' : t === 'wild' ? 'var(--wild)' : t === 'token' ? 'var(--token)' : t === 'fail' ? 'var(--bad)' : 'var(--panel2)', bd: isToday ? 'var(--accent)' : 'var(--line)', fg: t ? '#fff' : 'var(--ink3)' }); }
 
     const wildsThisAttempt = (d.wildcards || []).filter((w) => w.attempt === d.attempt).length;
+    const tokensThisAttempt = (d.events || []).reduce((a, e) => a + (e.t === 'token' ? (e.n || 1) : 0), 0);
     const hardest = failEntries.length ? failEntries[0][0] : '—';
 
     Object.assign(T, {
@@ -981,12 +1026,12 @@ class Component extends DCLogic {
 
       /* tutorial */
       tutStep: S.tutStep, tutIcon: ['30','▦','✓','❄','★'][S.tutStep - 1],
-      tutTitle: ['Treinta días seguidos','Tus tareas, tus secciones','Cada noche sellas el día','Fallar reinicia. El comodín congela.','Sube de rango'][S.tutStep - 1],
+      tutTitle: ['Treinta días seguidos','Tus tareas, tus secciones','Cada noche sellas el día','Tokens de vida, comodín o reinicio','Sube de rango'][S.tutStep - 1],
       tutBody: [
         'Eliges lo que vas a cumplir todos los días. Si cumples, avanzas. Si fallas, vuelves al día 1. El objetivo es llegar a 30/30 sin excusas.',
         'Organizas tus tareas en secciones con icono y nombre (Sueño, Entrenamiento, Trabajo…). Cuando empieces, quedan bloqueadas para todo el intento.',
         'Marcas las tareas y pulsas “Finalizar día”. Si están todas, la casilla del día se sella y pasas al siguiente.',
-        'Si te falta alguna, puedes usar un comodín: escribes por qué. Un motor de reglas mira las horas que mencionas; si tuviste 3 h libres, se rechaza y reinicias. Si es válido, el día se congela y te quedas en el mismo número.',
+        'Si te falta alguna, tienes 5 tokens de vida por intento: cada tarea sin marcar cuesta 1 token y el día se sella igual. Cuando se acaben, solo te queda el comodín: escribes por qué. Un motor de reglas mira las horas que mencionas; si tuviste 3 h libres, se rechaza y reinicias. Si es válido, el día se congela y te quedas en el mismo número.',
         'Cada día cumplido da XP y sube tu rango: Novato, Constante, Disciplinado, Implacable, Imparable. Al llegar al día 30 desbloqueas el certificado final.'
       ][S.tutStep - 1],
       tutCta: S.tutStep === 5 ? 'Configurar tareas' : 'Siguiente',
@@ -1027,10 +1072,10 @@ class Component extends DCLogic {
       showConfirmStart: S.showConfirm,
       cancelStart: () => this.setState({ showConfirm: false }),
       doStart: () => { this.setState({ showConfirm: false }); this.sound('seal');
-        this.up((x) => { x.sections = x.sections.map((s) => ({ ...s, tasks: s.tasks.filter((t) => t.name.trim()) })).filter((s) => s.tasks.length); x.phase = 'active'; x.day = 1; x.checked = {}; x.todayList = []; x.events = []; x.badges = []; }); },
+        this.up((x) => { x.sections = x.sections.map((s) => ({ ...s, tasks: s.tasks.filter((t) => t.name.trim()) })).filter((s) => s.tasks.length); x.phase = 'active'; x.day = 1; x.checked = {}; x.todayList = []; x.events = []; x.badges = []; x.tokens = TOKENS_MAX; }); },
 
       /* dashboard */
-      dayPad: pad2(d.day), dayNum: d.day, streak, sealedCount: (d.events || []).filter((e) => e.t === 'done').length,
+      dayPad: pad2(d.day), dayNum: d.day, streak, sealedCount: (d.events || []).filter((e) => e.t === 'done' || e.t === 'token').length,
       xpPct: Math.max(3, Math.min(100, xpPct)), xpLabel: d.xp + (next ? ' / ' + next.xp + ' XP' : ' XP · MAX'),
       rankName: rank.n, rankColor: rank.c, rankBlurb: rank.blurb, rankStripes: Array.from({ length: rank.s }, () => ({ c: rank.c })),
       avReady: true, avSrc: AVATARS[avIdx], avOp: S.avAnim ? '1' : '0', avSc: S.avAnim ? '1' : '0.95',
@@ -1075,9 +1120,35 @@ class Component extends DCLogic {
         if (doneAll === totalAll) this.sealDay(); else this.setState({ wildStage: 'offer', wildText: '', wildRes: null, wildTries: 0 });
       },
 
+      /* tokens de vida */
+      tokensLeft: tokens, tokensMax: TOKENS_MAX,
+      tokenPips: Array.from({ length: TOKENS_MAX }, (_, i) => {
+        const alive = i < tokens, spent = alive && i >= tokens - missingCount && missingCount > 0 && tokenCanUse;
+        return {
+          bd: alive ? 'var(--token)' : 'var(--line)',
+          bg: alive && !spent ? 'var(--token)' : 'transparent',
+          op: alive ? '1' : '.4',
+          title: alive ? (spent ? 'Se consumiría con esta jugada' : 'Token disponible') : 'Token gastado'
+        };
+      }),
+      tokenHeadFg: tokens > 0 ? 'var(--token)' : 'var(--ink3)',
+      tokenHint: tokens > 0
+        ? tokens + ' de ' + TOKENS_MAX + ' · 1 token salva 1 tarea sin marcar'
+        : 'Sin tokens · un fallo te devuelve al día 1',
+
       /* comodín */
       wildStage: !!S.wildStage, wildIsOffer: S.wildStage === 'offer', wildIsForm: S.wildStage === 'form', wildIsResult: S.wildStage === 'result',
-      missingCount: totalAll - doneAll,
+      missingCount,
+      missingTitle: missingCount === 1 ? 'Te falta 1 tarea' : 'Te faltan ' + missingCount + ' tareas',
+      tokenCanUse, tokenBtnLabel: 'Consumir ' + missingCount + ' token' + (missingCount === 1 ? '' : 's'),
+      tokenBoxBg: tokenCanUse ? 'var(--tokenSoft)' : 'var(--panel2)',
+      tokenBoxBd: tokenCanUse ? 'var(--token)' : 'var(--line)',
+      tokenAsk: tokenCanUse
+        ? 'Tienes ' + missingCount + (missingCount === 1 ? ' tarea aún pendiente' : ' tareas aún pendientes') + '. ¿Quieres consumir ' + (missingCount === 1 ? 'un token' : missingCount + ' tokens') + ' de ' + tokens + ' restantes? El día se sella igual y avanzas al siguiente.'
+        : tokens === 0
+          ? 'No te quedan tokens (0 de ' + TOKENS_MAX + '). Ya no puedes salvar el día con tokens: o comodín válido, o vuelta al día 1.'
+          : 'Te quedan ' + tokens + ' token' + (tokens === 1 ? '' : 's') + ' y necesitas ' + missingCount + ' (uno por tarea sin marcar). No llegan.',
+      useTokens: () => this.spendTokens(missingCount),
       missingList: tasks.filter((t) => !d.checked[t.id]).map((t) => ({ name: t.name }))
         .concat(mandDone ? [] : [{ name: todayList.length ? 'Terminar todas las tareas de hoy (' + pendingToday.join(', ') + ')' : 'Terminar todas las tareas de hoy (no apuntaste ninguna)' }]),
       sleepLabel: hm(sleepLimitFromTasks(tasks.map((t) => t.name))),
@@ -1115,18 +1186,20 @@ class Component extends DCLogic {
       certDate: esDate(new Date().toISOString()),
       certRows: [
         { k: 'Intentos totales', v: String(d.attempt) }, { k: 'Reinicios', v: String(d.resets) },
-        { k: 'Comodines usados', v: String((d.wildcards || []).length) }, { k: 'Tarea más difícil', v: hardest },
+        { k: 'Comodines usados', v: String((d.wildcards || []).length) },
+        { k: 'Tokens usados', v: tokensThisAttempt + ' de ' + TOKENS_MAX }, { k: 'Tarea más difícil', v: hardest },
         { k: 'XP acumulada', v: String(d.xp) }, { k: 'Rango final', v: rank.n }
       ],
-      repeatSame: () => { this.up((x) => { x.phase = 'active'; x.day = 1; x.checked = {}; x.todayList = []; x.events = []; x.badges = []; x.attempt += 1; }); },
-      newChallenge: () => { this.up((x) => { x.phase = 'setup'; x.day = 1; x.checked = {}; x.todayList = []; x.events = []; x.badges = []; x.attempt += 1; }); },
+      repeatSame: () => { this.up((x) => { x.phase = 'active'; x.day = 1; x.checked = {}; x.todayList = []; x.events = []; x.badges = []; x.attempt += 1; x.tokens = TOKENS_MAX; }); },
+      newChallenge: () => { this.up((x) => { x.phase = 'setup'; x.day = 1; x.checked = {}; x.todayList = []; x.events = []; x.badges = []; x.attempt += 1; x.tokens = TOKENS_MAX; }); },
 
       /* stats */
       showStats: S.showStats, openStats: () => this.setState({ showStats: true, wipeStep: 0 }), closeStats: () => this.setState({ showStats: false }),
       statCards: [
         { k: 'Racha actual', v: String(streak), c: 'var(--accent)' }, { k: 'Mejor racha', v: String(d.best), c: 'var(--ok)' },
         { k: 'Intentos', v: String(d.attempt), c: 'var(--ink)' }, { k: 'Reinicios', v: String(d.resets), c: 'var(--bad)' },
-        { k: 'Comodines', v: String((d.wildcards || []).length), c: 'var(--wild)' }, { k: 'XP total', v: String(d.xp), c: 'var(--ink)' }
+        { k: 'Comodines', v: String((d.wildcards || []).length), c: 'var(--wild)' }, { k: 'XP total', v: String(d.xp), c: 'var(--ink)' },
+        { k: 'Tokens restantes', v: tokens + '/' + TOKENS_MAX, c: 'var(--token)' }, { k: 'Tokens gastados', v: String(d.tokensUsed || 0), c: 'var(--token)' }
       ],
       heat, monthLabel: 'Calendario · ' + MONTHS[today.getMonth()] + ' ' + today.getFullYear(),
       weekDays: ['L','M','X','J','V','S','D'].map((x) => ({ d: x })), monthCells,
@@ -1174,6 +1247,30 @@ class Component extends DCLogic {
     });
   }
 
+  /* Gasta n tokens (1 por tarea sin marcar) y sella el día igualmente. */
+  spendTokens(n) {
+    const d = this.state.data;
+    const tokens = typeof d.tokens === 'number' ? d.tokens : TOKENS_MAX;
+    if (!n || n > tokens) { this.sound('fail'); this.shake(); return; }
+    const prevXp = d.xp, day = d.day, last = day === 30;
+    const missing = this.allTasks(d).filter((t) => !d.checked[t.id]).map((t) => t.name);
+    this.sound('seal'); this.burst(55, { y: window.innerHeight * 0.55, spread: 300, colors: ['#e0c341', '#f2dd8a', '#fff4cd'] });
+    this.up((x) => {
+      x.tokens = tokens - n; x.tokensUsed = (x.tokensUsed || 0) + n;
+      missing.forEach((nm) => { x.failCounts[nm] = (x.failCounts[nm] || 0) + 1; });
+      x.events.push({ t: 'token', day, n, date: new Date().toISOString() });
+      x.activity = (x.activity || []).filter((a) => a.k !== dkey(new Date())).concat([{ k: dkey(new Date()), t: 'token' }]).slice(-200);
+      x.xp += XP_TOKEN; x.best = Math.max(x.best, day); x.checked = {}; x.todayList = [];
+      BADGE_DAYS.forEach((b) => { if (day >= b.d && !x.badges.includes(b.d)) x.badges.push(b.d); });
+      if (last) { x.phase = 'done'; x.history.unshift({ attempt: x.attempt, date: new Date().toISOString(), days: 30, result: 'completado', wilds: (x.wildcards || []).filter((w) => w.attempt === x.attempt && w.accepted).length }); }
+      else x.day = day + 1;
+    }, () => {
+      this.setState({ wildStage: null, wildRes: null, wildText: '', wildTries: 0 });
+      if (last) { this.sound('win'); this.burst(220, { spread: 500 }); setTimeout(() => this.burst(160, { spread: 600 }), 700); }
+      this.checkRank(prevXp);
+    });
+  }
+
   freezeDay(res) {
     const d = this.state.data; const prevXp = d.xp;
     this.sound('seal'); this.burst(50, { colors: ['#7c6ce0', '#b6a9f2', '#e6e0ff'] });
@@ -1194,7 +1291,7 @@ class Component extends DCLogic {
       missing.forEach((n) => { x.failCounts[n] = (x.failCounts[n] || 0) + 1; });
       x.activity = (x.activity || []).filter((a) => a.k !== dkey(new Date())).concat([{ k: dkey(new Date()), t: 'fail' }]).slice(-200);
       x.history.unshift({ attempt, date: new Date().toISOString(), days, result: 'reiniciado', wilds: wilds.filter((w) => w.accepted).length });
-      x.resets += 1; x.attempt += 1; x.day = 1; x.checked = {}; x.todayList = []; x.events = []; x.badges = [];
+      x.resets += 1; x.attempt += 1; x.day = 1; x.checked = {}; x.todayList = []; x.events = []; x.badges = []; x.tokens = TOKENS_MAX;
     }, () => this.setState({
       wildStage: null, wildRes: null, wildText: '', wildTries: 0,
       recap: { attempt, line: 'Llegaste al día ' + days + ' de 30. Tu XP y tu rango se quedan contigo: eso no se reinicia.', rows: [

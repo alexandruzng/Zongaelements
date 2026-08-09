@@ -5,7 +5,7 @@
 */
 const UPDATES = [
   {
-    id: '2026-08-09-gestor-suscripciones',
+    id: '2026-08-09-gestor-suscripciones-2',
     title: 'Nueva herramienta: Gestor de suscripciones',
     items: [
       'En Productividad Personal tienes una herramienta nueva, «Gestor de suscripciones». Apuntas cada servicio que pagas (Netflix, Spotify, ChatGPT, el gym, el VPS…) con su importe y su ciclo — mensual, trimestral, semestral, anual o los meses que tú digas — y arriba te sale el gasto mensual REAL: todo se normaliza a coste por mes, así que una anual de 144 € cuenta como 12 €/mes y deja de esconderse. Al lado, la proyección de lo que te vas a dejar en un año.',
@@ -13,6 +13,7 @@ const UPDATES = [
       'Pruebas gratuitas: al añadir una suscripción puedes decir que empieza con trial, cuántos días dura y cuánto te cobrarán al acabar. Mientras dure sale con la etiqueta TRIAL, no suma al gasto mensual, y cuando quedan 2 días o menos empieza a parpadear avisándote de lo que te van a cobrar. En la tarjeta grande de arriba te dice cuánto subirá tu gasto cuando terminen todas las pruebas activas.',
       'Tres pestañas: Panel con las tarjetas y filtros (todas, activas, en prueba, pausadas, canceladas); Análisis con el reparto por categoría en donut y la previsión de cobros reales de los próximos 6 meses; y Calendario mensual con un punto por cada cobro previsto y el importe del día. Además tienes un objetivo mensual con barra de progreso que se pone roja al pasarte, un simulador de ahorro (marcas las que te planteas cancelar y te calcula al vuelo lo que ahorrarías al mes y al año, con botón para cancelarlas de golpe), categorías propias con color e icono, y modo claro/oscuro.',
       'Empieza vacía, con un botón por si quieres cargar un ejemplo y ver cómo queda todo antes de meter lo tuyo. Se guarda comprimido y se sincroniza entre tus dispositivos como el resto de herramientas.',
+      'Arreglado también este mismo popup de novedades: cuando el aviso era largo se salía de la pantalla y el botón «Entendido» quedaba fuera, y al intentar bajar se movía la web de detrás en vez del mensaje. Ahora el título y el botón se quedan fijos, solo scrollea la lista, la página de detrás se queda quieta y aparece una línea encima del botón para que se vea que hay más texto abajo.',
     ],
   },
   {
@@ -423,14 +424,33 @@ const UPDATES = [
           display: flex; align-items: center; justify-content: center; padding: 20px;
           animation: zuFade .25s ease;
           backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+          overflow-y: auto; /* red de seguridad si la tarjeta no cupiera */
+          overscroll-behavior: contain;
         }
+        /* La tarjeta nunca pasa del alto de la pantalla: cabecera y botón se
+           quedan fijos y solo scrollea la lista de novedades. Así el botón
+           "Entendido" siempre está a la vista, por largo que sea el texto. */
         #__zonga_update_overlay__ .zu-card {
           background: #FFFFFF; border-radius: 24px; max-width: 440px; width: 100%;
-          padding: 30px 28px 26px;
+          max-height: calc(100vh - 40px);
+          max-height: calc(100dvh - 40px);
+          display: flex; flex-direction: column; overflow: hidden;
           box-shadow: 0 25px 60px -15px rgba(37, 99, 235, 0.35), 0 10px 25px -10px rgba(15, 23, 42, 0.15);
           font-family: 'Inter', system-ui, -apple-system, sans-serif; color: #0F172A;
           animation: zuSlide .4s cubic-bezier(.2,.8,.3,1);
           border: 1px solid #E2E8F0;
+        }
+        #__zonga_update_overlay__ .zu-top { flex: none; padding: 30px 28px 0; }
+        #__zonga_update_overlay__ .zu-body {
+          flex: 1 1 auto; min-height: 0; padding: 0 28px;
+          overflow-y: auto; -webkit-overflow-scrolling: touch;
+          overscroll-behavior: contain; /* el scroll no se escapa a la página */
+        }
+        #__zonga_update_overlay__ .zu-foot { flex: none; padding: 18px 28px 24px; background: #FFFFFF; }
+        /* Separador y sombra solo cuando de verdad hay contenido que scrollear. */
+        #__zonga_update_overlay__ .zu-card.is-scrollable .zu-foot {
+          border-top: 1px solid #E2E8F0;
+          box-shadow: 0 -12px 20px -14px rgba(15, 23, 42, 0.35);
         }
         #__zonga_update_overlay__ .zu-head {
           display: flex; align-items: center; gap: 10px; margin-bottom: 18px;
@@ -449,7 +469,7 @@ const UPDATES = [
           font-family: 'Inter', system-ui, sans-serif; letter-spacing: -0.5px;
           color: #0F172A;
         }
-        #__zonga_update_overlay__ ul { list-style: none; padding: 0; margin: 0 0 24px; }
+        #__zonga_update_overlay__ ul { list-style: none; padding: 0; margin: 0; }
         #__zonga_update_overlay__ li {
           font-size: 14px; line-height: 1.6; color: #64748B;
           padding: 12px 0 12px 26px; border-bottom: 1px solid #F1F5F9;
@@ -474,20 +494,45 @@ const UPDATES = [
         @keyframes zuSlide { from { opacity: 0; transform: translateY(24px) scale(0.97) } to { opacity: 1; transform: translateY(0) scale(1) } }
       </style>
       <div class="zu-card" id="__zonga_update_card__">
-        <div class="zu-head">
-          <div class="zu-dot"></div>
-          <div class="zu-badge">Novedad</div>
+        <div class="zu-top">
+          <div class="zu-head">
+            <div class="zu-dot"></div>
+            <div class="zu-badge">Novedad</div>
+          </div>
+          <h2>${latest.title || 'Nueva actualización'}</h2>
         </div>
-        <h2>${latest.title || 'Nueva actualización'}</h2>
-        <ul>${latest.items.map(i => `<li>${i.replace(/</g, '&lt;')}</li>`).join('')}</ul>
-        <button id="__zonga_update_close__">Entendido</button>
+        <div class="zu-body" id="__zonga_update_body__">
+          <ul>${latest.items.map(i => `<li>${i.replace(/</g, '&lt;')}</li>`).join('')}</ul>
+        </div>
+        <div class="zu-foot">
+          <button id="__zonga_update_close__">Entendido</button>
+        </div>
       </div>
     `;
     document.body.appendChild(overlay);
 
+    // Bloquear el scroll de la página de detrás mientras el popup está abierto:
+    // sin esto, al arrastrar en el móvil se movía la web y no el mensaje.
+    // Se usa position:fixed (y no overflow:hidden) porque en iOS Safari el
+    // overflow no frena el scroll táctil. Se guarda la posición para devolver
+    // al usuario justo donde estaba al cerrar.
+    const scrollY = window.scrollY || document.documentElement.scrollTop || 0;
+    const prevBodyStyle = document.body.getAttribute('style');
+    Object.assign(document.body.style, {
+      position: 'fixed', top: (-scrollY) + 'px', left: '0', right: '0', width: '100%', overflow: 'hidden'
+    });
+
+    // Marcar la tarjeta como scrolleable para pintar el separador del botón.
+    const body = document.getElementById('__zonga_update_body__');
+    const card = document.getElementById('__zonga_update_card__');
+    if (body && card && body.scrollHeight > body.clientHeight + 1) card.classList.add('is-scrollable');
+
     const dismiss = () => {
       const el = document.getElementById('__zonga_update_overlay__');
       if (el) el.remove();
+      if (prevBodyStyle === null) document.body.removeAttribute('style');
+      else document.body.setAttribute('style', prevBodyStyle);
+      window.scrollTo(0, scrollY);
       const all = new Set(loadSeen());
       UPDATES.forEach(u => all.add(u.id)); // marcar todas como vistas para no acumular
       saveSeen([...all]);

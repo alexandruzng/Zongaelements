@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gestor de suscripciones · Zonga Elements</title>
+<meta name="description" content="Controla lo que te cuestan Netflix, Spotify, ChatGPT y compañía. Gasto mensual real, aviso de pruebas gratuitas, calendario de cobros y simulador de ahorro.">
+<meta property="og:title" content="Gestor de suscripciones · Zonga Elements">
+<meta property="og:description" content="Cuánto te cuestan de verdad tus suscripciones al mes y al año, con avisos antes de que te cobren.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='26' fill='%235b3df5'/%3E%3Ctext x='50' y='73' text-anchor='middle' font-family='Helvetica,Arial,sans-serif' font-weight='700' font-size='62' fill='%23ffffff'%3ES%3C/text%3E%3C/svg%3E">
+
+<!-- React (UMD) — lo necesita el runtime de la herramienta (support.js) -->
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
+<!-- Guardado comprimido compartido de Zonga (ZongaLS) -->
+<script src="/lz-string.min.js"></script>
+<script src="/zonga-storage.js"></script>
+<!-- Sin recursos externos: declararlo evita que el runtime vuelva a
+     descargar esta misma página en cada carga. -->
+<script>window.__resources = {};</script>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+:root{
+--bg:#f2f1ed;--surface:#ffffff;--surface2:#faf9f6;--text:#141310;--dim:#6f6c63;--line:#e4e2da;
+--accent:#5b3df5;--accent-soft:#ece8ff;--accent-ink:#ffffff;
+--u-red-bg:#ffe3df;--u-red-bd:#f3b3aa;--u-red-tx:#9c2a17;
+--u-yel-bg:#fff2cf;--u-yel-bd:#efd287;--u-yel-tx:#815d0b;
+--u-grn-bg:#e2f4e5;--u-grn-bd:#b2dcb8;--u-grn-tx:#1e6b33;
+--u-ovr-bg:#3a2422;--u-ovr-bd:#5c3733;--u-ovr-tx:#ffd6cf;
+--dead-bg:#eeece7;--dead-bd:#dedbd3;--dead-tx:#7d7a71;
+--shadow:0 1px 2px rgba(20,19,16,.06),0 8px 24px rgba(20,19,16,.06);
+--shadow-lg:0 12px 40px rgba(20,19,16,.16);
+}
+html[data-theme="dark"]{
+--bg:#0e0e12;--surface:#181820;--surface2:#1f1f29;--text:#f2f0ea;--dim:#9b98a6;--line:#2c2c38;
+--accent:#8b78ff;--accent-soft:#241f4d;--accent-ink:#0e0e12;
+--u-red-bg:#3d1f1c;--u-red-bd:#6b3129;--u-red-tx:#ffb3a5;
+--u-yel-bg:#382d13;--u-yel-bd:#5f4a1c;--u-yel-tx:#ffd88a;
+--u-grn-bg:#152e1e;--u-grn-bd:#26502f;--u-grn-tx:#9fe0ac;
+--u-ovr-bg:#4a1d1a;--u-ovr-bd:#7a3029;--u-ovr-tx:#ffcec3;
+--dead-bg:#1c1c24;--dead-bd:#2e2e3a;--dead-tx:#84818f;
+--shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+--shadow-lg:0 16px 48px rgba(0,0,0,.55);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:"DM Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+body{transition:background .35s ease,color .35s ease}
+button,input,select{font-family:inherit}
+a{color:var(--accent);text-decoration:none}
+a:hover{color:var(--text)}
+input[type=range]{accent-color:var(--accent)}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slidePanel{from{transform:translateX(40px);opacity:0}to{transform:none;opacity:1}}
+@keyframes pulseWarn{0%,100%{box-shadow:0 0 0 0 rgba(224,49,49,.45)}50%{box-shadow:0 0 0 8px rgba(224,49,49,0)}}
+.only-mobile{display:none !important}
+@media(max-width:820px){
+.only-mobile{display:flex !important}
+.hide-mobile{display:none !important}
+}
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:var(--bg);padding:0 0 140px">
+
+  <!-- Vuelta al índice de Zonga Elements -->
+  <div style="max-width:1280px;margin:0 auto;padding:14px 20px 0">
+    <a href="../index.html" style="color:var(--dim);text-decoration:none;font-size:14px;display:inline-flex;align-items:center;gap:6px">← Volver a Zonga Elements</a>
+  </div>
+
+  <div style="position:sticky;top:0;z-index:40;backdrop-filter:blur(14px);background:color-mix(in srgb,var(--bg) 86%,transparent);border-bottom:1px solid var(--line)">
+    <div style="max-width:1280px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:10px;margin-right:auto">
+        <div style="width:34px;height:34px;border-radius:11px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:18px">S</div>
+        <div>
+          <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:19px;letter-spacing:-.02em;line-height:1">Suscrito</div>
+          <div style="font-size:11px;color:var(--dim);letter-spacing:.06em;text-transform:uppercase">Control de suscripciones</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:4px;padding:4px;background:var(--surface2);border:1px solid var(--line);border-radius:999px">
+        <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="3">
+          <button onClick="{{ t.go }}" style="border:0;cursor:pointer;border-radius:999px;padding:8px 16px;font-size:13px;font-weight:700;transition:all .25s ease;background:{{ t.bg }};color:{{ t.fg }}">{{ t.label }}</button>
+        </sc-for>
+      </div>
+
+      <button onClick="{{ toggleTheme }}" title="Cambiar tema" style="width:40px;height:40px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--text);cursor:pointer;font-size:16px;display:grid;place-items:center;transition:transform .3s ease" style-hover="transform:rotate(-25deg)">{{ themeIcon }}</button>
+
+      <button onClick="{{ openAdd }}" class="hide-mobile" style="border:0;cursor:pointer;border-radius:999px;padding:11px 20px;background:var(--accent);color:var(--accent-ink);font-size:14px;font-weight:700;box-shadow:var(--shadow);transition:transform .2s ease" style-hover="transform:translateY(-2px)">+ Añadir suscripción</button>
+    </div>
+  </div>
+
+  <div style="max-width:1280px;margin:0 auto;padding:24px 20px 0">
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;animation:fadeUp .5s ease both">
+      <div style="grid-column:span 2;min-width:280px;border-radius:26px;padding:26px 28px;background:linear-gradient(140deg,var(--accent),color-mix(in srgb,var(--accent) 55%,#13102e));color:#fff;box-shadow:var(--shadow);display:flex;flex-wrap:wrap;gap:28px;align-items:flex-end">
+        <div>
+          <div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;opacity:.75;font-weight:700">Gasto mensual real</div>
+          <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(40px,7vw,62px);line-height:1;letter-spacing:-.03em;margin-top:6px">{{ totalMonthly }}</div>
+          <div style="font-size:13px;opacity:.8;margin-top:6px">{{ activeCountLabel }}</div>
+        </div>
+        <div style="width:1px;align-self:stretch;background:rgba(255,255,255,.25)"></div>
+        <div>
+          <div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;opacity:.75;font-weight:700">Proyección anual</div>
+          <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(30px,5vw,44px);line-height:1;letter-spacing:-.03em;margin-top:6px">{{ totalYearly }}</div>
+          <div style="font-size:13px;opacity:.8;margin-top:6px">{{ trialNote }}</div>
+        </div>
+      </div>
+
+      <div style="border-radius:26px;padding:22px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow)">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+          <div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);font-weight:700">Objetivo mensual</div>
+          <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:18px">{{ goalLabel }}</div>
+        </div>
+        <div style="margin-top:14px;height:14px;border-radius:999px;background:var(--surface2);border:1px solid var(--line);overflow:hidden">
+          <div style="height:100%;border-radius:999px;transition:width .6s cubic-bezier(.2,.8,.2,1);width:{{ goalPct }};background:{{ goalColor }}"></div>
+        </div>
+        <div style="margin-top:10px;font-size:13px;color:var(--dim)">{{ goalMsg }}</div>
+        <input type="range" min="10" max="400" step="5" value="{{ goal }}" onChange="{{ onGoal }}" style="width:100%;margin-top:12px" />
+      </div>
+    </div>
+
+    <sc-if value="{{ isPanel }}" hint-placeholder-val="{{ true }}">
+      <div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:28px 0 16px">
+          <sc-for list="{{ filters }}" as="f" hint-placeholder-count="4">
+            <button onClick="{{ f.go }}" style="border:1px solid;cursor:pointer;border-radius:999px;padding:7px 14px;font-size:13px;font-weight:600;transition:all .2s ease;background:{{ f.bg }};color:{{ f.fg }};border-color:{{ f.bd }}">{{ f.label }}</button>
+          </sc-for>
+          <button onClick="{{ toggleSim }}" style="margin-left:auto;border:1px solid var(--line);cursor:pointer;border-radius:999px;padding:8px 16px;font-size:13px;font-weight:700;transition:all .2s ease;background:{{ simBg }};color:{{ simFg }}">{{ simLabel }}</button>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px">
+          <sc-for list="{{ cards }}" as="c" hint-placeholder-count="6">
+            <div style="position:relative;border-radius:24px;overflow:hidden;display:flex;flex-direction:column">
+              <sc-if value="{{ c.swiped }}" hint-placeholder-val="{{ false }}">
+                <div style="position:absolute;inset:0;display:flex;justify-content:flex-end;align-items:stretch;border-radius:24px;overflow:hidden">
+                  <button onClick="{{ c.onEdit }}" style="border:0;cursor:pointer;width:82px;background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:13px">Editar</button>
+                  <button onClick="{{ c.onDelete }}" style="border:0;cursor:pointer;width:82px;background:#d13b2b;color:#fff;font-weight:700;font-size:13px">Borrar</button>
+                </div>
+              </sc-if>
+              <div onClick="{{ c.onToggle }}" onMouseEnter="{{ c.onEnter }}" onMouseLeave="{{ c.onLeave }}" onTouchStart="{{ c.onTouchStart }}" onTouchMove="{{ c.onTouchMove }}" onTouchEnd="{{ c.onTouchEnd }}" style="position:relative;flex:1;cursor:pointer;border:1px solid;border-radius:24px;padding:20px;animation:fadeUp .45s ease both;transition:transform .28s cubic-bezier(.2,.8,.2,1),box-shadow .28s ease;background:{{ c.bg }};border-color:{{ c.bd }};color:{{ c.tx }};transform:translateX({{ c.shift }}px) translateY({{ c.lift }}px);box-shadow:{{ c.shadow }}">
+
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                  <span style="display:inline-flex;align-items:center;gap:7px;padding:5px 11px 5px 6px;border-radius:999px;background:color-mix(in srgb,var(--surface) 70%,transparent);font-size:12px;font-weight:700">
+                    <span style="width:20px;height:20px;border-radius:7px;display:grid;place-items:center;font-size:11px;color:#fff;background:{{ c.catColor }}">{{ c.catIcon }}</span>
+                    {{ c.cat }}
+                  </span>
+                  <sc-if value="{{ c.isTrial }}" hint-placeholder-val="{{ false }}">
+                    <span style="padding:5px 10px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.08em;background:#5b3df5;color:#fff;animation:{{ c.trialAnim }}">TRIAL</span>
+                  </sc-if>
+                  <span style="margin-left:auto;font-size:11px;font-weight:700;opacity:.85;display:inline-flex;align-items:center;gap:5px">
+                    <span style="width:7px;height:7px;border-radius:99px;background:{{ c.autoDot }}"></span>{{ c.autoLabel }}
+                  </span>
+                  <sc-if value="{{ simOn }}" hint-placeholder-val="{{ false }}">
+                    <button onClick="{{ c.onSelect }}" style="width:26px;height:26px;border-radius:9px;cursor:pointer;font-size:14px;font-weight:800;display:grid;place-items:center;border:2px solid currentColor;background:{{ c.selBg }};color:{{ c.selFg }}">{{ c.selMark }}</button>
+                  </sc-if>
+                </div>
+
+                <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:23px;letter-spacing:-.02em;margin:14px 0 2px">{{ c.name }}</div>
+                <div style="font-size:12.5px;opacity:.75">{{ c.nextLabel }}</div>
+
+                <div style="display:flex;align-items:center;gap:16px;margin-top:16px">
+                  <div style="flex:1">
+                    <div style="display:flex;align-items:baseline;gap:8px">
+                      <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:44px;line-height:.95;letter-spacing:-.04em">{{ c.daysNum }}</span>
+                      <span style="font-size:13px;font-weight:700;opacity:.8">{{ c.daysUnit }}</span>
+                    </div>
+                    <div style="font-size:12.5px;font-weight:600;opacity:.85;margin-top:4px">{{ c.daysMsg }}</div>
+                  </div>
+                  <svg width="72" height="72" viewBox="0 0 72 72" style="flex:none">
+                    <circle cx="36" cy="36" r="28" fill="none" stroke="currentColor" stroke-opacity="0.16" stroke-width="8"></circle>
+                    <circle cx="36" cy="36" r="28" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-dasharray="{{ c.dash }}" stroke-dashoffset="{{ c.offset }}" transform="rotate(-90 36 36)" style="transition:stroke-dashoffset .8s cubic-bezier(.2,.8,.2,1)"></circle>
+                    <text x="36" y="40" text-anchor="middle" font-size="15" font-weight="700" fill="currentColor" font-family="DM Sans">{{ c.pct }}</text>
+                  </svg>
+                </div>
+
+                <div style="display:flex;align-items:flex-end;gap:12px;margin-top:16px;padding-top:14px;border-top:1px dashed currentColor;border-color:color-mix(in srgb,currentColor 25%,transparent)">
+                  <div>
+                    <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:22px;letter-spacing:-.02em">{{ c.monthly }}</div>
+                    <div style="font-size:11px;opacity:.7;font-weight:600">por mes (normalizado)</div>
+                  </div>
+                  <div style="margin-left:auto;text-align:right">
+                    <div style="font-weight:700;font-size:15px">{{ c.cycleAmount }}</div>
+                    <div style="font-size:11px;opacity:.7;font-weight:600">{{ c.cycleLabel }}</div>
+                  </div>
+                </div>
+
+                <sc-if value="{{ c.hasRaise }}" hint-placeholder-val="{{ false }}">
+                  <div style="margin-top:12px;display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:999px;font-size:12px;font-weight:700;background:color-mix(in srgb,#e0512f 16%,transparent);color:{{ c.raiseColor }}">↗ {{ c.raiseLabel }}</div>
+                </sc-if>
+
+                <sc-if value="{{ c.expanded }}" hint-placeholder-val="{{ false }}">
+                  <div style="margin-top:14px;padding-top:14px;border-top:1px solid color-mix(in srgb,currentColor 18%,transparent);animation:fadeUp .3s ease both">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;font-size:12.5px">
+                      <div><div style="opacity:.65;font-weight:600">Próximo cobro</div><div style="font-weight:700">{{ c.nextDateStr }}</div></div>
+                      <div><div style="opacity:.65;font-weight:600">Desde</div><div style="font-weight:700">{{ c.startStr }}</div></div>
+                      <div><div style="opacity:.65;font-weight:600">Estado</div><div style="font-weight:700">{{ c.statusLabel }}</div></div>
+                      <div><div style="opacity:.65;font-weight:600">Renovación</div><div style="font-weight:700">{{ c.autoFull }}</div></div>
+                    </div>
+                    <div style="margin-top:12px;font-size:12.5px;font-weight:700">{{ c.paidLabel }}</div>
+                    <sc-if value="{{ c.hasHistory }}" hint-placeholder-val="{{ false }}">
+                      <div style="margin-top:10px;border-radius:14px;padding:10px 12px;background:color-mix(in srgb,var(--surface) 55%,transparent)">
+                        <div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;opacity:.65;font-weight:700;margin-bottom:6px">Historial de precios</div>
+                        <sc-for list="{{ c.history }}" as="h" hint-placeholder-count="2">
+                          <div style="display:flex;justify-content:space-between;font-size:12.5px;padding:3px 0"><span style="opacity:.75">{{ h.date }}</span><span style="font-weight:700">{{ h.price }}</span></div>
+                        </sc-for>
+                      </div>
+                    </sc-if>
+                    <div style="display:flex;gap:8px;margin-top:14px">
+                      <button onClick="{{ c.onEdit }}" style="flex:1;border:1px solid currentColor;background:transparent;color:inherit;border-radius:12px;padding:9px;font-weight:700;font-size:13px;cursor:pointer">Editar</button>
+                      <button onClick="{{ c.onDelete }}" style="flex:1;border:1px solid currentColor;background:transparent;color:inherit;border-radius:12px;padding:9px;font-weight:700;font-size:13px;cursor:pointer;opacity:.75">Eliminar</button>
+                    </div>
+                  </div>
+                </sc-if>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
+          <div style="text-align:center;padding:70px 20px;border:1px dashed var(--line);border-radius:24px;color:var(--dim)">
+            <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:20px;color:var(--text)">{{ emptyTitle }}</div>
+            <div style="margin-top:6px;font-size:14px">{{ emptyMsg }}</div>
+            <!-- Solo cuando no hay NINGUNA suscripción guardada: arrancar de cero
+                 o cargar el ejemplo con el que venía la herramienta. -->
+            <sc-if value="{{ noSubs }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:22px">
+                <button onClick="{{ openAdd }}" style="border:0;cursor:pointer;border-radius:999px;padding:12px 22px;background:var(--accent);color:var(--accent-ink);font-size:14px;font-weight:700;box-shadow:var(--shadow);transition:transform .2s ease" style-hover="transform:translateY(-2px)">+ Añadir la primera</button>
+                <button onClick="{{ loadDemo }}" style="cursor:pointer;border:1px solid var(--line);border-radius:999px;padding:12px 22px;background:var(--surface);color:var(--text);font-size:14px;font-weight:700;transition:all .2s ease">Cargar suscripciones de ejemplo</button>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isStats }}" hint-placeholder-val="{{ false }}">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;margin-top:28px;animation:fadeUp .4s ease both">
+        <div style="border-radius:24px;background:var(--surface);border:1px solid var(--line);padding:24px;box-shadow:var(--shadow)">
+          <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:18px">Reparto por categoría</div>
+          <div style="font-size:13px;color:var(--dim);margin-top:2px">Coste mensual normalizado</div>
+          <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;margin-top:20px">
+            <div style="position:relative;width:190px;height:190px;flex:none">
+              <div style="position:absolute;inset:0;border-radius:999px;transition:background .6s ease;background:{{ donutBg }}"></div>
+              <div style="position:absolute;inset:26px;border-radius:999px;background:var(--surface);display:grid;place-items:center;text-align:center">
+                <div>
+                  <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:26px;letter-spacing:-.02em">{{ totalMonthly }}</div>
+                  <div style="font-size:11px;color:var(--dim);font-weight:600">al mes</div>
+                </div>
+              </div>
+            </div>
+            <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:9px">
+              <sc-for list="{{ legend }}" as="l" hint-placeholder-count="4">
+                <div style="display:flex;align-items:center;gap:9px;font-size:13.5px">
+                  <span style="width:11px;height:11px;border-radius:4px;flex:none;background:{{ l.color }}"></span>
+                  <span style="font-weight:600">{{ l.name }}</span>
+                  <span style="margin-left:auto;font-weight:700">{{ l.value }}</span>
+                  <span style="color:var(--dim);width:44px;text-align:right">{{ l.pct }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+
+        <div style="border-radius:24px;background:var(--surface);border:1px solid var(--line);padding:24px;box-shadow:var(--shadow)">
+          <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:18px">Previsión 6 meses</div>
+          <div style="font-size:13px;color:var(--dim);margin-top:2px">Cobros reales previstos por mes</div>
+          <div style="display:flex;align-items:flex-end;gap:10px;height:220px;margin-top:24px">
+            <sc-for list="{{ bars }}" as="b" hint-placeholder-count="6">
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end">
+                <div style="font-size:12px;font-weight:700">{{ b.value }}</div>
+                <div title="{{ b.value }}" style="width:100%;border-radius:12px 12px 6px 6px;transition:height .7s cubic-bezier(.2,.8,.2,1);height:{{ b.h }};background:{{ b.color }}"></div>
+                <div style="font-size:11.5px;color:var(--dim);font-weight:600;text-transform:capitalize">{{ b.label }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isCal }}" hint-placeholder-val="{{ false }}">
+      <div style="border-radius:24px;background:var(--surface);border:1px solid var(--line);padding:24px;box-shadow:var(--shadow);margin-top:28px;animation:fadeUp .4s ease both">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:20px;text-transform:capitalize;margin-right:auto">{{ calTitle }}</div>
+          <button onClick="{{ calPrev }}" style="width:38px;height:38px;border-radius:12px;border:1px solid var(--line);background:var(--surface2);color:var(--text);cursor:pointer;font-size:15px">‹</button>
+          <button onClick="{{ calToday }}" style="height:38px;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:var(--surface2);color:var(--text);cursor:pointer;font-size:13px;font-weight:700">Hoy</button>
+          <button onClick="{{ calNext }}" style="width:38px;height:38px;border-radius:12px;border:1px solid var(--line);background:var(--surface2);color:var(--text);cursor:pointer;font-size:15px">›</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:20px">
+          <sc-for list="{{ dow }}" as="d" hint-placeholder-count="7">
+            <div style="text-align:center;font-size:11px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;padding-bottom:4px">{{ d }}</div>
+          </sc-for>
+          <sc-for list="{{ calCells }}" as="c" hint-placeholder-count="35">
+            <div style="min-height:74px;border-radius:14px;padding:7px;border:1px solid;transition:background .3s ease;background:{{ c.bg }};border-color:{{ c.bd }};opacity:{{ c.op }}">
+              <div style="font-size:12px;font-weight:700;color:{{ c.numColor }}">{{ c.day }}</div>
+              <div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:5px">
+                <sc-for list="{{ c.dots }}" as="d" hint-placeholder-count="0">
+                  <span title="{{ d.title }}" style="width:8px;height:8px;border-radius:99px;background:{{ d.color }}"></span>
+                </sc-for>
+              </div>
+              <sc-if value="{{ c.hasAmount }}" hint-placeholder-val="{{ false }}">
+                <div style="font-size:10.5px;font-weight:700;color:var(--dim);margin-top:4px">{{ c.amount }}</div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:16px;font-size:12px;color:var(--dim)">
+          <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:99px;background:#d94a34"></span>≤3 días</span>
+          <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:99px;background:#e0a52a"></span>4–7 días</span>
+          <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:99px;background:#2f9e57"></span>+7 días</span>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+
+  <sc-if value="{{ simOn }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;left:0;right:0;bottom:0;z-index:60;padding:14px 20px;background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(16px);border-top:1px solid var(--line);box-shadow:var(--shadow-lg);animation:fadeUp .3s ease both">
+      <div style="max-width:1280px;margin:0 auto;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+        <div style="flex:1;min-width:220px">
+          <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:17px">{{ simHeadline }}</div>
+          <div style="font-size:13px;color:var(--dim);margin-top:2px">{{ simSub }}</div>
+        </div>
+        <button onClick="{{ applyCancel }}" style="border:0;cursor:pointer;border-radius:999px;padding:12px 22px;font-weight:700;font-size:14px;background:{{ applyBg }};color:{{ applyFg }}">Cancelar seleccionadas</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <button onClick="{{ openAdd }}" class="only-mobile" style="position:fixed;right:18px;bottom:24px;z-index:70;width:62px;height:62px;border-radius:999px;border:0;background:var(--accent);color:var(--accent-ink);font-size:30px;font-weight:400;line-height:1;box-shadow:var(--shadow-lg);cursor:pointer;align-items:center;justify-content:center">+</button>
+
+  <sc-if value="{{ modalOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;z-index:100;display:flex;justify-content:flex-end;background:rgba(10,9,20,.45);animation:fadeIn .25s ease both" onClick="{{ closeModal }}">
+      <div onClick="{{ stop }}" style="width:min(480px,100%);height:100%;overflow-y:auto;background:var(--surface);border-left:1px solid var(--line);padding:24px 24px 40px;animation:slidePanel .35s cubic-bezier(.2,.8,.2,1) both">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:23px;letter-spacing:-.02em;margin-right:auto">{{ modalTitle }}</div>
+          <button onClick="{{ closeModal }}" style="width:36px;height:36px;border-radius:999px;border:1px solid var(--line);background:var(--surface2);color:var(--text);cursor:pointer;font-size:15px">✕</button>
+        </div>
+
+        <div style="margin-top:22px;display:flex;flex-direction:column;gap:18px">
+          <div>
+            <div style="font-size:12px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px">Nombre del servicio</div>
+            <input value="{{ f.name }}" onChange="{{ h.name }}" placeholder="Netflix, Figma, ChatGPT…" style="width:100%;padding:13px 14px;border-radius:14px;border:1px solid var(--line);background:var(--surface2);color:var(--text);font-size:15px" />
+          </div>
+
+          <div>
+            <div style="font-size:12px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px">Categoría</div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px">
+              <sc-for list="{{ catOpts }}" as="c" hint-placeholder-count="8">
+                <button onClick="{{ c.go }}" style="display:inline-flex;align-items:center;gap:7px;cursor:pointer;border:1px solid;border-radius:999px;padding:7px 13px 7px 7px;font-size:13px;font-weight:600;transition:all .2s ease;background:{{ c.bg }};color:{{ c.fg }};border-color:{{ c.bd }}">
+                  <span style="width:20px;height:20px;border-radius:7px;display:grid;place-items:center;font-size:11px;color:#fff;background:{{ c.color }}">{{ c.icon }}</span>{{ c.name }}
+                </button>
+              </sc-for>
+              <button onClick="{{ openNewCat }}" style="display:inline-flex;align-items:center;gap:7px;cursor:pointer;border:1px dashed var(--accent);border-radius:999px;padding:7px 13px;font-size:13px;font-weight:700;background:transparent;color:var(--accent);transition:all .2s ease" style-hover="background:var(--accent-soft)">+ Nueva categoría</button>
+            </div>
+
+            <sc-if value="{{ newCatOpen }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:12px;border:1px solid var(--line);border-radius:18px;background:var(--surface2);padding:16px;animation:fadeUp .3s ease both">
+                <div style="font-size:12px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px">Crear categoría propia</div>
+                <input value="{{ nc.name }}" onChange="{{ nc.onName }}" placeholder="Ej. Comida a domicilio" style="width:100%;padding:12px 13px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--text);font-size:15px" />
+                <div style="font-size:12px;font-weight:700;color:var(--dim);margin:14px 0 7px">Color</div>
+                <div style="display:flex;flex-wrap:wrap;gap:8px">
+                  <sc-for list="{{ nc.colors }}" as="c" hint-placeholder-count="8">
+                    <button onClick="{{ c.go }}" style="width:30px;height:30px;border-radius:10px;cursor:pointer;border:2px solid;transition:transform .2s ease;background:{{ c.color }};border-color:{{ c.bd }}" style-hover="transform:scale(1.1)"></button>
+                  </sc-for>
+                </div>
+                <div style="font-size:12px;font-weight:700;color:var(--dim);margin:14px 0 7px">Icono</div>
+                <div style="display:flex;flex-wrap:wrap;gap:8px">
+                  <sc-for list="{{ nc.icons }}" as="i" hint-placeholder-count="10">
+                    <button onClick="{{ i.go }}" style="width:34px;height:34px;border-radius:11px;cursor:pointer;border:1px solid;font-size:14px;color:var(--text);transition:all .2s ease;background:{{ i.bg }};border-color:{{ i.bd }}">{{ i.icon }}</button>
+                  </sc-for>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;margin-top:16px">
+                  <span style="display:inline-flex;align-items:center;gap:7px;padding:6px 12px 6px 6px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font-size:13px;font-weight:700;margin-right:auto">
+                    <span style="width:20px;height:20px;border-radius:7px;display:grid;place-items:center;font-size:11px;color:#fff;background:{{ nc.color }}">{{ nc.icon }}</span>{{ nc.name }}
+                  </span>
+                  <button onClick="{{ cancelNewCat }}" style="cursor:pointer;border:1px solid var(--line);background:transparent;color:var(--text);border-radius:12px;padding:9px 14px;font-size:13px;font-weight:700">Cancelar</button>
+                  <button onClick="{{ createCat }}" style="cursor:pointer;border:0;background:var(--accent);color:var(--accent-ink);border-radius:12px;padding:9px 16px;font-size:13px;font-weight:700">Crear</button>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+
+          <div>
+            <div style="font-size:12px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px">Ciclo de facturación</div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px">
+              <sc-for list="{{ cycleOpts }}" as="o" hint-placeholder-count="5">
+                <button onClick="{{ o.go }}" style="cursor:pointer;border:1px solid;border-radius:999px;padding:8px 14px;font-size:13px;font-weight:600;transition:all .2s ease;background:{{ o.bg }};color:{{ o.fg }};border-color:{{ o.bd }}">{{ o.label }}</button>
+              </sc-for>
+            </div>
+            <sc-if value="{{ f.isCustom }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:10px">
+                <input type="number" min="1" value="{{ f.months }}" onChange="{{ h.months }}" placeholder="Número de meses" style="width:100%;padding:13px 14px;border-radius:14px;border:1px solid var(--line);background:var(--surface2);color:var(--text);font-size:15px" />
+              </div>
+            </sc-if>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div>
+              <div style="font-size:12px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px">Importe del ciclo</div>
+              <input type="number" step="0.01" value="{{ f.amount }}" onChange="{{ h.amount }}" style="width:100%;padding:13px 14px;border-radius:14px;border:1px solid var(--line);background:var(--surface2);color:var(--text);font-size:15px" />
+            </div>
+            <div>
+              <div style="font-size:12px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px">Próximo cobro</div>
+              <input type="date" value="{{ f.next }}" onChange="{{ h.next }}" style="width:100%;padding:13px 14px;border-radius:14px;border:1px solid var(--line);background:var(--surface2);color:var(--text);font-size:15px" />
+            </div>
+          </div>
+          <div style="font-size:13px;color:var(--dim);margin-top:-8px">{{ f.normHint }}</div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div>
+              <div style="font-size:12px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px">Renovación automática</div>
+              <div style="display:flex;gap:8px">
+                <sc-for list="{{ autoOpts }}" as="o" hint-placeholder-count="2">
+                  <button onClick="{{ o.go }}" style="flex:1;cursor:pointer;border:1px solid;border-radius:14px;padding:11px;font-size:13px;font-weight:700;transition:all .2s ease;background:{{ o.bg }};color:{{ o.fg }};border-color:{{ o.bd }}">{{ o.label }}</button>
+                </sc-for>
+              </div>
+            </div>
+            <div>
+              <div style="font-size:12px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px">Estado</div>
+              <div style="display:flex;gap:6px">
+                <sc-for list="{{ statusOpts }}" as="o" hint-placeholder-count="3">
+                  <button onClick="{{ o.go }}" style="flex:1;cursor:pointer;border:1px solid;border-radius:14px;padding:11px 4px;font-size:12.5px;font-weight:700;transition:all .2s ease;background:{{ o.bg }};color:{{ o.fg }};border-color:{{ o.bd }}">{{ o.label }}</button>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+
+          <div style="border-radius:18px;border:1px solid var(--line);background:var(--surface2);padding:16px">
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+              <div style="font-weight:700;font-size:14px;margin-right:auto">¿Hay opción de prueba gratuita?</div>
+              <div style="display:flex;gap:8px">
+                <sc-for list="{{ trialOpts }}" as="o" hint-placeholder-count="2">
+                  <button onClick="{{ o.go }}" style="cursor:pointer;border:1px solid;border-radius:12px;padding:8px 16px;font-size:13px;font-weight:700;transition:all .2s ease;background:{{ o.bg }};color:{{ o.fg }};border-color:{{ o.bd }}">{{ o.label }}</button>
+                </sc-for>
+              </div>
+            </div>
+            <sc-if value="{{ f.trial }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:12px;animation:fadeUp .3s ease both">
+                <div>
+                  <div style="font-size:12px;font-weight:700;color:var(--dim);margin-bottom:7px">¿Cuántos días dura?</div>
+                  <input type="number" min="1" value="{{ f.trialDays }}" onChange="{{ h.trialDays }}" style="width:100%;padding:12px 13px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--text);font-size:15px" />
+                </div>
+                <div>
+                  <div style="font-size:12px;font-weight:700;color:var(--dim);margin-bottom:7px">¿Cuánto cobrará al final?</div>
+                  <input type="number" step="0.01" value="{{ f.trialPrice }}" onChange="{{ h.trialPrice }}" style="width:100%;padding:12px 13px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--text);font-size:15px" />
+                </div>
+                <div style="grid-column:span 2;font-size:12.5px;color:var(--dim)">{{ f.trialHint }}</div>
+              </div>
+            </sc-if>
+          </div>
+
+          <sc-if value="{{ f.showRaise }}" hint-placeholder-val="{{ false }}">
+            <div style="border-radius:14px;padding:12px 14px;font-size:13px;font-weight:600;background:color-mix(in srgb,#e0512f 14%,transparent);color:var(--text)">{{ f.raiseNote }}</div>
+          </sc-if>
+
+          <div style="display:flex;gap:10px;margin-top:6px">
+            <button onClick="{{ save }}" style="flex:2;border:0;cursor:pointer;border-radius:16px;padding:15px;font-size:15px;font-weight:700;background:var(--accent);color:var(--accent-ink);box-shadow:var(--shadow)">{{ saveLabel }}</button>
+            <button onClick="{{ closeModal }}" style="flex:1;cursor:pointer;border:1px solid var(--line);border-radius:16px;padding:15px;font-size:15px;font-weight:700;background:transparent;color:var(--text)">Cancelar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#5b3df5&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;#5b3df5&quot;,&quot;#0f766e&quot;,&quot;#c2410c&quot;,&quot;#1d4ed8&quot;],&quot;section&quot;:&quot;Estilo&quot;},&quot;currency&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;€&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Datos&quot;},&quot;defaultGoal&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:90,&quot;min&quot;:10,&quot;max&quot;:400,&quot;step&quot;:5,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Datos&quot;}}">
+const CATS = [
+  { name: "Streaming", icon: "▶", color: "#e0503c" },
+  { name: "Herramientas", icon: "✦", color: "#e08a1e" },
+  { name: "VPN", icon: "⛨", color: "#3e63dd" },
+  { name: "IA", icon: "✳", color: "#8e4ec6" },
+  { name: "Gym", icon: "◆", color: "#2f9e57" },
+  { name: "Hosting", icon: "☁", color: "#0d9488" },
+  { name: "Música", icon: "♪", color: "#d93d82" },
+  { name: "Otros", icon: "●", color: "#78716c" }
+];
+const CYCLES = [
+  { key: "mensual", label: "Mensual", months: 1 },
+  { key: "trimestral", label: "Trimestral", months: 3 },
+  { key: "semestral", label: "Semestral", months: 6 },
+  { key: "anual", label: "Anual", months: 12 },
+  { key: "custom", label: "Personalizado", months: 24 }
+];
+let ALL_CATS = CATS.slice();
+const CAT_COLORS = ["#e0503c", "#e08a1e", "#3e63dd", "#8e4ec6", "#2f9e57", "#0d9488", "#d93d82", "#78716c"];
+const CAT_ICONS = ["●", "◆", "▲", "✦", "✳", "♪", "☁", "⛨", "▶", "✚"];
+const DAY = 86400000;
+const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const parse = (s) => { const p = String(s).split("-").map(Number); return new Date(p[0], p[1] - 1, p[2]); };
+const today0 = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; };
+const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+const addMonths = (d, n) => { const r = new Date(d.getFullYear(), d.getMonth() + n, 1); const day = Math.min(d.getDate(), new Date(r.getFullYear(), r.getMonth() + 1, 0).getDate()); r.setDate(day); return r; };
+const dayDiff = (a, b) => Math.round((a - b) / DAY);
+const catOf = (n) => ALL_CATS.find((c) => c.name === n) || CATS[7];
+
+/* Guardado a través de ZongaLS: comprime (~7-10x) y avisa con un banner si el
+   almacenamiento del dispositivo está lleno, en vez de fallar en silencio.
+   Lee también los valores antiguos sin comprimir. */
+const readStore = (k) => (window.ZongaLS ? ZongaLS.load(k) : localStorage.getItem(k));
+const writeStore = (k, v) => {
+  if (window.ZongaLS) return ZongaLS.save(k, v);
+  try { localStorage.setItem(k, v); return true; } catch (e) { return false; }
+};
+const monthName = (d) => d.toLocaleDateString("es-ES", { month: "long", year: "numeric" });
+const longDate = (d) => d.toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" });
+
+function seed() {
+  const t = today0();
+  const mk = (name, cat, key, months, amount, nextIn, start, opts) => Object.assign({
+    id: name.toLowerCase().replace(/\W/g, "") + Math.floor(Math.random() * 999),
+    name, cat, cycle: key, months, amount,
+    next: iso(addDays(t, nextIn)), auto: true, status: "activa",
+    start, trial: null, history: []
+  }, opts || {});
+  return [
+    mk("Netflix Premium", "Streaming", "mensual", 1, 17.99, 2, "2024-03-12", { history: [{ price: 15.99, date: "2026-01-14" }] }),
+    mk("Spotify Familiar", "Música", "mensual", 1, 19.99, 6, "2023-09-02"),
+    mk("ChatGPT Plus", "IA", "mensual", 1, 22.0, 12, "2024-11-20"),
+    mk("Figma Profesional", "Herramientas", "anual", 12, 144.0, 21, "2023-06-01"),
+    mk("NordVPN 2 años", "VPN", "custom", 24, 79.9, 1, "2025-02-10", { auto: false }),
+    mk("Basic-Fit", "Gym", "mensual", 1, 29.99, 4, "2022-01-15", { history: [{ price: 24.99, date: "2025-07-01" }] }),
+    mk("Hetzner VPS", "Hosting", "trimestral", 3, 26.4, 34, "2024-08-05"),
+    mk("Perplexity Pro", "IA", "mensual", 1, 20.0, 5, iso(addDays(t, -5)), { trial: { days: 7, price: 20.0, end: iso(addDays(t, 2)) } }),
+    mk("Disney+", "Streaming", "anual", 12, 89.9, -1, "2022-11-30", { auto: false, status: "pausada" })
+  ];
+}
+
+class Component extends DCLogic {
+  state = {
+    subs: [], view: "panel", filter: "Todas", theme: "light", goal: 90,
+    modal: false, editId: null, form: null, expanded: null, hover: null,
+    sim: false, selected: [], calOffset: 0, swipeId: null, swipeDx: 0,
+    customCats: [], newCat: null
+  };
+
+  loadCats() {
+    let custom = [];
+    try { custom = JSON.parse(readStore("suscrito.cats") || "[]"); } catch (e) {}
+    ALL_CATS = CATS.concat(custom);
+    return custom;
+  }
+
+  openNewCat = () => this.setState({ newCat: { name: "", color: CAT_COLORS[3], icon: CAT_ICONS[0] } });
+  cancelNewCat = () => this.setState({ newCat: null });
+  createCat = () => {
+    const n = this.state.newCat;
+    const name = (n.name || "").trim();
+    if (!name || ALL_CATS.some((c) => c.name.toLowerCase() === name.toLowerCase())) return;
+    const customCats = this.state.customCats.concat([{ name, icon: n.icon, color: n.color }]);
+    ALL_CATS = CATS.concat(customCats);
+    writeStore("suscrito.cats", JSON.stringify(customCats));
+    this.setState((s) => ({ customCats, newCat: null, form: Object.assign({}, s.form, { cat: name }) }));
+  };
+
+  componentDidMount() {
+    let subs = null;
+    try { const raw = readStore("suscrito.v1"); if (raw) subs = JSON.parse(raw); } catch (e) {}
+    // Sin datos se arranca en blanco: el ejemplo se carga a mano desde el
+    // estado vacío, para no llenar de suscripciones falsas la cuenta real.
+    if (!subs) subs = [];
+    const theme = (() => { try { return localStorage.getItem("suscrito.theme") || "light"; } catch (e) { return "light"; } })();
+    const goal = (() => { try { return Number(localStorage.getItem("suscrito.goal")) || (this.props.defaultGoal ?? 90); } catch (e) { return 90; } })();
+    document.documentElement.setAttribute("data-theme", theme);
+    if (this.props.accent) document.documentElement.style.setProperty("--accent", this.props.accent);
+    this.setState({ subs: this.roll(subs), theme, goal, customCats: this.loadCats() });
+  }
+
+  persist(subs) { writeStore("suscrito.v1", JSON.stringify(subs)); }
+
+  /* Carga el juego de suscripciones de ejemplo (solo desde el estado vacío). */
+  loadDemo = () => {
+    const subs = this.roll(seed());
+    this.persist(subs);
+    this.setState({ subs, filter: "Todas" });
+  };
+
+  roll(subs) {
+    const t = today0();
+    return subs.map((s) => {
+      if (s.status !== "activa" || !s.auto) return s;
+      let n = parse(s.next), guard = 0;
+      while (n < t && guard++ < 60) n = addMonths(n, s.months);
+      return Object.assign({}, s, { next: iso(n) });
+    });
+  }
+
+  cur() { return this.props.currency || "€"; }
+  fmt(n) { return n.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " " + this.cur(); }
+  fmt0(n) { return Math.round(n).toLocaleString("es-ES") + " " + this.cur(); }
+
+  info(s) {
+    const t = today0();
+    const isTrial = !!(s.trial && parse(s.trial.end) > t);
+    const target = isTrial ? parse(s.trial.end) : parse(s.next);
+    const days = dayDiff(target, t);
+    const cycleDays = Math.max(1, Math.round(s.months * 30.44));
+    const span = isTrial ? Math.max(1, s.trial.days) : cycleDays;
+    const pct = Math.max(0, Math.min(1, (span - days) / span));
+    const monthly = s.amount / s.months;
+    return { isTrial, days, pct, monthly, cycleDays };
+  }
+
+  activeSubs() { return this.state.subs.filter((s) => s.status === "activa"); }
+  billing() { return this.activeSubs().filter((s) => !this.info(s).isTrial); }
+  monthlyTotal() { return this.billing().reduce((a, s) => a + s.amount / s.months, 0); }
+
+  paidSince(s) {
+    let d = parse(s.start), n = 0, t = today0(), g = 0;
+    while (d <= t && g++ < 500) { n++; d = addMonths(d, s.months); }
+    return { total: n * s.amount, since: monthName(parse(s.start)) };
+  }
+
+  urgency(s) {
+    const i = this.info(s);
+    if (s.status !== "activa") return { bg: "var(--dead-bg)", bd: "var(--dead-bd)", tx: "var(--dead-tx)", dot: "#8a8a8a" };
+    if (i.days <= 0) return { bg: "var(--u-ovr-bg)", bd: "var(--u-ovr-bd)", tx: "var(--u-ovr-tx)", dot: "#c23a24" };
+    if (i.days <= 3) return { bg: "var(--u-red-bg)", bd: "var(--u-red-bd)", tx: "var(--u-red-tx)", dot: "#d94a34" };
+    if (i.days <= 7) return { bg: "var(--u-yel-bg)", bd: "var(--u-yel-bd)", tx: "var(--u-yel-tx)", dot: "#e0a52a" };
+    return { bg: "var(--u-grn-bg)", bd: "var(--u-grn-bd)", tx: "var(--u-grn-tx)", dot: "#2f9e57" };
+  }
+
+  blank() {
+    return { name: "", cat: "Streaming", cycle: "mensual", months: 1, amount: "", next: iso(addDays(today0(), 30)), auto: true, status: "activa", trial: false, trialDays: 7, trialPrice: "" };
+  }
+
+  openAdd = () => this.setState({ modal: true, editId: null, form: this.blank() });
+  openEdit = (s) => this.setState({
+    modal: true, editId: s.id, expanded: null, swipeId: null, swipeDx: 0,
+    form: { name: s.name, cat: s.cat, cycle: s.cycle, months: s.months, amount: String(s.amount), next: s.next, auto: s.auto, status: s.status, trial: !!s.trial, trialDays: s.trial ? s.trial.days : 7, trialPrice: s.trial ? String(s.trial.price) : "" }
+  });
+  closeModal = () => this.setState({ modal: false });
+  stop = (e) => e.stopPropagation();
+
+  setF = (k, v) => this.setState((st) => ({ form: Object.assign({}, st.form, { [k]: v }) }));
+
+  save = () => {
+    const f = this.state.form;
+    if (!f.name.trim()) return;
+    const amount = Number(f.amount) || 0;
+    const months = f.cycle === "custom" ? Math.max(1, Number(f.months) || 1) : (CYCLES.find((c) => c.key === f.cycle) || CYCLES[0]).months;
+    const trial = f.trial ? { days: Math.max(1, Number(f.trialDays) || 7), price: Number(f.trialPrice) || amount, end: iso(addDays(today0(), Math.max(1, Number(f.trialDays) || 7))) } : null;
+    let subs;
+    if (this.state.editId) {
+      subs = this.state.subs.map((s) => {
+        if (s.id !== this.state.editId) return s;
+        const history = s.history.slice();
+        if (Math.abs(s.amount - amount) > 0.009) history.push({ price: s.amount, date: iso(today0()) });
+        const t2 = trial ? Object.assign({}, trial, { end: s.trial ? s.trial.end : trial.end }) : null;
+        return Object.assign({}, s, { name: f.name, cat: f.cat, cycle: f.cycle, months, amount, next: f.next, auto: f.auto, status: f.status, trial: t2, history });
+      });
+    } else {
+      subs = this.state.subs.concat([{ id: "s" + Date.now(), name: f.name, cat: f.cat, cycle: f.cycle, months, amount, next: trial ? trial.end : f.next, auto: f.auto, status: f.status, start: iso(today0()), trial, history: [] }]);
+    }
+    this.persist(subs);
+    this.setState({ subs, modal: false, editId: null });
+  };
+
+  remove = (id) => { const subs = this.state.subs.filter((s) => s.id !== id); this.persist(subs); this.setState({ subs, swipeId: null, swipeDx: 0 }); };
+
+  toggleTheme = () => {
+    const theme = this.state.theme === "light" ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", theme);
+    try { localStorage.setItem("suscrito.theme", theme); } catch (e) {}
+    this.setState({ theme });
+  };
+
+  onGoal = (e) => { const goal = Number(e.target.value); try { localStorage.setItem("suscrito.goal", goal); } catch (er) {} this.setState({ goal }); };
+
+  toggleSim = () => this.setState((s) => ({ sim: !s.sim, selected: [] }));
+  toggleSel = (id) => this.setState((s) => ({ selected: s.selected.indexOf(id) >= 0 ? s.selected.filter((x) => x !== id) : s.selected.concat([id]) }));
+  applyCancel = () => {
+    if (!this.state.selected.length) return;
+    const subs = this.state.subs.map((s) => this.state.selected.indexOf(s.id) >= 0 ? Object.assign({}, s, { status: "cancelada" }) : s);
+    this.persist(subs);
+    this.setState({ subs, selected: [], sim: false });
+  };
+
+  touchStart = (id) => (e) => { this.tx = e.touches[0].clientX; this.tid = id; };
+  touchMove = (id) => (e) => {
+    if (this.tid !== id) return;
+    const dx = Math.max(-164, Math.min(0, e.touches[0].clientX - this.tx));
+    if (Math.abs(dx) > 6) this.setState({ swipeId: id, swipeDx: dx });
+  };
+  touchEnd = (id) => () => { if (this.tid !== id) return; this.setState((s) => ({ swipeDx: s.swipeDx < -70 ? -164 : 0, swipeId: s.swipeDx < -70 ? id : null })); };
+
+  buildCards() {
+    const t = today0();
+    const f = this.state.filter;
+    let list = this.state.subs.filter((s) => {
+      if (f === "Activas") return s.status === "activa";
+      if (f === "Pausadas") return s.status === "pausada";
+      if (f === "Canceladas") return s.status === "cancelada";
+      if (f === "En prueba") return this.info(s).isTrial;
+      return true;
+    });
+    const rank = { activa: 0, pausada: 1, cancelada: 2 };
+    list = list.slice().sort((a, b) => (rank[a.status] - rank[b.status]) || (this.info(a).days - this.info(b).days));
+
+    return list.map((s) => {
+      const i = this.info(s), u = this.urgency(s), c = catOf(s.cat);
+      const C = 2 * Math.PI * 28;
+      const paid = this.paidSince(s);
+      const last = s.history.length ? s.history[s.history.length - 1] : null;
+      const raise = last && last.price < s.amount;
+      const sel = this.state.selected.indexOf(s.id) >= 0;
+      const expanded = this.state.expanded === s.id || this.state.hover === s.id;
+      const overdue = i.days <= 0 && s.status === "activa";
+      let daysMsg;
+      if (s.status !== "activa") daysMsg = s.status === "pausada" ? "En pausa · no suma al total" : "Cancelada · solo historial";
+      else if (i.isTrial) daysMsg = i.days <= 2 ? "⚠ La prueba acaba ya — te cobrarán " + this.fmt(s.trial.price) : "Prueba gratuita en curso";
+      else if (overdue) daysMsg = i.days === 0 ? (s.auto ? "Te cobran HOY" : "Caduca HOY") : "Vencida hace " + Math.abs(i.days) + " días";
+      else daysMsg = s.auto ? "hasta el próximo cobro" : "hasta que caduque (sin renovación)";
+
+      return {
+        id: s.id,
+        name: s.name, cat: s.cat, catIcon: c.icon, catColor: c.color,
+        bg: u.bg, bd: u.bd, tx: u.tx,
+        shift: this.state.swipeId === s.id ? this.state.swipeDx : 0,
+        swiped: this.state.swipeId === s.id && this.state.swipeDx < 0,
+        lift: this.state.hover === s.id ? -4 : 0,
+        shadow: this.state.hover === s.id ? "var(--shadow-lg)" : "var(--shadow)",
+        isTrial: i.isTrial,
+        trialAnim: i.isTrial && i.days <= 2 ? "pulseWarn 1.6s ease-in-out infinite" : "none",
+        autoLabel: s.auto ? "Renovación auto" : "Sin renovación",
+        autoDot: s.auto ? "#2f9e57" : "#c9772a",
+        autoFull: s.auto ? "Automática · se renueva sola" : "Manual · caduca al vencer",
+        nextLabel: (i.isTrial ? "Fin de prueba: " : s.auto ? "Próximo cobro: " : "Caduca el ") + longDate(i.isTrial ? parse(s.trial.end) : parse(s.next)),
+        nextDateStr: longDate(parse(s.next)),
+        startStr: monthName(parse(s.start)),
+        statusLabel: s.status.charAt(0).toUpperCase() + s.status.slice(1),
+        daysNum: Math.abs(i.days) === 0 ? "0" : String(Math.abs(i.days)),
+        daysUnit: Math.abs(i.days) === 1 ? "día" : "días",
+        daysMsg,
+        dash: C.toFixed(1), offset: (C * (1 - i.pct)).toFixed(1), pct: Math.round(i.pct * 100) + "%",
+        monthly: this.fmt(i.monthly),
+        cycleAmount: this.fmt(s.amount),
+        cycleLabel: s.months === 1 ? "cada mes" : "cada " + s.months + " meses",
+        paidLabel: "Llevas " + this.fmt0(paid.total) + " pagados desde " + paid.since,
+        hasRaise: !!raise,
+        raiseLabel: raise ? "Subió " + this.fmt(s.amount - last.price) + " en " + monthName(parse(last.date)) : "",
+        raiseColor: "inherit",
+        hasHistory: s.history.length > 0,
+        history: s.history.concat([{ price: s.amount, date: iso(today0()) }]).map((h, k) => ({ date: (k === s.history.length ? "Actual · " : "") + monthName(parse(h.date)), price: this.fmt(h.price) })),
+        expanded,
+        selMark: sel ? "✓" : "",
+        selBg: sel ? "currentColor" : "transparent",
+        selFg: sel ? u.bg : "inherit",
+        onSelect: (e) => { e.stopPropagation(); this.toggleSel(s.id); },
+        onToggle: () => this.setState((st) => ({ expanded: st.expanded === s.id ? null : s.id })),
+        onEnter: () => this.setState({ hover: s.id }),
+        onLeave: () => this.setState({ hover: null }),
+        onEdit: (e) => { e.stopPropagation(); this.openEdit(s); },
+        onDelete: (e) => { e.stopPropagation(); this.remove(s.id); },
+        onTouchStart: this.touchStart(s.id), onTouchMove: this.touchMove(s.id), onTouchEnd: this.touchEnd(s.id)
+      };
+    });
+  }
+
+  buildDonut() {
+    const map = {};
+    this.billing().forEach((s) => { map[s.cat] = (map[s.cat] || 0) + s.amount / s.months; });
+    const total = Object.keys(map).reduce((a, k) => a + map[k], 0) || 1;
+    const entries = Object.keys(map).map((k) => ({ name: k, val: map[k], color: catOf(k).color })).sort((a, b) => b.val - a.val);
+    let acc = 0;
+    const stops = entries.map((e) => { const from = (acc / total) * 100; acc += e.val; const to = (acc / total) * 100; return `${e.color} ${from.toFixed(2)}% ${to.toFixed(2)}%`; });
+    return {
+      bg: entries.length ? `conic-gradient(${stops.join(",")})` : "var(--line)",
+      legend: entries.map((e) => ({ name: e.name, color: e.color, value: this.fmt(e.val), pct: Math.round((e.val / total) * 100) + "%" }))
+    };
+  }
+
+  buildBars() {
+    const t = today0();
+    const buckets = [];
+    for (let k = 0; k < 6; k++) { const d = addMonths(new Date(t.getFullYear(), t.getMonth(), 1), k); buckets.push({ y: d.getFullYear(), m: d.getMonth(), label: d.toLocaleDateString("es-ES", { month: "short" }), total: 0 }); }
+    const end = addMonths(new Date(t.getFullYear(), t.getMonth(), 1), 6);
+    this.activeSubs().forEach((s) => {
+      let d = parse(s.next), g = 0;
+      const amt = this.info(s).isTrial ? s.trial.price : s.amount;
+      while (d < end && g++ < 60) {
+        const b = buckets.find((x) => x.y === d.getFullYear() && x.m === d.getMonth());
+        if (b) b.total += amt;
+        if (!s.auto) break;
+        d = addMonths(d, s.months);
+      }
+    });
+    const max = Math.max.apply(null, buckets.map((b) => b.total).concat([1]));
+    return buckets.map((b) => ({
+      label: b.label.replace(".", ""),
+      value: this.fmt0(b.total),
+      h: Math.max(6, (b.total / max) * 100) + "%",
+      color: b.total > max * 0.75 ? "var(--accent)" : "color-mix(in srgb,var(--accent) 45%,transparent)"
+    }));
+  }
+
+  buildCal() {
+    const t = today0();
+    const base = addMonths(new Date(t.getFullYear(), t.getMonth(), 1), this.state.calOffset);
+    const first = new Date(base.getFullYear(), base.getMonth(), 1);
+    const startIdx = (first.getDay() + 6) % 7;
+    const daysIn = new Date(base.getFullYear(), base.getMonth() + 1, 0).getDate();
+    const charges = {};
+    this.activeSubs().forEach((s) => {
+      let d = parse(s.next), g = 0;
+      const amt = this.info(s).isTrial ? s.trial.price : s.amount;
+      while (d <= new Date(base.getFullYear(), base.getMonth() + 1, 0) && g++ < 80) {
+        if (d.getFullYear() === base.getFullYear() && d.getMonth() === base.getMonth() && d >= t) {
+          const k = d.getDate();
+          (charges[k] = charges[k] || []).push({ color: this.urgency(s).dot, title: s.name + " · " + this.fmt(amt), amt });
+        }
+        if (!s.auto) break;
+        d = addMonths(d, s.months);
+      }
+    });
+    const cells = [];
+    for (let k = 0; k < startIdx; k++) cells.push({ day: "", dots: [], bg: "transparent", bd: "transparent", op: "1", numColor: "var(--dim)", hasAmount: false, amount: "" });
+    for (let d = 1; d <= daysIn; d++) {
+      const isToday = base.getFullYear() === t.getFullYear() && base.getMonth() === t.getMonth() && d === t.getDate();
+      const dots = charges[d] || [];
+      const sum = dots.reduce((a, x) => a + x.amt, 0);
+      cells.push({
+        day: String(d), dots,
+        bg: isToday ? "var(--accent-soft)" : dots.length ? "var(--surface2)" : "transparent",
+        bd: isToday ? "var(--accent)" : "var(--line)",
+        op: base < new Date(t.getFullYear(), t.getMonth(), 1) ? "0.5" : "1",
+        numColor: isToday ? "var(--accent)" : "var(--text)",
+        hasAmount: dots.length > 0, amount: this.fmt0(sum)
+      });
+    }
+    return { cells, title: monthName(base) };
+  }
+
+  renderVals() {
+    const st = this.state;
+    const monthly = this.monthlyTotal();
+    const trialSoon = this.activeSubs().filter((s) => this.info(s).isTrial);
+    const pillOn = { bg: "var(--accent)", fg: "var(--accent-ink)", bd: "var(--accent)" };
+    const pillOff = { bg: "var(--surface)", fg: "var(--text)", bd: "var(--line)" };
+    const pick = (on) => (on ? pillOn : pillOff);
+
+    const goalPct = Math.min(100, (monthly / Math.max(1, st.goal)) * 100);
+    const over = monthly > st.goal;
+    const donut = this.buildDonut();
+    const cal = this.buildCal();
+    const f = st.form || this.blank();
+    const fMonths = f.cycle === "custom" ? Math.max(1, Number(f.months) || 1) : (CYCLES.find((c) => c.key === f.cycle) || CYCLES[0]).months;
+    const fAmount = Number(f.amount) || 0;
+    const editing = st.editId ? st.subs.find((s) => s.id === st.editId) : null;
+    const selSubs = st.subs.filter((s) => st.selected.indexOf(s.id) >= 0 && s.status === "activa");
+    const saved = selSubs.reduce((a, s) => a + s.amount / s.months, 0);
+
+    return {
+      tabs: [["panel", "Panel"], ["stats", "Análisis"], ["cal", "Calendario"]].map(([k, label]) => ({
+        label, bg: st.view === k ? "var(--surface)" : "transparent",
+        fg: st.view === k ? "var(--text)" : "var(--dim)",
+        go: () => this.setState({ view: k })
+      })),
+      themeIcon: st.theme === "light" ? "☾" : "☀",
+      toggleTheme: this.toggleTheme,
+      openAdd: this.openAdd,
+      isPanel: st.view === "panel", isStats: st.view === "stats", isCal: st.view === "cal",
+
+      totalMonthly: this.fmt(monthly),
+      totalYearly: this.fmt0(monthly * 12),
+      activeCountLabel: this.billing().length + " suscripciones activas cobrando",
+      trialNote: trialSoon.length ? trialSoon.length + " en prueba: +" + this.fmt(trialSoon.reduce((a, s) => a + s.trial.price / s.months, 0)) + "/mes al acabar" : "Sin pruebas gratuitas activas",
+
+      goal: st.goal, onGoal: this.onGoal,
+      goalLabel: this.fmt0(st.goal) + "/mes",
+      goalPct: goalPct + "%",
+      goalColor: over ? "#d94a34" : goalPct > 80 ? "#e0a52a" : "var(--accent)",
+      goalMsg: over ? "Te has pasado " + this.fmt(monthly - st.goal) + " del objetivo" : "Te quedan " + this.fmt(st.goal - monthly) + " de margen",
+
+      filters: ["Todas", "Activas", "En prueba", "Pausadas", "Canceladas"].map((label) => {
+        const on = st.filter === label; const p = pick(on);
+        return { label, bg: p.bg, fg: p.fg, bd: p.bd, go: () => this.setState({ filter: label }) };
+      }),
+
+      cards: this.buildCards(),
+      isEmpty: this.buildCards().length === 0,
+      noSubs: st.subs.length === 0,
+      emptyTitle: st.subs.length === 0 ? "Aún no has añadido ninguna suscripción" : "Nada por aquí",
+      emptyMsg: st.subs.length === 0
+        ? "Apunta lo que pagas cada mes y verás el gasto real, los cobros que vienen y cuánto ahorrarías cancelando."
+        : "No hay suscripciones con este filtro.",
+      loadDemo: this.loadDemo,
+
+      simOn: st.sim, toggleSim: this.toggleSim,
+      simLabel: st.sim ? "✕ Salir del simulador" : "◎ Simulador de ahorro",
+      simBg: st.sim ? "var(--accent)" : "var(--surface)",
+      simFg: st.sim ? "var(--accent-ink)" : "var(--text)",
+      simHeadline: selSubs.length ? "Cancelando estas " + selSubs.length + " ahorras " + this.fmt(saved) + "/mes y " + this.fmt0(saved * 12) + "/año" : "Marca las suscripciones que te planteas cancelar",
+      simSub: selSubs.length ? "Tu nuevo gasto mensual sería " + this.fmt(monthly - saved) : "El ahorro se calcula en tiempo real",
+      applyCancel: this.applyCancel,
+      applyBg: selSubs.length ? "var(--accent)" : "var(--line)",
+      applyFg: selSubs.length ? "var(--accent-ink)" : "var(--dim)",
+
+      donutBg: donut.bg, legend: donut.legend, bars: this.buildBars(),
+      dow: ["lun", "mar", "mié", "jue", "vie", "sáb", "dom"],
+      calCells: cal.cells, calTitle: cal.title,
+      calPrev: () => this.setState((s) => ({ calOffset: s.calOffset - 1 })),
+      calNext: () => this.setState((s) => ({ calOffset: s.calOffset + 1 })),
+      calToday: () => this.setState({ calOffset: 0 }),
+
+      modalOpen: st.modal, closeModal: this.closeModal, stop: this.stop, save: this.save,
+      modalTitle: st.editId ? "Editar suscripción" : "Nueva suscripción",
+      saveLabel: st.editId ? "Guardar cambios" : "Añadir suscripción",
+      f: {
+        name: f.name, amount: f.amount, next: f.next, months: f.months,
+        trial: f.trial, trialDays: f.trialDays, trialPrice: f.trialPrice,
+        isCustom: f.cycle === "custom",
+        normHint: fAmount > 0 ? this.fmt(fAmount) + " cada " + (fMonths === 1 ? "mes" : fMonths + " meses") + " = " + this.fmt(fAmount / fMonths) + " al mes" : "Introduce el importe total del ciclo",
+        trialHint: "Se marcará como TRIAL durante " + (Number(f.trialDays) || 0) + " días; después pasará a cobrar " + this.fmt(Number(f.trialPrice) || 0) + ".",
+        showRaise: !!(editing && Math.abs(editing.amount - fAmount) > 0.009),
+        raiseNote: editing ? (fAmount > editing.amount ? "Se guardará una subida de " + this.fmt(fAmount - editing.amount) + " en el historial." : "Se guardará una bajada de " + this.fmt(editing.amount - fAmount) + " en el historial.") : ""
+      },
+      h: {
+        name: (e) => this.setF("name", e.target.value),
+        amount: (e) => this.setF("amount", e.target.value),
+        next: (e) => this.setF("next", e.target.value),
+        months: (e) => this.setF("months", e.target.value),
+        trialDays: (e) => this.setF("trialDays", e.target.value),
+        trialPrice: (e) => this.setF("trialPrice", e.target.value)
+      },
+      catOpts: ALL_CATS.map((c) => {
+        const on = f.cat === c.name;
+        return { name: c.name, icon: c.icon, color: c.color, bg: on ? "var(--accent-soft)" : "var(--surface2)", fg: "var(--text)", bd: on ? "var(--accent)" : "var(--line)", go: () => this.setF("cat", c.name) };
+      }),
+      newCatOpen: !!st.newCat,
+      openNewCat: this.openNewCat,
+      cancelNewCat: this.cancelNewCat,
+      createCat: this.createCat,
+      nc: {
+        name: (st.newCat && st.newCat.name) || "",
+        icon: (st.newCat && st.newCat.icon) || CAT_ICONS[0],
+        color: (st.newCat && st.newCat.color) || CAT_COLORS[3],
+        onName: (e) => this.setState((s) => ({ newCat: Object.assign({}, s.newCat, { name: e.target.value }) })),
+        colors: CAT_COLORS.map((col) => ({
+          color: col, bd: st.newCat && st.newCat.color === col ? "var(--text)" : "transparent",
+          go: () => this.setState((s) => ({ newCat: Object.assign({}, s.newCat, { color: col }) }))
+        })),
+        icons: CAT_ICONS.map((ic) => {
+          const on = st.newCat && st.newCat.icon === ic;
+          return { icon: ic, bg: on ? "var(--accent-soft)" : "var(--surface)", bd: on ? "var(--accent)" : "var(--line)", go: () => this.setState((s) => ({ newCat: Object.assign({}, s.newCat, { icon: ic }) })) };
+        })
+      },
+      cycleOpts: CYCLES.map((c) => {
+        const on = f.cycle === c.key; const p = pick(on);
+        return { label: c.label, bg: p.bg, fg: p.fg, bd: p.bd, go: () => this.setState((s) => ({ form: Object.assign({}, s.form, { cycle: c.key, months: c.months }) })) };
+      }),
+      autoOpts: [["Sí", true], ["No", false]].map(([label, v]) => {
+        const on = f.auto === v; const p = pick(on);
+        return { label, bg: p.bg, fg: p.fg, bd: p.bd, go: () => this.setF("auto", v) };
+      }),
+      statusOpts: ["activa", "pausada", "cancelada"].map((k) => {
+        const on = f.status === k; const p = pick(on);
+        return { label: k.charAt(0).toUpperCase() + k.slice(1), bg: p.bg, fg: p.fg, bd: p.bd, go: () => this.setF("status", k) };
+      }),
+      trialOpts: [["Sí", true], ["No", false]].map(([label, v]) => {
+        const on = f.trial === v; const p = pick(on);
+        return { label, bg: p.bg, fg: p.fg, bd: p.bd, go: () => this.setF("trial", v) };
+      })
+    };
+  }
+}
+</script>
+
+<script src="/zonga-memory.js"></script>
+<script type="module" src="/firebase.js"></script>
+<script type="module" src="/sync.js?v=20260718"></script>
+</body>
+</html>

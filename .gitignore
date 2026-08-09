@@ -72,3 +72,7 @@ node_modules/
 # (fuentes .dc.html, uploads y miniatura). La herramienta publicada vive
 # en reto-30-dias/ y no necesita nada de aqui.
 /reto 30 dias seguidos/
+
+# Idem para el "Gestor de suscripciones": la version publicada vive en
+# gestor-suscripciones/.
+/Gestor de suscripciones/

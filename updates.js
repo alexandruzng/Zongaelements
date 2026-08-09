@@ -5,6 +5,17 @@
 */
 const UPDATES = [
   {
+    id: '2026-08-09-gestor-suscripciones',
+    title: 'Nueva herramienta: Gestor de suscripciones',
+    items: [
+      'En Productividad Personal tienes una herramienta nueva, «Gestor de suscripciones». Apuntas cada servicio que pagas (Netflix, Spotify, ChatGPT, el gym, el VPS…) con su importe y su ciclo — mensual, trimestral, semestral, anual o los meses que tú digas — y arriba te sale el gasto mensual REAL: todo se normaliza a coste por mes, así que una anual de 144 € cuenta como 12 €/mes y deja de esconderse. Al lado, la proyección de lo que te vas a dejar en un año.',
+      'Cada suscripción es una tarjeta que cambia de color según lo cerca que esté el cobro: verde con más de 7 días, ámbar entre 4 y 7, roja a 3 días o menos y oscura si ya está vencida. Un anillo de progreso te enseña cuánto llevas del ciclo y los días que faltan. Al pulsarla se despliega el detalle: próximo cobro, desde cuándo la tienes, cuánto llevas pagado en total desde que la contrataste y el historial de subidas de precio (si editas el importe, se guarda solo y la tarjeta te marca «↗ Subió 2,00 € en enero»). En móvil, desliza la tarjeta a la izquierda para editar o borrar.',
+      'Pruebas gratuitas: al añadir una suscripción puedes decir que empieza con trial, cuántos días dura y cuánto te cobrarán al acabar. Mientras dure sale con la etiqueta TRIAL, no suma al gasto mensual, y cuando quedan 2 días o menos empieza a parpadear avisándote de lo que te van a cobrar. En la tarjeta grande de arriba te dice cuánto subirá tu gasto cuando terminen todas las pruebas activas.',
+      'Tres pestañas: Panel con las tarjetas y filtros (todas, activas, en prueba, pausadas, canceladas); Análisis con el reparto por categoría en donut y la previsión de cobros reales de los próximos 6 meses; y Calendario mensual con un punto por cada cobro previsto y el importe del día. Además tienes un objetivo mensual con barra de progreso que se pone roja al pasarte, un simulador de ahorro (marcas las que te planteas cancelar y te calcula al vuelo lo que ahorrarías al mes y al año, con botón para cancelarlas de golpe), categorías propias con color e icono, y modo claro/oscuro.',
+      'Empieza vacía, con un botón por si quieres cargar un ejemplo y ver cómo queda todo antes de meter lo tuyo. Se guarda comprimido y se sincroniza entre tus dispositivos como el resto de herramientas.',
+    ],
+  },
+  {
     id: '2026-08-05-reto-30-dias-tokens-de-vida',
     title: 'Reto de 30 días: 5 tokens de vida para salvar el día',
     items: [

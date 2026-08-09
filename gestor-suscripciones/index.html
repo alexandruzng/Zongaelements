@@ -68,18 +68,21 @@ input[type=range]{accent-color:var(--accent)}
 .only-mobile{display:flex !important}
 .hide-mobile{display:none !important}
 }
+/* Hueco a la izquierda de la cabecera para el botón flotante «Volver al menú»
+   que monta zonga-memory.js: va fijo en la esquina superior izquierda y, como
+   la cabecera es sticky, taparía el logo tanto al cargar como al scrollear. */
+.zonga-topbar{padding-left:186px !important}
+/* En móvil no hay ancho de sobra para apartar la cabecera: se le deja
+   el hueco arriba, que el botón ocupa toda la esquina. */
+@media(max-width:540px){.zonga-topbar{padding-left:20px !important;padding-top:56px !important}}
 </style>
 </helmet>
 
 <div style="min-height:100vh;background:var(--bg);padding:0 0 140px">
 
-  <!-- Vuelta al índice de Zonga Elements -->
-  <div style="max-width:1280px;margin:0 auto;padding:14px 20px 0">
-    <a href="../index.html" style="color:var(--dim);text-decoration:none;font-size:14px;display:inline-flex;align-items:center;gap:6px">← Volver a Zonga Elements</a>
-  </div>
-
+  <!-- La vuelta al índice la monta zonga-memory.js (botón flotante). -->
   <div style="position:sticky;top:0;z-index:40;backdrop-filter:blur(14px);background:color-mix(in srgb,var(--bg) 86%,transparent);border-bottom:1px solid var(--line)">
-    <div style="max-width:1280px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+    <div class="zonga-topbar" style="max-width:1280px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
       <div style="display:flex;align-items:center;gap:10px;margin-right:auto">
         <div style="width:34px;height:34px;border-radius:11px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:18px">S</div>
         <div>

@@ -171,7 +171,7 @@ const tools = [
     description: 'Controla lo que te cuestan Netflix, Spotify, ChatGPT y compañía: gasto mensual real, aviso de pruebas gratuitas, calendario de cobros y simulador de ahorro.',
     url: 'gestor-suscripciones/index.html',
     status: 'available',
-    category: 'personal',
+    category: 'finanzas',
     icon: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>`
   },
   {

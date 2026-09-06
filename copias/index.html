@@ -157,6 +157,31 @@
     .row .meta  { color: var(--c-text-soft); font-size: 12.5px; font-variant-numeric: tabular-nums; }
     .row .actions { display: flex; gap: var(--sp-2); flex-shrink: 0; }
 
+    /* ── Barra de ocupacion del almacenamiento ─────────────────────────── */
+    .bar {
+      height: 12px; border-radius: 999px; overflow: hidden;
+      background: var(--c-border); display: flex;
+      margin: var(--sp-3) 0 var(--sp-2);
+    }
+    .bar > i { display: block; height: 100%; transition: width var(--dur) var(--ease); }
+    .bar > i.fotos { background: var(--c-danger); }
+    .bar > i.datos { background: var(--c-primary); }
+    .barleg {
+      display: flex; flex-wrap: wrap; gap: var(--sp-4);
+      font-size: 12.5px; color: var(--c-text-soft);
+      font-variant-numeric: tabular-nums; margin-bottom: var(--sp-4);
+    }
+    .barleg span { display: inline-flex; align-items: center; gap: 6px; }
+    .barleg b::before {
+      content: ""; width: 10px; height: 10px; border-radius: 3px;
+      display: inline-block; background: currentColor;
+    }
+    .swatch-fotos { color: var(--c-danger); }
+    .swatch-datos { color: var(--c-primary); }
+    .swatch-libre { color: var(--c-border); }
+
+    .usorow .bar { margin: 6px 0 0; height: 6px; }
+
     .empty {
       padding: var(--sp-5); text-align: center;
       color: var(--c-text-soft); font-size: 14px;
@@ -221,6 +246,22 @@
     </section>
 
     <!-- ── Exportar ───────────────────────────────────────────────────── -->
+    <!-- ── Que ocupa el espacio ───────────────────────────────────────── -->
+    <section class="card" aria-labelledby="h-espacio">
+      <h2 id="h-espacio">Qué ocupa el espacio</h2>
+      <p class="sub">
+        El navegador da <strong>un solo almacén de unos 5 MB para todo el dominio</strong>, compartido
+        por las quince herramientas. Es un límite del navegador, no una configuración: no se puede ampliar.
+        Aquí ves exactamente qué lo está llenando.
+      </p>
+      <div id="espacioResumen"></div>
+      <div id="espacioLista" class="rows"></div>
+      <div class="btn-row" style="margin-top:var(--sp-4)">
+        <button class="btn btn-ghost btn-sm" id="btnMedirLibre">Medir cuánto queda libre</button>
+      </div>
+      <div id="espacioMedida"></div>
+    </section>
+
     <section class="card" aria-labelledby="h-exportar">
       <h2 id="h-exportar">Guardar una copia en tu ordenador</h2>
       <p class="hint">Descarga un único archivo con absolutamente todo lo que tienes en las herramientas. Es la copia que no depende de nada ni de nadie: guárdala de vez en cuando.</p>
@@ -295,6 +336,146 @@
       });
     }
 
+    /* ══ Qué ocupa el espacio ═════════════════════════════════════════════
+       El navegador contabiliza el localStorage en UTF-16: 2 bytes por carácter,
+       clave incluida. Por eso se mide así y no con el largo del texto. */
+    const BYTES = (k, v) => (k.length + (v ? v.length : 0)) * 2;
+
+    // Clave → herramienta. Se comprueba primero exacto y luego por prefijo.
+    const DUENO_EXACTO = {
+      "bp_products_v1": "Banco de productos",
+      "ph_db_v1": "Product Hub",
+      "tracker_habitos_v1": "Tracker de hábitos",
+      "zonga_tracker_beneficio_v3": "Tracker de beneficio Ads",
+      "zonga_ads_analyzer_v1": "Analizador de métricas Ads",
+      "reto30_v1": "Reto de 30 días",
+      "notas-libros:v1": "Notas de libros",
+    };
+    const DUENO_PREFIJO = [
+      ["diario_",       "Diario electrónico"],
+      ["fz:",           "Finanzas"],
+      ["pd:",           "Pedidos diarios"],
+      ["suscrito.",     "Gestor de suscripciones"],
+      ["notas-libros:", "Notas de libros"],
+      ["__zonga",       "Interno (sincronización)"],
+    ];
+    function duenoDe(k) {
+      if (DUENO_EXACTO[k]) return DUENO_EXACTO[k];
+      for (const [pre, nombre] of DUENO_PREFIJO) if (k.startsWith(pre)) return nombre;
+      return "Otra herramienta";
+    }
+
+    // Cuánto de un valor son fotos incrustadas en base64. Es lo que de verdad
+    // llena el almacén: una foto de móvil ocupa más que todo lo demás junto.
+    function bytesEnFotos(v) {
+      if (!v || v.indexOf("data:image") === -1) return { bytes: 0, n: 0 };
+      let total = 0, n = 0;
+      const re = /data:image\/[a-z+]+;base64,[A-Za-z0-9+/=]+/g;
+      let m;
+      while ((m = re.exec(v)) !== null) { total += m[0].length * 2; n++; }
+      return { bytes: total, n };
+    }
+
+    function analizarEspacio() {
+      const filas = [];
+      let totalBytes = 0, totalFotos = 0, totalNumFotos = 0;
+
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        const v = localStorage.getItem(k);
+        const b = BYTES(k, v);
+        const f = bytesEnFotos(v);
+        totalBytes += b; totalFotos += f.bytes; totalNumFotos += f.n;
+        filas.push({
+          k, bytes: b, fotos: f.bytes, nFotos: f.n,
+          dueno: duenoDe(k),
+          comprimido: !!(v && v.startsWith("LZ1:")),
+        });
+      }
+      filas.sort((a, b) => b.bytes - a.bytes);
+      return { filas, totalBytes, totalFotos, totalNumFotos };
+    }
+
+    // Estimación honesta: 5 MB es lo que dan Chrome y Safari por dominio.
+    const LIMITE_TIPICO = 5 * 1024 * 1024;
+
+    function pintarEspacio() {
+      const { filas, totalBytes, totalFotos, totalNumFotos } = analizarEspacio();
+      const pct = Math.min(100, (totalBytes / LIMITE_TIPICO) * 100);
+      const pctFotos = Math.min(100, (totalFotos / LIMITE_TIPICO) * 100);
+      const pctDatos = Math.max(0, pct - pctFotos);
+
+      let aviso = "";
+      if (totalFotos > totalBytes * 0.4 && totalFotos > 300 * 1024) {
+        aviso = `<div class="note danger"><strong>El problema son las fotos.</strong>
+          ${totalNumFotos} foto(s) guardadas dentro del texto ocupan ${fmtBytes(totalFotos)}
+          de los ${fmtBytes(totalBytes)} que usas. Abre el <a href="/diario electronico/Diario-completo.html">Diario</a>
+          en este dispositivo y espera unos segundos: al abrirlo mueve las fotos antiguas a la nube
+          y libera ese espacio automáticamente.</div>`;
+      } else if (pct > 85) {
+        aviso = `<div class="note warn"><strong>Estás al ${Math.round(pct)} % del almacén.</strong>
+          Por eso fallan los guardados nuevos. Mira abajo qué es lo que más ocupa.</div>`;
+      } else if (pct > 60) {
+        aviso = `<div class="note info">Vas por el ${Math.round(pct)} % del almacén del navegador.</div>`;
+      }
+
+      $("#espacioResumen").innerHTML = `
+        ${aviso}
+        <dl class="stats">
+          <div class="stat"><dt>En uso</dt><dd>${fmtBytes(totalBytes)}</dd></div>
+          <div class="stat"><dt>De eso, fotos</dt><dd>${fmtBytes(totalFotos)}</dd></div>
+          <div class="stat"><dt>Límite del navegador</dt><dd>~5 MB</dd></div>
+          <div class="stat"><dt>Ocupado</dt><dd>${Math.round(pct)} %</dd></div>
+        </dl>
+        <div class="bar" role="img" aria-label="Ocupación: ${Math.round(pct)} por ciento">
+          <i class="fotos" style="width:${pctFotos}%"></i>
+          <i class="datos" style="width:${pctDatos}%"></i>
+        </div>
+        <div class="barleg">
+          <span class="swatch-fotos"><b></b>Fotos incrustadas ${fmtBytes(totalFotos)}</span>
+          <span class="swatch-datos"><b></b>Datos ${fmtBytes(totalBytes - totalFotos)}</span>
+          <span class="swatch-libre"><b></b>Libre ~${fmtBytes(Math.max(0, LIMITE_TIPICO - totalBytes))}</span>
+        </div>`;
+
+      $("#espacioLista").innerHTML = filas
+        .filter(f => f.bytes > 1024)
+        .map(f => {
+          const p = Math.min(100, (f.bytes / LIMITE_TIPICO) * 100);
+          const etiquetas = [
+            f.nFotos ? `<span class="pill danger">${f.nFotos} foto(s) · ${fmtBytes(f.fotos)}</span>` : "",
+            f.comprimido ? `<span class="pill ok">comprimido</span>` : "",
+          ].join(" ");
+          return `<div class="row usorow">
+            <div class="main">
+              <div class="title">${f.dueno} ${etiquetas}</div>
+              <div class="meta">${f.k} · ${fmtBytes(f.bytes)} · ${p.toFixed(1)} % del almacén</div>
+              <div class="bar"><i class="${f.nFotos ? "fotos" : "datos"}" style="width:${p}%"></i></div>
+            </div>
+          </div>`;
+        }).join("") || `<div class="empty">No hay nada guardado en este dispositivo todavía.</div>`;
+    }
+
+    /* Mide de verdad cuánto cabe todavía, escribiendo en una clave de prueba
+       hasta que el navegador dice basta. La clave empieza por `__zonga`, así que
+       la sincronización la ignora, y se borra siempre al terminar. */
+    async function medirLibre() {
+      const K = "__zonga_probe__";
+      const PASO = 128 * 1024;              // 128 KB de caracteres = 256 KB reales
+      const trozo = "x".repeat(PASO);
+      let libre = 0, buf = "";
+      try {
+        for (let i = 0; i < 120; i++) {     // tope de seguridad: ~30 MB
+          buf += trozo;
+          try { localStorage.setItem(K, buf); libre = buf.length * 2; }
+          catch { break; }
+          if (i % 8 === 0) await new Promise(r => setTimeout(r, 0)); // no congelar la pestaña
+        }
+      } finally {
+        try { localStorage.removeItem(K); } catch {}
+      }
+      return libre;
+    }
+
     let uid = null;
 
     onAuthStateChanged(auth, async (user) => {
@@ -348,6 +529,33 @@
     }
 
     /* ── Exportar / importar ──────────────────────────────────────────── */
+    // El desglose de espacio no necesita sesión: lee el almacén de este equipo.
+    pintarEspacio();
+    window.addEventListener("zonga:sync", pintarEspacio);
+
+    $("#btnMedirLibre").addEventListener("click", async (e) => {
+      const btn = e.currentTarget;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Midiendo…';
+      try {
+        const libre = await medirLibre();
+        const usado = analizarEspacio().totalBytes;
+        $("#espacioMedida").innerHTML = `<div class="note ${libre < 200 * 1024 ? "danger" : "info"}"
+          style="margin:var(--sp-3) 0 0">
+          Caben <strong>${fmtBytes(libre)}</strong> más en este dispositivo.
+          Ahora mismo usas ${fmtBytes(usado)}, así que el navegador te está dando
+          un total de unos <strong>${fmtBytes(usado + libre)}</strong>.
+          ${libre < 200 * 1024 ? "Es prácticamente cero: por eso te falla al guardar." : ""}
+        </div>`;
+      } catch (err) {
+        $("#espacioMedida").innerHTML = `<div class="note danger" style="margin:var(--sp-3) 0 0">
+          No se pudo medir: ${err?.message || err}</div>`;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Medir cuánto queda libre";
+      }
+    });
+
     $("#btnExport").addEventListener("click", async () => {
       const btn = $("#btnExport");
       btn.disabled = true; btn.textContent = "Preparando…";

@@ -5,6 +5,16 @@
 */
 const UPDATES = [
   {
+    id: '2026-09-06-que-ocupa-el-espacio',
+    title: 'Copias: ahora ves qué está llenando el almacenamiento',
+    items: [
+      'Si al guardar te sale «no hay espacio», entra en «Copias de seguridad» (abajo del todo de la página principal) y mira la sección nueva «Qué ocupa el espacio». Te lista cada herramienta ordenada por lo que ocupa, con una barra por cada una, para que veas de un vistazo cuál se está comiendo el almacén en vez de tener que adivinarlo.',
+      'La explicación de por qué el espacio parece tan pequeño: el navegador da UN SOLO almacén de unos 5 MB para todo el dominio, compartido por las quince herramientas. No es una configuración que se pueda subir, es un límite del navegador. Y los textos no pesan casi nada: cuarenta productos del Banco de productos son 13 KB. Lo que llena los 5 MB son las FOTOS antiguas del Diario guardadas dentro del texto: una sola foto de móvil puede ocupar 2 MB, es decir, más que todas las demás herramientas juntas.',
+      'Por eso, cuando detecta que el problema son fotos, te lo dice en rojo y te manda al Diario: al abrirlo mueve solo las fotos antiguas a la nube (donde el espacio no está limitado) y deja en el móvil o el portátil únicamente una referencia. Eso libera el almacén de golpe y vuelven a funcionar los guardados del resto de herramientas.',
+      'También hay un botón «Medir cuánto queda libre» que escribe datos de prueba hasta que el navegador dice basta, y así te dice el hueco REAL que te queda en ese dispositivo concreto, no una estimación.',
+    ],
+  },
+  {
     id: '2026-09-06-sincronizacion-a-prueba-de-perdidas',
     title: 'Se acabó perder datos: sincronización reescrita de cero',
     items: [

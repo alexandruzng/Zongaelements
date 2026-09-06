@@ -5,6 +5,17 @@
 */
 const UPDATES = [
   {
+    id: '2026-09-06-fuera-fotos-diario-y-notas-libros',
+    title: 'Fuera las fotos del Diario y la herramienta de Notas de Libros',
+    items: [
+      'El Diario ya no tiene fotos. Se ha quitado el botón de añadir foto del editor, la pestaña «Multimedia» del menú de abajo, las miniaturas de las entradas y el puntito de foto del calendario. La grabadora de nota de voz se queda donde estaba: eso no se ha tocado.',
+      'IMPORTANTE: los días escritos NO se han tocado. De cada entrada se ha quitado únicamente el campo de las fotos; el texto, la puntuación, las rachas, el marcador, los colores del día, la metáfora, la nota de voz y la fecha siguen exactamente igual. Está comprobado día por día antes de publicarlo.',
+      'También se han borrado los archivos de foto que quedaban en la nube y en el almacenamiento del navegador. Esto es lo que libera el espacio: en la prueba, un diario de 1,43 MB se quedó en 0,4 KB. Ese era el motivo de que te saltara «no hay espacio» al guardar cualquier cosa en cualquier otra herramienta.',
+      'La herramienta «Notas de Libros» se ha eliminado de la web y sus datos se han borrado de todos tus dispositivos.',
+      'Todo lo borrado tiene copia. Antes de tocar nada se guarda el contenido íntegro en la papelera de «Copias de seguridad», así que si te arrepientes de cualquiera de las dos cosas se puede recuperar desde ahí.',
+    ],
+  },
+  {
     id: '2026-09-06-que-ocupa-el-espacio',
     title: 'Copias: ahora ves qué está llenando el almacenamiento',
     items: [

@@ -825,6 +825,18 @@ window.__zongaSync = {
   deviceId,
   schema: "kv-v2",
   forcePush: () => currentUid && reconciled && pushNow(currentUid),
+  /* Guarda el valor actual de una clave en la papelera de la nube ANTES de que
+     quien llama la borre o la modifique. Se usa en las limpiezas destructivas
+     (zonga-cleanup.js) para que todo borrado siga siendo reversible desde
+     /copias/. Espera a tener sesión para no perder la copia. */
+  stash: async (key, motivo) => {
+    for (let i = 0; i < 60 && !currentUid; i++) await new Promise(r => setTimeout(r, 250));
+    if (!currentUid) throw new Error("sin sesión: no se pudo guardar la copia");
+    const v = origGet(key);
+    if (v === null) return false;
+    await toTrash(currentUid, key, v, motivo || "copia-previa");
+    return true;
+  },
   listBackups,
   readBackup,
   restoreBackup,

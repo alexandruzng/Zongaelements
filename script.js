@@ -247,15 +247,6 @@ const tools = [
     icon: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>`
   },
   {
-    id: 'notas-libros',
-    name: 'Notas de Libros',
-    description: 'Tu biblioteca personal de lectura: guarda cada libro con su portada, progreso de páginas, valoración con estrellas y todas tus notas. Organízalos por estado (por leer, leyendo, leído), con buscador y modo oscuro. Todo sincronizado en la nube entre tus dispositivos.',
-    url: 'notas-libros/index.html',
-    status: 'available',
-    category: 'personal',
-    icon: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v15.5H5.5A1.5 1.5 0 0 0 4 21z"/><path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H13v15.5h5.5A1.5 1.5 0 0 1 20 21z"/></svg>`
-  },
-  {
     id: 'soon-2',
     name: 'Próximamente',
     description: 'Estamos trabajando en más piezas para completar tu flujo de trabajo.',

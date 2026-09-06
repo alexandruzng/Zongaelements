@@ -71,7 +71,6 @@ const COMPACTED   = "__zonga_compacted__";   // { clave: rev del valor ANTES de 
 
 const PUSH_DEBOUNCE_MS = 700;
 const PART_MAX_UNITS   = 250_000;  // ≈750 KB en UTF-8, con margen bajo el límite de 1 MiB
-const TRASH_MAX_CHARS  = 400_000;
 const BACKUP_KEEP_DAYS = 14;
 const PUSH_CONCURRENCY = 4;
 
@@ -295,20 +294,49 @@ async function pushKey(uid, key, ts) {
    5. Papelera — nada se sobrescribe ni se borra sin dejar copia
    ══════════════════════════════════════════════════════════════════════════ */
 
+/* Guarda una copia integra en la papelera. Los valores grandes se parten igual
+   que en `kv` (partes bajo el propio documento) en vez de recortarse: una
+   papelera que trunca no es una papelera, y de ella depende que los borrados
+   sean reversibles. */
 async function toTrash(uid, key, value, reason) {
   if (typeof value !== "string" || !value.length) return;
   try {
-    const truncated = value.length > TRASH_MAX_CHARS;
-    await setDoc(doc(db, "users", uid, "trash", encId(key) + "_" + Date.now()), {
+    const id = encId(key) + "_" + Date.now();
+    const partes = splitValue(value);
+
+    // Las partes >0 primero; la cabecera al final, igual que en pushKey, para
+    // que nunca se lea una entrada que dice tener partes que aun no existen.
+    await pool(partes.map((v, i) => ({ v, i })).slice(1), PUSH_CONCURRENCY, async ({ v, i }) => {
+      await setDoc(doc(db, "users", uid, "trash", id, "parts", String(i)), { i, n: partes.length, v });
+    });
+
+    await setDoc(doc(db, "users", uid, "trash", id), {
       k: key,
-      v: truncated ? value.slice(0, TRASH_MAX_CHARS) : value,
-      truncated,
+      v: partes[0],
+      n: partes.length,
+      truncated: false,
       bytes: value.length,
       ts: Date.now(),
       dev: deviceId,
       reason,
     });
   } catch (e) { console.warn("[sync] papelera", key, e?.message || e); }
+}
+
+/* Reconstruye el valor completo de una entrada de la papelera. */
+async function readTrash(uid, id) {
+  const head = await getDoc(doc(db, "users", uid, "trash", id));
+  if (!head.exists()) throw new Error("no existe");
+  const d = head.data() || {};
+  if (typeof d.v !== "string") throw new Error("entrada inválida");
+  let valor = d.v;
+  const n = Math.max(1, Number(d.n || 1));
+  for (let i = 1; i < n; i++) {
+    const p = await getDoc(doc(db, "users", uid, "trash", id, "parts", String(i)));
+    if (!p.exists()) throw new Error("copia incompleta (falta la parte " + i + ")");
+    valor += String(p.data()?.v || "");
+  }
+  return { k: d.k, v: valor };
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -845,11 +873,10 @@ window.__zongaSync = {
     const snap = await getDocs(collection(db, "users", currentUid, "trash"));
     return snap.docs.map(d => ({ id: d.id, ...(d.data() || {}) })).sort((a, b) => b.ts - a.ts);
   },
+  readTrash: (id) => readTrash(currentUid, id),
   restoreTrash: async (id) => {
     if (!currentUid) throw new Error("sin sesión");
-    const d = await getDoc(doc(db, "users", currentUid, "trash", id));
-    if (!d.exists()) throw new Error("no existe");
-    const { k, v } = d.data() || {};
+    const { k, v } = await readTrash(currentUid, id);
     if (!k || typeof v !== "string") throw new Error("entrada inválida");
     const prev = origGet(k);
     if (prev !== null) await toTrash(currentUid, k, prev, "reemplazado-al-restaurar-papelera");

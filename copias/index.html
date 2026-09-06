@@ -303,7 +303,7 @@
   <footer class="bot">Zonga Elements · sincronización kv-v2</footer>
 
   <script type="module" src="/firebase.js"></script>
-  <script type="module" src="/sync.js?v=20260906-kv2"></script>
+  <script type="module" src="/sync.js?v=20260906-kv2b"></script>
   <script src="/lz-string.min.js"></script>
   <script src="/zonga-storage.js"></script>
 
@@ -681,9 +681,9 @@
         }).join("");
 
         cont.querySelectorAll("[data-vertrash]").forEach(b => b.addEventListener("click", async () => {
-          const d = await getDoc(doc(db, "users", uid, "trash", b.dataset.vertrash));
-          const v = d.data()?.v || "";
-          let bonito = v;
+          // readTrash reensambla las copias grandes, que se guardan por partes.
+          const { v } = await sync.readTrash(b.dataset.vertrash);
+          let bonito = v || "";
           try { bonito = JSON.stringify(JSON.parse(v), null, 2); } catch {}
           const pre = document.createElement("pre");
           pre.className = "dump";

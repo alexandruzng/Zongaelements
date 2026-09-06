@@ -4,5 +4,8 @@
   },
   "devDependencies": {
     "esbuild": "^0.28.0"
+  },
+  "scripts": {
+    "test": "node tests/sync.test.mjs"
   }
 }

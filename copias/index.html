@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Copias de seguridad, papelera y recuperación de datos de Zonga Elements." />
+  <meta name="robots" content="noindex" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%232563EB'/><text x='50' y='68' font-size='55' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'>Z</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <title>Copias de seguridad — Zonga Elements</title>
+
+  <style>
+    /* ── Tokens (mismos que la landing) ───────────────────────────────── */
+    :root {
+      --c-primary: #2563EB;
+      --c-primary-dark: #1E40AF;
+      --c-primary-soft: #DBEAFE;
+      --c-bg: #FFFFFF;
+      --c-bg-alt: #F8FAFC;
+      --c-text: #0F172A;
+      --c-text-soft: #64748B;
+      --c-border: #E2E8F0;
+      --c-ok: #059669;
+      --c-ok-soft: #ECFDF5;
+      --c-warn: #B45309;
+      --c-warn-soft: #FFFBEB;
+      --c-danger: #B91C1C;
+      --c-danger-soft: #FEF2F2;
+
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+
+      --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06);
+      --shadow-md: 0 10px 30px -12px rgba(15, 23, 42, 0.18);
+
+      --ease: cubic-bezier(0.4, 0, 0.2, 1);
+      --dur: 200ms;
+
+      --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px;
+      --sp-5: 24px; --sp-6: 32px; --sp-7: 48px; --sp-8: 64px;
+    }
+
+    /* ── Reset ────────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      font-size: 15px; line-height: 1.6;
+      color: var(--c-text); background: var(--c-bg-alt);
+      -webkit-font-smoothing: antialiased;
+    }
+    h1, h2, h3 { margin: 0; letter-spacing: -0.02em; font-weight: 700; line-height: 1.25; }
+    p, ul { margin: 0; }
+    ul { padding: 0; list-style: none; }
+    a { color: var(--c-primary); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    button { font-family: inherit; font-size: inherit; cursor: pointer; border: 0; background: none; }
+
+    /* ── Layout ───────────────────────────────────────────────────────── */
+    .wrap { width: 100%; max-width: 780px; margin: 0 auto; padding: 0 var(--sp-4); }
+
+    header.top {
+      background: var(--c-bg);
+      border-bottom: 1px solid var(--c-border);
+      padding: var(--sp-5) 0;
+      margin-bottom: var(--sp-6);
+    }
+    .back {
+      display: inline-flex; align-items: center; gap: var(--sp-2);
+      font-size: 13px; font-weight: 600; color: var(--c-text-soft);
+      margin-bottom: var(--sp-4);
+      transition: color var(--dur) var(--ease);
+    }
+    .back:hover { color: var(--c-primary); text-decoration: none; }
+    header.top h1 { font-size: clamp(24px, 5vw, 32px); }
+    header.top p  { color: var(--c-text-soft); margin-top: var(--sp-2); max-width: 60ch; }
+
+    section.card {
+      background: var(--c-bg);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      padding: var(--sp-5);
+      margin-bottom: var(--sp-5);
+    }
+    section.card > h2 {
+      font-size: 17px;
+      display: flex; align-items: center; gap: var(--sp-2);
+      margin-bottom: var(--sp-1);
+    }
+    section.card > .hint {
+      color: var(--c-text-soft); font-size: 13px;
+      margin-bottom: var(--sp-4); max-width: 62ch;
+    }
+
+    /* ── Estado / métricas ────────────────────────────────────────────── */
+    .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--sp-3); }
+    @media (min-width: 620px) { .stats { grid-template-columns: repeat(4, 1fr); } }
+    .stat {
+      background: var(--c-bg-alt);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius-md);
+      padding: var(--sp-3) var(--sp-4);
+    }
+    .stat dt { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--c-text-soft); font-weight: 600; }
+    .stat dd { margin: var(--sp-1) 0 0; font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+    .pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 12px; font-weight: 600;
+      padding: 4px 10px; border-radius: 999px;
+    }
+    .pill.ok     { background: var(--c-ok-soft);     color: var(--c-ok); }
+    .pill.warn   { background: var(--c-warn-soft);   color: var(--c-warn); }
+    .pill.danger { background: var(--c-danger-soft); color: var(--c-danger); }
+
+    /* ── Botones ──────────────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-2);
+      padding: 10px 16px; border-radius: var(--radius-sm);
+      font-size: 14px; font-weight: 600;
+      border: 1px solid transparent;
+      transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease),
+                  color var(--dur) var(--ease), transform var(--dur) var(--ease);
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn:focus-visible { outline: 2px solid var(--c-primary); outline-offset: 2px; }
+    .btn[disabled] { opacity: .5; cursor: not-allowed; transform: none; }
+
+    .btn-primary { background: var(--c-primary); color: #fff; }
+    .btn-primary:hover:not([disabled]) { background: var(--c-primary-dark); }
+
+    .btn-ghost { background: var(--c-bg); color: var(--c-text); border-color: var(--c-border); }
+    .btn-ghost:hover:not([disabled]) { border-color: var(--c-primary); color: var(--c-primary); }
+
+    .btn-sm { padding: 6px 12px; font-size: 13px; }
+
+    .btn-row { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+
+    /* ── Listas de copias / papelera ──────────────────────────────────── */
+    .rows { display: flex; flex-direction: column; gap: var(--sp-2); }
+    .row {
+      display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-3);
+      padding: var(--sp-3) var(--sp-4);
+      background: var(--c-bg-alt);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius-md);
+      transition: border-color var(--dur) var(--ease);
+    }
+    .row:hover { border-color: #CBD5E1; }
+    .row .main { flex: 1 1 220px; min-width: 0; }
+    .row .title { font-weight: 600; font-size: 14px; word-break: break-word; }
+    .row .meta  { color: var(--c-text-soft); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+    .row .actions { display: flex; gap: var(--sp-2); flex-shrink: 0; }
+
+    .empty {
+      padding: var(--sp-5); text-align: center;
+      color: var(--c-text-soft); font-size: 14px;
+      background: var(--c-bg-alt); border: 1px dashed var(--c-border);
+      border-radius: var(--radius-md);
+    }
+
+    .note {
+      font-size: 13px; line-height: 1.55;
+      padding: var(--sp-3) var(--sp-4);
+      border-radius: var(--radius-md);
+      border: 1px solid;
+      margin-bottom: var(--sp-4);
+    }
+    .note.info   { background: var(--c-primary-soft); border-color: #BFDBFE; color: var(--c-primary-dark); }
+    .note.warn   { background: var(--c-warn-soft);    border-color: #FDE68A; color: var(--c-warn); }
+    .note.danger { background: var(--c-danger-soft);  border-color: #FECACA; color: var(--c-danger); }
+
+    pre.dump {
+      max-height: 320px; overflow: auto;
+      background: #0F172A; color: #E2E8F0;
+      padding: var(--sp-4); border-radius: var(--radius-md);
+      font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+      white-space: pre-wrap; word-break: break-all;
+      margin-top: var(--sp-3);
+    }
+
+    .spinner {
+      width: 16px; height: 16px; border-radius: 50%;
+      border: 2px solid currentColor; border-top-color: transparent;
+      animation: spin .7s linear infinite; display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    }
+
+    footer.bot { padding: var(--sp-6) 0 var(--sp-8); color: var(--c-text-soft); font-size: 13px; text-align: center; }
+  </style>
+</head>
+
+<body>
+  <header class="top">
+    <div class="wrap">
+      <a class="back" href="/">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+        Volver a Zonga Elements
+      </a>
+      <h1>Copias de seguridad y recuperación</h1>
+      <p>Todo lo que guardas se copia entera una vez al día y nada se sobrescribe ni se borra sin dejar antes una copia en la papelera. Desde aquí puedes verlo, descargarlo y restaurarlo.</p>
+    </div>
+  </header>
+
+  <main class="wrap">
+
+    <!-- ── Estado ─────────────────────────────────────────────────────── -->
+    <section class="card" aria-labelledby="h-estado">
+      <h2 id="h-estado">Estado de la sincronización</h2>
+      <p class="hint">Comprueba que este dispositivo está conectado y que no hay nada atascado sin subir.</p>
+      <dl class="stats" id="stats"></dl>
+      <div id="estadoAvisos" style="margin-top:var(--sp-4)"></div>
+    </section>
+
+    <!-- ── Exportar ───────────────────────────────────────────────────── -->
+    <section class="card" aria-labelledby="h-exportar">
+      <h2 id="h-exportar">Guardar una copia en tu ordenador</h2>
+      <p class="hint">Descarga un único archivo con absolutamente todo lo que tienes en las herramientas. Es la copia que no depende de nada ni de nadie: guárdala de vez en cuando.</p>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btnExport">Descargar copia completa</button>
+        <label class="btn btn-ghost" for="fileImport">Restaurar desde un archivo</label>
+        <input type="file" id="fileImport" accept="application/json,.json" hidden />
+      </div>
+      <div id="importResult"></div>
+    </section>
+
+    <!-- ── Copias diarias ─────────────────────────────────────────────── -->
+    <section class="card" aria-labelledby="h-copias">
+      <h2 id="h-copias">Copias automáticas diarias</h2>
+      <p class="hint">Se guarda una copia completa el primer día que abres cualquier herramienta. Se conservan los últimos 14 días. Restaurar solo añade y reemplaza: nunca borra nada que la copia no tuviera.</p>
+      <div id="listaCopias" class="rows"><div class="empty"><span class="spinner"></span> Cargando…</div></div>
+    </section>
+
+    <!-- ── Papelera ───────────────────────────────────────────────────── -->
+    <section class="card" aria-labelledby="h-papelera">
+      <h2 id="h-papelera">Papelera</h2>
+      <p class="hint">Cada vez que un dato se reemplaza por una versión más nueva o se borra desde otro dispositivo, la versión anterior acaba aquí antes de desaparecer.</p>
+      <div id="listaPapelera" class="rows"><div class="empty"><span class="spinner"></span> Cargando…</div></div>
+    </section>
+
+    <!-- ── Formato antiguo ────────────────────────────────────────────── -->
+    <section class="card" aria-labelledby="h-antiguo">
+      <h2 id="h-antiguo">Datos del sistema antiguo</h2>
+      <p class="hint">Hasta ahora la sincronización guardaba todo junto en bloques. Ese almacén sigue intacto y no se borra: si algo se perdió por el camino, es el primer sitio donde mirar.</p>
+      <div class="btn-row">
+        <button class="btn btn-ghost" id="btnVerAntiguo">Ver qué hay guardado</button>
+        <button class="btn btn-ghost" id="btnDescargarAntiguo" disabled>Descargar</button>
+      </div>
+      <div id="antiguoResult"></div>
+    </section>
+
+  </main>
+
+  <footer class="bot">Zonga Elements · sincronización kv-v2</footer>
+
+  <script type="module" src="/firebase.js"></script>
+  <script type="module" src="/sync.js?v=20260906-kv2"></script>
+  <script src="/lz-string.min.js"></script>
+  <script src="/zonga-storage.js"></script>
+
+  <script type="module">
+    import { auth, db } from "/firebase.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
+    import { doc, collection, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
+
+    const $ = (s) => document.querySelector(s);
+    const fmtBytes = (n) => n > 1048576 ? (n / 1048576).toFixed(1) + " MB"
+                        : n > 1024     ? Math.round(n / 1024) + " KB"
+                        : n + " B";
+    const fmtFecha = (ts) => new Date(ts).toLocaleString("es-ES", {
+      day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"
+    });
+
+    function descargar(nombre, texto) {
+      const url = URL.createObjectURL(new Blob([texto], { type: "application/json" }));
+      const a = document.createElement("a");
+      a.href = url; a.download = nombre;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function esperarSync() {
+      return new Promise((res) => {
+        const t = setInterval(() => {
+          if (window.__zongaSync) { clearInterval(t); res(window.__zongaSync); }
+        }, 100);
+      });
+    }
+
+    let uid = null;
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        $("#stats").innerHTML = "";
+        $("#estadoAvisos").innerHTML =
+          '<div class="note warn">No has iniciado sesión. <a href="/">Entra desde la página principal</a> y vuelve aquí.</div>';
+        return;
+      }
+      uid = user.uid;
+      const sync = await esperarSync();
+      pintarEstado(sync);
+      setInterval(() => pintarEstado(sync), 3000);
+      cargarCopias(sync);
+      cargarPapelera(sync);
+    });
+
+    /* ── Estado ───────────────────────────────────────────────────────── */
+    function pintarEstado(sync) {
+      const i = sync.inspect();
+      const bytes = i.bytes || 0;
+      $("#stats").innerHTML = `
+        <div class="stat"><dt>Conjuntos de datos</dt><dd>${i.claves.length}</dd></div>
+        <div class="stat"><dt>Tamaño</dt><dd>${fmtBytes(bytes)}</dd></div>
+        <div class="stat"><dt>Sin subir</dt><dd>${i.pendientes.length}</dd></div>
+        <div class="stat"><dt>Conectado</dt><dd>${i.reconciled ? "Sí" : "…"}</dd></div>`;
+
+      const avisos = [];
+      if (!i.reconciled) {
+        avisos.push('<div class="note info">Conectando con la nube… Hasta que termine no se sube nada, para no pisar tus datos buenos.</div>');
+      }
+      if (i.pendientes.length) {
+        avisos.push(`<div class="note warn"><strong>${i.pendientes.length} cambio(s) esperando a subir.</strong>
+          No se pierden aunque cierres: la cola se guarda en este dispositivo y se reintenta sola.
+          <div class="btn-row" style="margin-top:var(--sp-3)"><button class="btn btn-ghost btn-sm" id="btnForce">Subir ahora</button></div></div>`);
+      }
+      if (i.bloqueadasPorEspacio?.length) {
+        avisos.push(`<div class="note danger"><strong>Este dispositivo se ha quedado sin espacio</strong> para
+          ${i.bloqueadasPorEspacio.length} conjunto(s) de datos (${i.bloqueadasPorEspacio.join(", ")}).
+          Están completos en la nube y en tus otros dispositivos; aquí los ves incompletos y, por seguridad,
+          este equipo tiene prohibido subirlos para no recortarlos. Libera espacio borrando fotos o entradas antiguas.</div>`);
+      }
+      if (!avisos.length) {
+        avisos.push('<div class="note info">Todo al día. No hay nada pendiente de subir.</div>');
+      }
+      $("#estadoAvisos").innerHTML = avisos.join("");
+      $("#btnForce")?.addEventListener("click", (e) => {
+        e.target.disabled = true; e.target.textContent = "Subiendo…";
+        Promise.resolve(sync.forcePush()).finally(() => pintarEstado(sync));
+      });
+    }
+
+    /* ── Exportar / importar ──────────────────────────────────────────── */
+    $("#btnExport").addEventListener("click", async () => {
+      const btn = $("#btnExport");
+      btn.disabled = true; btn.textContent = "Preparando…";
+      try {
+        const datos = {};
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (!k || k.startsWith("__zonga") || k.startsWith("firebase:")) continue;
+          datos[k] = localStorage.getItem(k);
+        }
+        descargar(
+          `zonga-copia-${new Date().toISOString().slice(0, 10)}.json`,
+          JSON.stringify({ formato: "zonga-export-1", fecha: new Date().toISOString(), datos }, null, 2)
+        );
+      } finally { btn.disabled = false; btn.textContent = "Descargar copia completa"; }
+    });
+
+    $("#fileImport").addEventListener("change", async (ev) => {
+      const file = ev.target.files?.[0];
+      ev.target.value = "";
+      if (!file) return;
+      const out = $("#importResult");
+      out.innerHTML = '<div class="note info"><span class="spinner"></span> Leyendo el archivo…</div>';
+      try {
+        const json = JSON.parse(await file.text());
+        const datos = json?.datos && typeof json.datos === "object" ? json.datos : json;
+        const claves = Object.entries(datos).filter(([k, v]) => typeof v === "string" && !k.startsWith("__zonga"));
+        if (!claves.length) throw new Error("El archivo no contiene datos de Zonga Elements.");
+
+        if (!confirm(`Se van a restaurar ${claves.length} conjuntos de datos.\n\n` +
+                     `Lo que ahora tengas y sea distinto se guarda antes en la papelera, así que puedes deshacerlo. ¿Sigo?`)) {
+          out.innerHTML = ""; return;
+        }
+        let n = 0;
+        for (const [k, v] of claves) {
+          if (localStorage.getItem(k) === v) continue;
+          localStorage.setItem(k, v);   // pasa por sync.js: se marca para subir
+          n++;
+        }
+        await window.__zongaSync.forcePush();
+        out.innerHTML = `<div class="note info"><strong>Restaurados ${n} conjuntos de datos.</strong> Ya se están subiendo al resto de tus dispositivos. Abre la herramienta que corresponda para verlo.</div>`;
+      } catch (e) {
+        out.innerHTML = `<div class="note danger">No se pudo restaurar: ${e.message}</div>`;
+      }
+    });
+
+    /* ── Copias diarias ───────────────────────────────────────────────── */
+    async function cargarCopias(sync) {
+      const cont = $("#listaCopias");
+      try {
+        const copias = await sync.listBackups();
+        if (!copias.length) {
+          cont.innerHTML = '<div class="empty">Todavía no hay ninguna copia. Se creará la primera automáticamente en unos segundos.</div>';
+          return;
+        }
+        cont.innerHTML = copias.map(c => `
+          <div class="row">
+            <div class="main">
+              <div class="title">${c.day}</div>
+              <div class="meta">${c.keys || "?"} conjuntos · ${fmtBytes(c.bytes || 0)} · ${c.ts ? fmtFecha(c.ts) : ""}</div>
+            </div>
+            <div class="actions">
+              <button class="btn btn-ghost btn-sm" data-descargar="${c.day}">Descargar</button>
+              <button class="btn btn-primary btn-sm" data-restaurar="${c.day}">Restaurar</button>
+            </div>
+          </div>`).join("");
+
+        cont.querySelectorAll("[data-descargar]").forEach(b => b.addEventListener("click", async () => {
+          b.disabled = true; b.textContent = "…";
+          try {
+            const datos = await sync.readBackup(b.dataset.descargar);
+            descargar(`zonga-copia-${b.dataset.descargar}.json`,
+              JSON.stringify({ formato: "zonga-export-1", fecha: b.dataset.descargar, datos }, null, 2));
+          } catch (e) { alert("No se pudo leer la copia: " + e.message); }
+          b.disabled = false; b.textContent = "Descargar";
+        }));
+
+        cont.querySelectorAll("[data-restaurar]").forEach(b => b.addEventListener("click", async () => {
+          const dia = b.dataset.restaurar;
+          if (!confirm(`Restaurar la copia del ${dia}.\n\nSolo añade y reemplaza; no borra nada que la copia no tuviera, y lo que se reemplace queda en la papelera. ¿Sigo?`)) return;
+          b.disabled = true; b.textContent = "Restaurando…";
+          try {
+            const n = await sync.restoreBackup(dia);
+            alert(n ? `Restaurados ${n} conjuntos de datos.` : "Ya tenías exactamente esos datos: no ha hecho falta cambiar nada.");
+            cargarPapelera(sync);
+          } catch (e) { alert("No se pudo restaurar: " + e.message); }
+          b.disabled = false; b.textContent = "Restaurar";
+        }));
+      } catch (e) {
+        cont.innerHTML = `<div class="note danger">No se pudieron cargar las copias: ${e.message}</div>`;
+      }
+    }
+
+    /* ── Papelera ─────────────────────────────────────────────────────── */
+    const MOTIVOS = {
+      "sobrescrito-por-nube": "sustituido por la versión de la nube",
+      "borrado-en-otro-dispositivo": "borrado desde otro dispositivo",
+      "reemplazado-por-version-mas-nueva": "reemplazado por una versión más nueva",
+      "reemplazado-al-restaurar-papelera": "reemplazado al restaurar de la papelera",
+    };
+
+    async function cargarPapelera(sync) {
+      const cont = $("#listaPapelera");
+      try {
+        const items = await sync.listTrash();
+        if (!items.length) {
+          cont.innerHTML = '<div class="empty">La papelera está vacía. Nada se ha sobrescrito ni borrado.</div>';
+          return;
+        }
+        cont.innerHTML = items.slice(0, 60).map(t => {
+          const motivo = MOTIVOS[t.reason] || (t.reason || "").replace(/^reemplazado-al-restaurar-/, "reemplazado al restaurar la copia del ");
+          return `
+          <div class="row">
+            <div class="main">
+              <div class="title">${t.k}</div>
+              <div class="meta">${fmtFecha(t.ts)} · ${fmtBytes(t.bytes || 0)} · ${motivo}${t.truncated ? " · <span class=\"pill warn\">copia parcial</span>" : ""}</div>
+            </div>
+            <div class="actions">
+              <button class="btn btn-ghost btn-sm" data-vertrash="${t.id}">Ver</button>
+              <button class="btn btn-primary btn-sm" data-restrash="${t.id}" ${t.truncated ? "disabled title='Esta copia está recortada y no se puede restaurar entera'" : ""}>Restaurar</button>
+            </div>
+          </div>`;
+        }).join("");
+
+        cont.querySelectorAll("[data-vertrash]").forEach(b => b.addEventListener("click", async () => {
+          const d = await getDoc(doc(db, "users", uid, "trash", b.dataset.vertrash));
+          const v = d.data()?.v || "";
+          let bonito = v;
+          try { bonito = JSON.stringify(JSON.parse(v), null, 2); } catch {}
+          const pre = document.createElement("pre");
+          pre.className = "dump";
+          pre.textContent = bonito.slice(0, 20000);
+          b.closest(".row").after(pre);
+          b.disabled = true;
+        }));
+
+        cont.querySelectorAll("[data-restrash]").forEach(b => b.addEventListener("click", async () => {
+          if (!confirm("Restaurar esta versión anterior.\n\nLa versión actual se guardará también en la papelera, así que puedes volver atrás. ¿Sigo?")) return;
+          b.disabled = true; b.textContent = "Restaurando…";
+          try {
+            const k = await sync.restoreTrash(b.dataset.restrash);
+            alert(`Restaurado «${k}». Abre la herramienta correspondiente para verlo.`);
+          } catch (e) { alert("No se pudo restaurar: " + e.message); b.disabled = false; b.textContent = "Restaurar"; }
+        }));
+      } catch (e) {
+        cont.innerHTML = `<div class="note danger">No se pudo cargar la papelera: ${e.message}</div>`;
+      }
+    }
+
+    /* ── Formato antiguo (chunks-v1) ──────────────────────────────────── */
+    let antiguo = null;
+    $("#btnVerAntiguo").addEventListener("click", async () => {
+      const btn = $("#btnVerAntiguo"), out = $("#antiguoResult");
+      if (!uid) { out.innerHTML = '<div class="note warn">Inicia sesión primero.</div>'; return; }
+      btn.disabled = true; btn.textContent = "Leyendo…";
+      out.innerHTML = "";
+      try {
+        antiguo = {};
+        const snap = await getDocs(collection(db, "users", uid, "chunks"));
+        snap.docs.forEach(d => {
+          const x = d.data() || {};
+          if (x.data && typeof x.data === "object") Object.assign(antiguo, x.data);
+        });
+        const raiz = await getDoc(doc(db, "users", uid));
+        const ld = raiz.exists() ? raiz.data() : {};
+        if (ld?.localStorage && typeof ld.localStorage === "object") {
+          Object.entries(ld.localStorage).forEach(([k, v]) => { if (!(k in antiguo)) antiguo[k] = v; });
+        }
+
+        const claves = Object.keys(antiguo);
+        if (!claves.length) {
+          out.innerHTML = '<div class="note info">No queda nada en el almacén antiguo: todo se migró ya al sistema nuevo.</div>';
+        } else {
+          const filas = claves
+            .sort()
+            .map(k => `<div class="row"><div class="main"><div class="title">${k}</div>
+              <div class="meta">${fmtBytes((antiguo[k] || "").length)}${localStorage.getItem(k) === antiguo[k] ? " · <span class=\"pill ok\">igual que ahora</span>" : " · <span class=\"pill warn\">distinto de lo actual</span>"}</div>
+              </div></div>`).join("");
+          out.innerHTML = `<div class="note info" style="margin-top:var(--sp-4)">
+              Hay <strong>${claves.length}</strong> conjuntos de datos guardados en el formato antiguo.
+              Descárgalo y, si ves algo que te falta, restáuralo con «Restaurar desde un archivo» de arriba.
+            </div><div class="rows">${filas}</div>`;
+          $("#btnDescargarAntiguo").disabled = false;
+        }
+      } catch (e) {
+        out.innerHTML = `<div class="note danger">No se pudo leer: ${e.message}</div>`;
+      }
+      btn.disabled = false; btn.textContent = "Ver qué hay guardado";
+    });
+
+    $("#btnDescargarAntiguo").addEventListener("click", () => {
+      if (!antiguo) return;
+      descargar(`zonga-formato-antiguo-${new Date().toISOString().slice(0, 10)}.json`,
+        JSON.stringify({ formato: "zonga-export-1", origen: "chunks-v1", datos: antiguo }, null, 2));
+    });
+  </script>
+</body>
+</html>

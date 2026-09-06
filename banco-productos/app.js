@@ -51,8 +51,23 @@
     return cur === 'USD' ? `${sign}$${num}` : `${sign}${num} €`;
   }
 
-  const loadProducts = () => { try { products = JSON.parse(localStorage.getItem(STORE_KEY)) || []; } catch { products = []; } };
-  const saveProducts = () => localStorage.setItem(STORE_KEY, JSON.stringify(products));
+  // Guardado a traves de ZongaLS: comprime (~7-10x) y AVISA si no cabe, en vez
+  // de fallar en silencio. Antes un setItem crudo podia reventar por cuota y el
+  // producto no llegaba a guardarse sin que se notara.
+  const loadProducts = () => {
+    try {
+      const raw = window.ZongaLS ? ZongaLS.load(STORE_KEY) : localStorage.getItem(STORE_KEY);
+      products = JSON.parse(raw) || [];
+    } catch { products = []; }
+  };
+  const saveProducts = () => {
+    const json = JSON.stringify(products);
+    const ok = window.ZongaLS
+      ? ZongaLS.save(STORE_KEY, json)
+      : (() => { try { localStorage.setItem(STORE_KEY, json); return true; } catch { return false; } })();
+    if (!ok) alert('No se ha podido guardar: el almacenamiento de este dispositivo esta lleno. Libera espacio (fotos del diario, entradas antiguas) e intentalo otra vez.');
+    return ok;
+  };
 
   /* ---------- Tasa de cambio USD→EUR (para el total en €) ---------- */
   let usdToEur = FX_FALLBACK;

@@ -5,6 +5,19 @@
 */
 const UPDATES = [
   {
+    id: '2026-09-06-sincronizacion-a-prueba-de-perdidas',
+    title: 'Se acabó perder datos: sincronización reescrita de cero',
+    items: [
+      'Arreglado el fallo que borraba información al entrar desde otro dispositivo. La causa: la sincronización subía TODO tu almacenamiento como una foto única. Si un dispositivo no tenía sitio para bajarlo entero — le pasa a cualquier portátil o móvil que reciba de golpe años de datos y fotos — se quedaba con una copia recortada y, en cuanto tocabas cualquier cosa, subía esa copia recortada encima de la buena. Ahí es donde desaparecían los productos del Banco de productos y lo demás. Estaba reproducido y ahora está corregido con pruebas automáticas que lo verifican.',
+      'Ahora cada herramienta viaja por separado. Antes, guardar en Finanzas reescribía también el Diario, el Tracker y todo lo demás; si esa escritura se cortaba a la mitad (refrescar la página, cerrar el portátil, red lenta) la nube quedaba descuadrada y algunas cosas se esfumaban. Ahora se sube solo lo que has cambiado, una herramienta no puede pisar a otra, y una subida a medias nunca corrompe nada: como mucho no llega, y se reintenta sola.',
+      'Nada se borra sin dejar copia. Una herramienta solo desaparece de un dispositivo si TÚ la borraste en otro, nunca por no encontrarla en la nube (ese era el disparo que vaciaba las listas). Y antes de sobrescribir o borrar cualquier cosa, la versión anterior se guarda en una papelera de la que puedes recuperarla.',
+      'Copias de seguridad automáticas. Se guarda una copia completa de todo cada día y se conservan 14 días. Tienes una página nueva, «Copias de seguridad» (enlace abajo del todo en la portada), donde ves el estado de la sincronización, restauras cualquier día, rebuscas en la papelera, y puedes descargarte todo en un archivo para guardarlo tú.',
+      'Si a un dispositivo no le cabe algo, te lo dice y se le prohíbe subirlo. Antes fallaba en silencio y ese equipo acababa recortando los datos de todos. Ahora sale un aviso, el resto de dispositivos siguen intactos y la nube conserva la versión completa.',
+      'Fotos del Diario: las que subiste desde el PC y no se veían en el MacBook ya se ven. Vivían solo en el navegador del equipo que las subió, sin copia en la nube. Al abrir el Diario se suben solas. Además, las fotos antiguas que estaban incrustadas en el almacenamiento del navegador se mueven a la nube: es lo que llenaba el espacio compartido y rompía el guardado del resto de herramientas.',
+      'La cuenta atrás también protege al Banco de productos: ahora guarda comprimido y avisa si no puede guardar, en vez de perder el producto sin decir nada.',
+    ],
+  },
+  {
     id: '2026-08-09-gestor-suscripciones-3',
     title: 'Nueva herramienta: Gestor de suscripciones',
     items: [

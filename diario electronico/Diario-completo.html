@@ -183,6 +183,76 @@ async function deleteMediaRef(refStr) {
   setMediaPaths(m);
 }
 
+// ── Recuperación de fotos que nunca llegaron a la nube ──
+// Antes de que existiera la copia en Firebase Storage, las fotos vivían solo en
+// el IndexedDB del navegador que las subió. IndexedDB NO se sincroniza, así que
+// esas fotos se veían en el PC y salían en gris en el MacBook. Esto las sube.
+async function idbKeys() {
+  const db = await idbOpen();
+  return new Promise((res, rej) => {
+    const tx = db.transaction(IDB_STORE, 'readonly');
+    const r = tx.objectStore(IDB_STORE).getAllKeys();
+    r.onsuccess = () => res(r.result || []);
+    r.onerror = () => rej(r.error);
+  });
+}
+
+async function backfillMediaToCloud() {
+  const stor = await waitStorage().catch(() => null);
+  if (!stor) return 0;
+  const ids = await idbKeys().catch(() => []);
+  let subidas = 0;
+  for (const id of ids) {
+    if (getMediaPaths()[id]?.path) continue;
+    const blob = await idbGet(id).catch(() => null);
+    if (!blob) continue;
+    await trackUpload(id, blob);
+    if (getMediaPaths()[id]?.path) subidas++;
+  }
+  if (subidas) console.info('[diario] subidas a la nube', subidas, 'fotos/vídeos que solo estaban en este equipo');
+  return subidas;
+}
+
+// ── Fotos antiguas incrustadas en base64 dentro del localStorage ──
+// Ocupaban muchísimo y llenaban la cuota COMPARTIDA por todas las herramientas,
+// que es lo que reventaba el guardado del resto. Se pasan a IndexedDB + nube y
+// en la entrada queda solo la referencia. Solo se sustituye si la subida
+// funcionó: si falla, la foto se queda como estaba y no se pierde nada.
+function dataUrlToBlob(dataUrl) {
+  const coma = dataUrl.indexOf(',');
+  const cabecera = dataUrl.slice(0, coma);
+  const mime = (cabecera.match(/data:([^;]+)/) || [])[1] || 'application/octet-stream';
+  const bin = atob(dataUrl.slice(coma + 1));
+  const buf = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+  return new Blob([buf], { type: mime });
+}
+
+async function uploadInlinePhotos(entries) {
+  const mapa = new Map(); // dataUrl original → referencia nueva
+  const stor = await waitStorage().catch(() => null);
+  if (!stor) return mapa;
+
+  const pendientes = new Set();
+  Object.values(entries || {}).forEach(e => {
+    const lista = e?.photos || (e?.photo ? [e.photo] : []);
+    lista.forEach(p => { if (typeof p === 'string' && p.startsWith('data:image')) pendientes.add(p); });
+  });
+
+  for (const dataUrl of pendientes) {
+    try {
+      const blob = dataUrlToBlob(dataUrl);
+      const id = newMediaId('i');
+      await idbPut(id, blob);
+      await trackUpload(id, blob);
+      if (!getMediaPaths()[id]?.path) continue;  // no subió: dejarla como está
+      mapa.set(dataUrl, IMG_REF_PREFIX + id);
+    } catch (err) { console.warn('[diario] no se pudo migrar una foto incrustada', err); }
+  }
+  if (mapa.size) console.info('[diario] movidas', mapa.size, 'fotos del almacenamiento local a la nube');
+  return mapa;
+}
+
 // Reintentar uploads pendientes al iniciar y al volver el foco
 window.addEventListener('load', () => { setTimeout(retryPendingUploads, 1500); });
 window.addEventListener('focus', () => { retryPendingUploads(); });
@@ -1829,6 +1899,38 @@ function App() {
   const [viewingDay, setViewingDay] = useState(null);
 
   useEffect(() => { saveData(STORAGE_KEY, entries); }, [entries]);
+
+  // Recuperación de multimedia, una sola vez por carga:
+  //  1. Sube las fotos/vídeos que solo estaban en el IndexedDB de este equipo
+  //     (por eso no se veían en los demás dispositivos).
+  //  2. Saca del localStorage las fotos antiguas guardadas en base64 y las deja
+  //     en la nube, liberando la cuota que compartimos con el resto de herramientas.
+  useEffect(() => {
+    let cancelado = false;
+    (async () => {
+      await backfillMediaToCloud().catch(() => {});
+      const mapa = await uploadInlinePhotos(loadData(STORAGE_KEY, {})).catch(() => null);
+      if (cancelado || !mapa || !mapa.size) return;
+      // Actualización funcional: si has editado mientras tanto, no se pisa nada.
+      setEntries(prev => {
+        let tocado = false;
+        const next = {};
+        Object.entries(prev).forEach(([k, e]) => {
+          const lista = e?.photos || (e?.photo ? [e.photo] : null);
+          if (!lista) { next[k] = e; return; }
+          const nueva = lista.map(p => mapa.get(p) || p);
+          if (e.photo || nueva.some((v, i) => v !== lista[i])) {
+            const ne = { ...e, photos: nueva };
+            delete ne.photo;
+            next[k] = ne;
+            tocado = true;
+          } else next[k] = e;
+        });
+        return tocado ? next : prev;
+      });
+    })();
+    return () => { cancelado = true; };
+  }, []);
   useEffect(() => { saveData(STREAKS_KEY, streaks); }, [streaks]);
   useEffect(() => { saveData(LETTERS_KEY, letters); }, [letters]);
   useEffect(() => { saveData(OBJECTIVES_KEY, objectives); }, [objectives]);
@@ -1982,6 +2084,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
 </script>
   <script src="/zonga-memory.js"></script>
   <script type="module" src="/firebase.js"></script>
-  <script type="module" src="/sync.js?v=20260718"></script>
+  <script type="module" src="/sync.js?v=20260906-kv2"></script>
 </body>
 </html>

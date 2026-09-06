@@ -1,13 +1,19 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // Todo lo que cuelga de users/{uid} es privado de ese usuario.
+    // Incluye, ademas del documento raiz:
+    //   kv/{id}                      -> sync.js v2: un documento por clave del localStorage
+    //   trash/{id}                   -> copia de todo lo que se sobrescribe o borra
+    //   backups/{dia}/parts/{n}      -> copia de seguridad completa diaria
+    //   chunks/{n}                   -> formato antiguo (chunks-v1), congelado como historico
+    // El comodin recursivo cubre tambien las subcolecciones anidadas, que es lo
+    // que necesitan las copias de seguridad por partes.
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
 
-      // Subcoleccion usada por sync.js para repartir el snapshot del
-      // localStorage en varios documentos y esquivar el limite de 1 MiB
-      // por documento de Firestore.
-      match /chunks/{chunkId} {
+      match /{document=**} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
     }

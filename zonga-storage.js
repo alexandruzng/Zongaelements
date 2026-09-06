@@ -113,12 +113,38 @@
   // esto no puede fallar por cuota. Idempotente: salta lo que ya lleva prefijo.
   var COMPACT_KEYS = [
     "diario_entries_v2", "diario_streaks_v2",
-    "diario_letters_v2", "diario_objectives_v2",
+    "diario_letters_v2", "diario_objectives_v2", "diario_media_paths_v1",
     "fz:transactions", "fz:goals", "fz:budgets",
     "fz:categories", "fz:categoryOverrides",
     "tracker_habitos_v1",
-    "zonga_tracker_beneficio_v3"
+    "zonga_tracker_beneficio_v3",
+    "bp_products_v1",
+    "reto30_v1",
+    "suscrito.v1", "suscrito.cats"
   ];
+
+  // ── Aviso a sync.js de que hemos comprimido algo ──
+  // Este script es clásico y corre ANTES que sync.js (que es un módulo), así
+  // que la compresión no pasa por el localStorage.setItem parcheado y sync.js
+  // no se entera. Sin este aviso vería un valor local distinto al de la nube,
+  // lo machacaría con la versión sin comprimir, y en la siguiente carga se
+  // volvería a comprimir: bucle infinito y papelera llena de basura.
+  // Dejando aquí el hash del ORIGINAL, sync.js reconoce que la versión de la
+  // nube y la local son el mismo dato (solo que comprimido) y sube la buena.
+  var COMPACTED_KEY = "__zonga_compacted__";
+  function revOf(str) {
+    var h = 0x811c9dc5;
+    for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193); }
+    return (h >>> 0).toString(36) + "-" + str.length.toString(36);
+  }
+  function noteCompacted(key, original) {
+    try {
+      var m = JSON.parse(localStorage.getItem(COMPACTED_KEY) || "{}");
+      m[key] = revOf(original);
+      localStorage.setItem(COMPACTED_KEY, JSON.stringify(m));
+    } catch (e) {}
+  }
+
   function compact() {
     if (!hasLZ()) return;
     for (var i = 0; i < COMPACT_KEYS.length; i++) {
@@ -127,7 +153,10 @@
         var raw = localStorage.getItem(key);
         if (raw == null || raw.slice(0, PREFIX.length) === PREFIX) continue;
         var packed = encode(raw);
-        if (packed.length < raw.length) localStorage.setItem(key, packed);
+        if (packed.length < raw.length) {
+          localStorage.setItem(key, packed);
+          noteCompacted(key, raw);
+        }
       } catch (e) { /* si una clave falla, seguir con las demás */ }
     }
   }

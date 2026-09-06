@@ -111,6 +111,54 @@
     promise, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))
   ]);
 
+  /* ---------- Imagenes: comprimir antes de subir ----------
+     Una portada no necesita los 8 MB que suelta un movil. Se reescala a 1400 px
+     de lado mayor y se pasa a JPEG: una foto normal queda en 150-300 KB. Sube
+     mas rapido, ocupa menos en la nube y, sobre todo, hace que el respaldo de
+     emergencia (base64 en el navegador) quepa sin reventar el almacen de 5 MB
+     que comparten todas las herramientas. */
+  const MAX_LADO = 1400;
+  const CALIDAD_JPEG = 0.82;
+  const MAX_RESPALDO_BYTES = 500 * 1024;
+
+  function leerComoDataURL(blob) {
+    return new Promise((res) => {
+      const r = new FileReader();
+      r.onload = () => res(r.result);
+      r.onerror = () => res('');
+      r.readAsDataURL(blob);
+    });
+  }
+
+  async function comprimirImagen(file) {
+    const original = { blob: file, dataURL: await leerComoDataURL(file) };
+    try {
+      const bitmapUrl = URL.createObjectURL(file);
+      const img = await new Promise((res, rej) => {
+        const i = new Image();
+        i.onload = () => res(i);
+        i.onerror = () => rej(new Error('no dibujable'));
+        i.src = bitmapUrl;
+      });
+      URL.revokeObjectURL(bitmapUrl);
+
+      const escala = Math.min(1, MAX_LADO / Math.max(img.width, img.height));
+      const w = Math.max(1, Math.round(img.width * escala));
+      const h = Math.max(1, Math.round(img.height * escala));
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+
+      const blob = await new Promise((res) => c.toBlob(res, 'image/jpeg', CALIDAD_JPEG));
+      // Si no mejora (ya era pequena, o es un PNG con transparencia que engorda),
+      // nos quedamos con el archivo tal cual.
+      if (!blob || blob.size >= file.size) return original;
+      return { blob, dataURL: await leerComoDataURL(blob) };
+    } catch {
+      return original;  // formatos que el navegador no sabe dibujar (HEIC, etc.)
+    }
+  }
+
   async function resolvePhoto(id) {
     // Devuelve { url, path } según pendingPhoto. Sube a Storage si es archivo.
     if (!pendingPhoto) return { url: '', path: '' };
@@ -130,8 +178,14 @@
       } catch (e) {
         console.warn('[banco] subida a Storage falló, uso imagen local', e?.message || e);
       }
-      // Respaldo: guarda el dataURL para no perder la foto (se sincroniza igual)
-      return { url: pendingPhoto.dataURL, path: '' };
+      // Respaldo cuando la subida falla. Guardar la imagen en base64 dentro del
+      // navegador solo si es pequena: una foto grande aqui llena el almacen
+      // compartido de 5 MB y rompe el guardado de TODAS las herramientas, que
+      // es exactamente lo que pasaba con las fotos del Diario.
+      const d = pendingPhoto.dataURL || '';
+      if (d && d.length <= MAX_RESPALDO_BYTES) return { url: d, path: '', pendiente: true };
+      toast('No se ha podido subir la foto y pesa demasiado para dejarla en este dispositivo. El producto se guarda sin foto: vuelve a editarlo con mejor conexion.');
+      return { url: '', path: '' };
     }
     return { url: '', path: '' };
   }
@@ -450,10 +504,10 @@
     const prev = editingId ? products.find(p => p.id === editingId) : null;
 
     // si en edición cambió la foto y la antigua estaba en Storage, bórrala
-    let photo = '', photoPath = '';
+    let photo = '', photoPath = '', fotoPendiente = false;
     try {
       const r = await resolvePhoto(id);
-      photo = r.url; photoPath = r.path;
+      photo = r.url; photoPath = r.path; fotoPendiente = !!r.pendiente;
     } catch { photo = prev?.photo || ''; photoPath = prev?.photoPath || ''; }
 
     if (prev && prev.photoPath && prev.photoPath !== photoPath) deleteCloudPhoto(prev.photoPath);
@@ -467,7 +521,7 @@
       currency: formCurrency,
       status, source,
       notes: $('#notes').value.trim(),
-      photo, photoPath,
+      photo, photoPath, fotoPendiente,
       createdAt: prev?.createdAt || Date.now(),
       updatedAt: Date.now(),
     };
@@ -599,16 +653,45 @@
     });
   }
 
-  function handleFile(file) {
+  async function handleFile(file) {
     if (file.size > 8 * 1024 * 1024) { toast('La imagen supera 8 MB'); return; }
-    const reader = new FileReader();
-    reader.onload = () => {
-      pendingPhoto = { kind: 'file', blob: file, dataURL: reader.result };
-      setPhotoPreview(reader.result);
-      $('#photoUrl').value = '';
-      $('#photoError').hidden = true; $('#dropzone').classList.remove('is-drag');
-    };
-    reader.readAsDataURL(file);
+    const { blob, dataURL } = await comprimirImagen(file);
+    pendingPhoto = { kind: 'file', blob, dataURL };
+    setPhotoPreview(dataURL);
+    $('#photoUrl').value = '';
+    $('#photoError').hidden = true; $('#dropzone').classList.remove('is-drag');
+  }
+
+  /* ---------- Rescate de fotos que se quedaron en el navegador ----------
+     Si en su dia la subida a Storage fallo, la foto quedo como base64 dentro
+     del producto, ocupando sitio en el almacen compartido. En cada carga se
+     intenta subirla y dejar solo el enlace. Tambien repara los productos
+     antiguos guardados antes de que existiera este limite. */
+  async function rescatarFotosLocales() {
+    const pendientes = products.filter(p => typeof p.photo === 'string' && p.photo.startsWith('data:'));
+    if (!pendientes.length) return;
+
+    const stor = await waitStorage().catch(() => null);
+    if (!stor) return;
+    let userId;
+    try { userId = await withTimeout(stor.uid(), 8000); } catch { return; }
+
+    let subidas = 0;
+    for (const p of pendientes) {
+      try {
+        const blob = await (await fetch(p.photo)).blob();
+        const ext = (blob.type && blob.type.split('/')[1]) || 'jpg';
+        const path = `users/${userId}/banco-productos/${p.id}.${ext}`;
+        const url = await stor.upload(path, blob);
+        p.photo = url; p.photoPath = path; p.fotoPendiente = false;
+        subidas++;
+      } catch { /* sin conexion o sin permisos: se reintenta en la proxima carga */ }
+    }
+    if (subidas) {
+      saveProducts();
+      renderGrid();
+      console.info('[banco] ' + subidas + ' foto(s) movidas del navegador a la nube');
+    }
   }
 
   /* ---------- Re-render cuando sync.js trae datos de la nube ---------- */
@@ -623,7 +706,7 @@
     renderGrid();
     loadFx();
     // tras unos segundos, sync.js puede haber traído datos: refresca
-    setTimeout(() => { loadProducts(); renderGrid(); }, 2500);
+    setTimeout(() => { loadProducts(); renderGrid(); rescatarFotosLocales(); }, 2500);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

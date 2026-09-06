@@ -5,6 +5,17 @@
 */
 const UPDATES = [
   {
+    id: '2026-09-06-banco-productos-fotos-ligeras',
+    title: 'Banco de productos: las portadas ya no pueden llenarte el almacenamiento',
+    items: [
+      'Las fotos de portada del Banco de productos van a Firebase Storage y en el navegador solo se guarda el enlace, unos 100 bytes por producto. Eso ya funcionaba así: puedes meter cientos de productos con foto sin acercarte al límite de 5 MB. No es como eran las fotos del Diario.',
+      'Pero había una trampa: si la subida fallaba (mala conexión, o los 5 segundos de espera agotados), la herramienta guardaba la foto entera en base64 dentro del navegador «para no perderla». Una sola foto de 8 MB ocupa ahí más que todo el almacén disponible, así que ese respaldo podía dejarte la web entera sin poder guardar nada. Justo lo que acaba de pasar con el Diario.',
+      'Ahora la imagen se comprime ANTES de subirla: se reescala a 1400 px de lado mayor y se pasa a JPEG. Una foto de móvil de 4000x3000 se queda en unos 180 KB, un 77 % menos. Sube más rápido y ocupa menos en la nube, y la calidad sigue siendo de sobra para una portada.',
+      'Y el respaldo de emergencia ahora tiene tope: solo se guarda en el navegador si ocupa menos de 500 KB. Si no cabe, el producto se guarda sin foto y te avisa para que lo reintentes, en vez de romperte el guardado de todas las demás herramientas sin decir nada.',
+      'Además, en cada carga revisa si algún producto tiene todavía la foto metida dentro del navegador y la mueve sola a la nube. Así se reparan también los productos que guardaste antes de este cambio.',
+    ],
+  },
+  {
     id: '2026-09-06-fuera-fotos-diario-y-notas-libros',
     title: 'Fuera las fotos del Diario y la herramienta de Notas de Libros',
     items: [

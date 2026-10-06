@@ -574,20 +574,32 @@
     try { localStorage.setItem(PREF_CURRENCY_KEY, 'USD'); } catch {}
   }
 
-  function loadDays() {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
-    catch { return {}; }
+  /* Guardado comprimido (ZongaLS): el histórico de días es lo que más ocupa de
+     esta herramienta y el almacén de ~5 MB se comparte con las demás, sobre todo
+     en el móvil. Además AVISA si no cabe, en vez de perder el día en silencio
+     como hacía el `catch {}` anterior. */
+  function leerJSON(key, fallback) {
+    try {
+      const raw = window.ZongaLS ? ZongaLS.load(key) : localStorage.getItem(key);
+      return JSON.parse(raw) || fallback;
+    } catch { return fallback; }
   }
-  function saveDays(d) {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); } catch {}
+  let avisadoLleno = false;
+  function guardarJSON(key, val) {
+    const json = JSON.stringify(val);
+    const ok = window.ZongaLS
+      ? ZongaLS.save(key, json)
+      : (() => { try { localStorage.setItem(key, json); return true; } catch { return false; } })();
+    if (!ok && !avisadoLleno) {
+      avisadoLleno = true;
+      alert('No se ha podido guardar: el almacenamiento de este dispositivo está lleno. Mira qué ocupa en Copias de seguridad y libera espacio.');
+    }
+    return ok;
   }
-  function loadMonthly() {
-    try { return JSON.parse(localStorage.getItem(MONTHLY_KEY)) || {}; }
-    catch { return {}; }
-  }
-  function saveMonthly(m) {
-    try { localStorage.setItem(MONTHLY_KEY, JSON.stringify(m)); } catch {}
-  }
+  function loadDays() { return leerJSON(STORAGE_KEY, {}); }
+  function saveDays(d) { return guardarJSON(STORAGE_KEY, d); }
+  function loadMonthly() { return leerJSON(MONTHLY_KEY, {}); }
+  function saveMonthly(m) { return guardarJSON(MONTHLY_KEY, m); }
   function loadView() {
     const raw = localStorage.getItem(VIEW_KEY);
     if (raw) {
@@ -1622,8 +1634,10 @@
   render();
 })();
 </script>
+<script src="/lz-string.min.js"></script>
+<script src="/zonga-storage.js?v=20261007"></script>
 <script src="/zonga-memory.js"></script>
 <script type="module" src="/firebase.js"></script>
-<script type="module" src="/sync.js?v=20260906-kv2b"></script>
+<script type="module" src="/sync.js?v=20261007-kv2c"></script>
 </body>
 </html>

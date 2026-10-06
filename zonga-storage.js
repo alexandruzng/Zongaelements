@@ -120,7 +120,14 @@
     "zonga_tracker_beneficio_v3",
     "bp_products_v1",
     "reto30_v1",
-    "suscrito.v1", "suscrito.cats"
+    "suscrito.v1", "suscrito.cats",
+    // Anadidas 2026-10-07: guardaban en crudo y son de las que mas ocupan.
+    // Al listarlas aqui, el valor que ya tengas guardado se comprime en cuanto
+    // abres cualquier pagina, sin esperar a que edites nada.
+    "pd:days", "pd:monthly",
+    "ph_db_v1",
+    "zonga_ads_analyzer_v1",
+    "drumul-spre-permis-v1"
   ];
 
   // ── Aviso a sync.js de que hemos comprimido algo ──

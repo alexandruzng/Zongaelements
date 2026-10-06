@@ -5,6 +5,16 @@
 */
 const UPDATES = [
   {
+    id: '2026-10-07-espacio-movil',
+    title: 'Menos espacio ocupado y el aviso ahora te dice QUÉ no cabe',
+    items: [
+      'Si en el móvil te salía «no hay espacio» aunque no tengas fotos ahí, el motivo es que al iniciar sesión el móvil se descarga los datos de las quince herramientas. No es lo que tengas en el teléfono: es la suma de todo lo que tienes en la web.',
+      'Pedidos diarios y Product Hub eran las dos únicas herramientas que seguían guardando sin comprimir. Ahora comprimen como el resto: dos años de registros diarios pasan de 123 KB a 30 KB (un 75 % menos) y 120 productos con su histórico pasan de 491 KB a 89 KB (un 82 % menos). No tienes que hacer nada: con abrir cualquier página, lo que ya tenías guardado se comprime solo.',
+      'El aviso rojo de almacenamiento lleno ya no es genérico. Ahora te dice exactamente qué conjunto de datos no ha cabido («…no ha podido bajar: Diario electrónico, Finanzas»), te recuerda que en la nube y en tus otros dispositivos eso sigue intacto, y te enlaza directamente a «Copias de seguridad» para ver qué lo está ocupando. También se puede cerrar.',
+      'Las dos herramientas avisaban mal cuando fallaba el guardado: Pedidos diarios se lo tragaba con un catch vacío y podías perder el día que acababas de meter sin enterarte. Ahora las dos te avisan.',
+    ],
+  },
+  {
     id: '2026-10-07-drumul-spre-permis',
     title: 'Nueva herramienta: Drumul spre Permis (juego del carnet rumano)',
     items: [

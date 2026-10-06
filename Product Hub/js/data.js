@@ -305,15 +305,26 @@ DB.products.forEach((p) => {
    siempre. */
 const PH_STORAGE_KEY = "ph_db_v1";
 
+/* Guardado comprimido (ZongaLS): el almacén de ~5 MB del navegador lo comparten
+   las quince herramientas, y en el móvil se llena antes. Si aun así no cabe, se
+   avisa en vez de dejar el guardado fallando en silencio. */
+let phAvisadoLleno = false;
 function saveDB() {
-  try {
-    localStorage.setItem(PH_STORAGE_KEY, JSON.stringify({ products: DB.products }));
-  } catch (e) { console.warn("[product-hub] save failed", e); }
+  const json = JSON.stringify({ products: DB.products });
+  const ok = window.ZongaLS
+    ? ZongaLS.save(PH_STORAGE_KEY, json)
+    : (() => { try { localStorage.setItem(PH_STORAGE_KEY, json); return true; } catch (e) { return false; } })();
+  if (!ok && !phAvisadoLleno) {
+    phAvisadoLleno = true;
+    console.error("[product-hub] almacenamiento lleno: no se ha guardado");
+    alert("No se ha podido guardar: el almacenamiento de este dispositivo está lleno. Mira qué ocupa en Copias de seguridad y libera espacio.");
+  }
+  return ok;
 }
 
 (function loadDB() {
   try {
-    const raw = localStorage.getItem(PH_STORAGE_KEY);
+    const raw = window.ZongaLS ? ZongaLS.load(PH_STORAGE_KEY) : localStorage.getItem(PH_STORAGE_KEY);
     if (!raw) return;
     const parsed = JSON.parse(raw);
     if (parsed && Array.isArray(parsed.products)) {

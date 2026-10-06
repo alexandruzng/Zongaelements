@@ -19,6 +19,9 @@
   <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
 
   <!-- App (plain scripts share global scope; load order matters) -->
+  <!-- Guardado comprimido compartido (ZongaLS). Debe ir ANTES de data.js. -->
+  <script src="/lz-string.min.js"></script>
+  <script src="/zonga-storage.js?v=20261007"></script>
   <script src="js/data.js"></script>
   <script src="js/charts.js"></script>
   <script src="js/diagnostico.js"></script>
@@ -27,6 +30,6 @@
 
   <script src="/zonga-memory.js"></script>
   <script type="module" src="/firebase.js"></script>
-  <script type="module" src="/sync.js?v=20260906-kv2b"></script>
+  <script type="module" src="/sync.js?v=20261007-kv2c"></script>
 </body>
 </html>

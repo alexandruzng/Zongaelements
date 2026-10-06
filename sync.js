@@ -348,29 +348,61 @@ function isQuotaError(e) {
                  e.code === 22 || e.code === 1014);
 }
 
+/* Nombre legible de la herramienta duena de una clave, para que el aviso diga
+   QUE no ha cabido en vez de un generico "no hay espacio". */
+function duenoDeClave(k) {
+  const exacto = {
+    "bp_products_v1": "Banco de productos", "ph_db_v1": "Product Hub",
+    "tracker_habitos_v1": "Tracker de habitos", "zonga_tracker_beneficio_v3": "Tracker de beneficio Ads",
+    "zonga_ads_analyzer_v1": "Analizador de metricas Ads", "reto30_v1": "Reto de 30 dias",
+    "drumul-spre-permis-v1": "Drumul spre Permis",
+  };
+  if (exacto[k]) return exacto[k];
+  for (const [pre, nombre] of [["diario_", "Diario electronico"], ["fz:", "Finanzas"], ["pd:", "Pedidos diarios"],
+                               ["suscrito.", "Gestor de suscripciones"]]) if (k.startsWith(pre)) return nombre;
+  return k;
+}
+
 let quotaWarned = false;
+const quotaFallidas = new Set();
 function warnQuota(key) {
   console.error("[sync] cuota llena al escribir", key);
-  if (window.ZongaLS && typeof ZongaLS.warnQuotaFull === "function") { ZongaLS.warnQuotaFull(); return; }
-  if (quotaWarned) return;
-  quotaWarned = true;
-  const show = () => {
-    if (document.getElementById("__zonga_quota_banner__")) return;
-    const el = document.createElement("div");
-    el.id = "__zonga_quota_banner__";
-    el.setAttribute("role", "alert");
-    Object.assign(el.style, {
-      position: "fixed", left: "0", right: "0", top: "0", zIndex: "2147483647",
-      background: "#7a1212", color: "#fff",
-      font: "600 13px/1.4 system-ui, -apple-system, 'Segoe UI', sans-serif",
-      padding: "12px 44px 12px 16px", textAlign: "center",
-    });
-    el.textContent = "⚠ Este dispositivo no tiene espacio para bajar todos tus datos. " +
-      "No se ha perdido nada en la nube, pero aquí verás información incompleta. " +
-      "Libera espacio borrando fotos o entradas antiguas.";
-    document.body.appendChild(el);
+  quotaFallidas.add(duenoDeClave(key));
+  const lista = [...quotaFallidas].join(", ");
+
+  const pintar = () => {
+    let el = document.getElementById("__zonga_quota_banner__");
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "__zonga_quota_banner__";
+      el.setAttribute("role", "alert");
+      Object.assign(el.style, {
+        position: "fixed", left: "0", right: "0", top: "0", zIndex: "2147483647",
+        background: "#7a1212", color: "#fff",
+        font: "600 13px/1.45 system-ui, -apple-system, 'Segoe UI', sans-serif",
+        padding: "12px 42px 12px 16px", textAlign: "center",
+      });
+      const cerrar = document.createElement("button");
+      cerrar.textContent = "×";
+      cerrar.setAttribute("aria-label", "Cerrar aviso");
+      Object.assign(cerrar.style, {
+        position: "absolute", right: "8px", top: "50%", transform: "translateY(-50%)",
+        background: "transparent", border: "0", color: "#fff", fontSize: "22px", lineHeight: "1",
+        cursor: "pointer", padding: "0 8px",
+      });
+      cerrar.addEventListener("click", () => el.remove());
+      el.appendChild(cerrar);
+      document.body.appendChild(el);
+    }
+    let txt = el.querySelector("[data-txt]");
+    if (!txt) { txt = document.createElement("span"); txt.setAttribute("data-txt", ""); el.insertBefore(txt, el.firstChild); }
+    // Lo importante: NADA se ha perdido en la nube. Este equipo solo no puede
+    // guardar una copia local, y por eso tiene prohibido subir nada de esas claves.
+    txt.innerHTML = "⚠ Este dispositivo se ha quedado sin espacio y no ha podido bajar: <b>" + lista + "</b>. " +
+      "En la nube y en tus otros dispositivos esos datos están intactos. " +
+      "Mira qué ocupa en <a href=\"/copias/\" style=\"color:#ffd7d3;text-decoration:underline\">Copias de seguridad</a>.";
   };
-  document.body ? show() : document.addEventListener("DOMContentLoaded", show);
+  document.body ? pintar() : document.addEventListener("DOMContentLoaded", pintar);
 }
 
 /* Devuelve true si escribió; false si la cuota lo impidió (y entonces NO se

@@ -5,6 +5,17 @@
 */
 const UPDATES = [
   {
+    id: '2026-10-07-drumul-spre-permis',
+    title: 'Nueva herramienta: Drumul spre Permis (juego del carnet rumano)',
+    items: [
+      'En Productividad Personal tienes una herramienta nueva, «Drumul spre Permis»: un juego para aprender el Código de Circulación rumano conduciendo de Arad a Bucarest. Cada provincia es una lección corta en tres partes — primero aprendes con fichas ilustradas, luego practicas con un minijuego y al final respondes preguntas tipo examen sobre lo que acabas de ver. Entre regiones hay controles de policía que tienes que superar para seguir avanzando, y al final te espera el examen del DRPCIV: 26 preguntas, 30 minutos, aprobado a partir de 22 aciertos.',
+      'Ganas kilómetros y lei, coleccionas una postal de cada provincia, desbloqueas insignias y tunas el coche en el garaje (pintura, llantas, alerón, vinilos, luces). Hay racha diaria con «rovinieta» para salvarla, una Ruta del día con preguntas mezcladas y un «Service auto» donde vuelven las preguntas que fallaste para que las repares. Los minijuegos van desde adivinar señales o deslizar verdadero/falso hasta ordenar quién pasa primero en un cruce, ajustar el velocímetro o interpretar los gestos del policía. Pablito, el perro copiloto, te acompaña todo el camino.',
+      'El progreso se guarda SIEMPRE y se sincroniza entre tus dispositivos: puedes empezar en el PC y seguir en el móvil por la misma provincia, con tus kilómetros, tu coche y tus insignias. Antes de arrancar, el juego espera a bajar la partida de la nube y te enseña una pantalla de carga, para que nunca juegues sobre un progreso viejo. Se guarda comprimido y, si el dispositivo se quedara sin espacio, te avisa en vez de perder la partida en silencio.',
+      'Ocupa muy poco: una partida entera con las 41 provincias terminadas y 420 respuestas son 2,2 KB, un 0,09 % del almacenamiento del navegador.',
+      'Está en rumano, igual que el artifact original, porque las preguntas citan artículos concretos de la OUG 195/2002 y del Reglamento.',
+    ],
+  },
+  {
     id: '2026-09-06-banco-productos-fotos-ligeras',
     title: 'Banco de productos: las portadas ya no pueden llenarte el almacenamiento',
     items: [
